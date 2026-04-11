@@ -142,6 +142,69 @@ if [ "$INSTALL_MODE" = "project" ]; then
   done
 fi
 
+# --- Write UV Suite context to CLAUDE.md (before bundled tools, which can be slow) ---
+if [ "$INSTALL_MODE" = "project" ]; then
+  PROJECT_ROOT="$(dirname "$TARGET_DIR")"
+  CLAUDE_MD="$PROJECT_ROOT/CLAUDE.md"
+  UV_VERSION=$(grep '"version"' "$UV_SUITE_DIR/package.json" 2>/dev/null | head -1 | sed 's/.*": "//;s/".*//')
+
+  # Remove existing UV Suite section if present
+  if [ -f "$CLAUDE_MD" ] && grep -q "## UV Suite" "$CLAUDE_MD" 2>/dev/null; then
+    echo "Updating UV Suite section in CLAUDE.md..."
+    # Create temp file without UV Suite section
+    awk '/^## UV Suite$/{found=1; next} /^## [^U]/{if(found){found=0}} !found' "$CLAUDE_MD" > "$CLAUDE_MD.tmp"
+    mv "$CLAUDE_MD.tmp" "$CLAUDE_MD"
+  else
+    echo "Adding UV Suite section to CLAUDE.md..."
+    # Create CLAUDE.md if it doesn't exist
+    touch "$CLAUDE_MD"
+  fi
+
+  # Determine active hooks text
+  HOOKS_TEXT=""
+  case "$PERSONA" in
+    professional)
+      HOOKS_TEXT="- auto-lint (on file write), slop check (on file write), danger zone (on file edit), destructive block (on bash), review reminder (on session end)" ;;
+    auto)
+      HOOKS_TEXT="- auto-lint (on file write), destructive block (on bash)" ;;
+    sport)
+      HOOKS_TEXT="- auto-lint (on file write)" ;;
+    spike)
+      HOOKS_TEXT="- doc slop check (on file write)" ;;
+  esac
+
+  cat >> "$CLAUDE_MD" << EOF
+
+## UV Suite
+
+This project uses [UV Suite](https://github.com/utsavanand/uv-suite) v${UV_VERSION} for AI-assisted development.
+
+**Active persona:** ${PERSONA_LABEL}
+
+### Skills
+
+/map-codebase, /map-stack, /spec, /architect, /review, /write-tests, /write-evals, /slop-check, /prototype, /security-review
+
+### Artifacts
+
+Agent output is written to uv-out/. Agents read prior artifacts automatically:
+- /map-codebase writes uv-out/map-codebase.md (read by /architect, /review, /security-review)
+- /spec writes uv-out/specs/ (read by /architect, /write-tests, /write-evals)
+- /architect writes uv-out/architecture/ (read by /review, /write-tests, /slop-check)
+- /review writes uv-out/review-*.md (read by /slop-check, /security-review)
+
+### Hooks
+
+${HOOKS_TEXT}
+
+### Personas
+
+Start sessions with: ./uv.sh spike | sport | pro | auto
+EOF
+
+  echo "  ✓ UV Suite section added to CLAUDE.md"
+fi
+
 # --- Install bundled tools ---
 echo "Installing bundled integrations..."
 
@@ -162,7 +225,7 @@ if [ -n "$PIP_CMD" ]; then
       echo "  ✓ $label (already installed)"
     else
       echo "  Installing $label..."
-      $PIP_CMD install "$pkg" --quiet 2>/dev/null
+      timeout 60 $PIP_CMD install "$pkg" --quiet 2>/dev/null
       if command -v "$cmd" &>/dev/null || $PIP_CMD show "$pkg" &>/dev/null; then
         echo "  ✓ $label installed"
       else
@@ -219,6 +282,100 @@ else
   if ! command -v trivy &>/dev/null; then
     echo "  · Trivy not found — install: brew install trivy"
   fi
+fi
+
+# --- Write UV Suite context to CLAUDE.md ---
+if [ "$INSTALL_MODE" = "project" ]; then
+  PROJECT_ROOT="$(dirname "$TARGET_DIR")"
+  CLAUDE_MD="$PROJECT_ROOT/CLAUDE.md"
+
+  # Check if UV Suite section already exists
+  if [ -f "$CLAUDE_MD" ] && grep -q "## UV Suite" "$CLAUDE_MD" 2>/dev/null; then
+    echo "Updating UV Suite section in CLAUDE.md..."
+    # Remove old UV Suite section and rewrite
+    sed -i.bak '/^## UV Suite$/,/^## [^U]/{ /^## [^U]/!d; }' "$CLAUDE_MD" 2>/dev/null || true
+    rm -f "$CLAUDE_MD.bak" 2>/dev/null
+  else
+    echo "Adding UV Suite section to CLAUDE.md..."
+  fi
+
+  cat >> "$CLAUDE_MD" << CLAUDEMD
+
+## UV Suite
+
+This project uses [UV Suite](https://github.com/utsavanand/uv-suite) for AI-assisted development.
+
+**Active persona:** $PERSONA_LABEL
+**Version:** $(cat "$UV_SUITE_DIR/package.json" 2>/dev/null | grep '"version"' | head -1 | sed 's/.*: "//;s/".*//')
+
+### Available skills (slash commands)
+
+| Command | Agent | What it does |
+|---------|-------|-------------|
+| /map-codebase [dir] | Cartographer | Build knowledge graph of codebase |
+| /map-stack [dir] | Cartographer | Map multiple services and their connections |
+| /spec [requirements] | Spec Writer | Write technical specification |
+| /architect [spec] | Architect | Design architecture, decompose into Acts |
+| /review | Reviewer | Code review (correctness, security, perf, slop) |
+| /write-tests [file] | Test Writer | Generate tests matching project conventions |
+| /write-evals [prompt] | Eval Writer | Write AI/LLM evaluation cases |
+| /slop-check | Anti-Slop Guard | Detect 6 categories of AI-generated slop |
+| /prototype [concept] | Prototype Builder | Build static React prototype |
+| /security-review | Security Agent | OWASP audit, dependency scan, secret detection |
+
+### Artifacts
+
+All agent output is written to \`uv-out/\`. Each agent reads relevant prior artifacts from this directory automatically.
+
+| Artifact | Written by | Read by |
+|----------|-----------|---------|
+| uv-out/map-codebase.md | /map-codebase | /architect, /review, /security-review |
+| uv-out/specs/*.md | /spec | /architect, /write-tests, /write-evals |
+| uv-out/architecture/*.md | /architect | /review, /write-tests, /slop-check |
+| uv-out/review-*.md | /review | /slop-check, /security-review |
+| uv-out/security-review-*.md | /security-review | — |
+| uv-out/slop-check-*.md | /slop-check | — |
+
+### Active hooks
+
+Hooks fire automatically on every relevant action. You do not invoke these.
+
+$(if [ "$PERSONA" = "professional" ]; then
+cat << 'HOOKS'
+- **auto-lint** (on file write) — runs prettier/ruff/gofmt
+- **slop check** (on file write) — Haiku scans for obvious slop
+- **danger zone** (on file edit) — warns if file is in DANGER-ZONES.md
+- **destructive block** (on bash) — blocks rm -rf, force push
+- **review reminder** (on session end) — reminds to /review if uncommitted changes
+HOOKS
+elif [ "$PERSONA" = "auto" ]; then
+cat << 'HOOKS'
+- **auto-lint** (on file write) — runs prettier/ruff/gofmt
+- **destructive block** (on bash) — blocks rm -rf, force push
+HOOKS
+elif [ "$PERSONA" = "sport" ]; then
+cat << 'HOOKS'
+- **auto-lint** (on file write) — runs prettier/ruff/gofmt
+HOOKS
+elif [ "$PERSONA" = "spike" ]; then
+cat << 'HOOKS'
+- **doc slop check** (on file write) — Haiku checks documentation quality
+HOOKS
+fi)
+
+### Personas
+
+Switch persona by starting a new session:
+
+\`\`\`
+./uv.sh spike    # Research & docs (Opus, max)
+./uv.sh sport    # New projects (Sonnet, high)
+./uv.sh pro      # Production code (all hooks, all guardrails)
+./uv.sh auto     # Fully autonomous (max, everything approved)
+\`\`\`
+CLAUDEMD
+
+  echo "  ✓ UV Suite section added to CLAUDE.md"
 fi
 
 # --- Install launcher script ---
