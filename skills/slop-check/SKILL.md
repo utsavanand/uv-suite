@@ -28,3 +28,13 @@ $ARGUMENTS
 ### Full diff
 
 !`git diff --cached 2>/dev/null || git diff 2>/dev/null || echo ""`
+
+## Prior analysis
+
+### Architecture decisions (check code against stated rationale)
+
+!`cat uv-out/architecture/decisions.md 2>/dev/null | head -40 || echo "No architecture decisions found"`
+
+### Recent review findings
+
+!`cat $(ls -t uv-out/review-*.md 2>/dev/null | head -1) 2>/dev/null | head -40 || echo "No prior review found"`

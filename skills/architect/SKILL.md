@@ -24,3 +24,15 @@ $ARGUMENTS
 ## Project context
 
 !`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
+
+## Prior analysis
+
+### Codebase map
+
+!`cat uv-out/map-codebase.md 2>/dev/null | head -100 || echo "No codebase map — run /map-codebase first for better architecture context"`
+
+### Spec (if written)
+
+!`ls uv-out/specs/*.md 2>/dev/null | head -5 || echo "No specs found"`
+
+!`cat $(ls -t uv-out/specs/*.md 2>/dev/null | head -1) 2>/dev/null | head -80 || echo ""`

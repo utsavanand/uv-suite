@@ -40,6 +40,20 @@ $ARGUMENTS
 
 !`cat DANGER-ZONES.md 2>/dev/null || echo "No DANGER-ZONES.md found"`
 
+## Prior analysis
+
+### Codebase map
+
+!`cat uv-out/map-codebase.md 2>/dev/null | head -80 || echo "No codebase map found"`
+
+### Recent code review findings
+
+!`cat $(ls -t uv-out/review-*.md 2>/dev/null | head -1) 2>/dev/null | head -60 || echo "No prior review found"`
+
+### Recent slop check
+
+!`cat $(ls -t uv-out/slop-check-*.md 2>/dev/null | head -1) 2>/dev/null | head -40 || echo "No prior slop check found"`
+
 ## Available security tools
 
 ```!

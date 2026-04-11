@@ -38,3 +38,13 @@ $ARGUMENTS
 ## Project test command
 
 !`cat package.json 2>/dev/null | grep -A2 '"test"' || echo "No package.json test script"`
+
+## Prior analysis
+
+### Spec (what to test against)
+
+!`cat $(ls -t uv-out/specs/*.md 2>/dev/null | head -1) 2>/dev/null | head -60 || echo "No spec found — test based on code behavior"`
+
+### Acts plan (current task context)
+
+!`cat uv-out/architecture/acts-plan.md 2>/dev/null | head -40 || echo "No acts plan found"`

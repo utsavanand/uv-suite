@@ -48,3 +48,7 @@ cat graphify-out/GRAPH_REPORT.md 2>/dev/null | head -80 || echo "No existing gra
 ## Danger zones
 
 !`cat DANGER-ZONES.md 2>/dev/null || echo "No DANGER-ZONES.md found"`
+
+## Prior analysis (if re-mapping)
+
+!`cat uv-out/map-codebase.md 2>/dev/null | head -30 || echo "No prior map — fresh scan"`

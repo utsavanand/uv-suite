@@ -38,6 +38,10 @@ This is NOT a single-repo mapping. You are mapping an entire tech stack — mult
 
 !`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
 
+## Prior codebase maps (from /map-codebase runs)
+
+!`cat uv-out/map-codebase.md 2>/dev/null | head -80 || echo "No prior codebase map — will scan from scratch"`
+
 ## Discover services
 
 ```!

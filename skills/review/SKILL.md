@@ -37,3 +37,17 @@ $ARGUMENTS
 ## Danger zones
 
 !`cat DANGER-ZONES.md 2>/dev/null || echo "No DANGER-ZONES.md found"`
+
+## Prior analysis (from other UV Suite agents)
+
+### Architecture map
+
+!`cat uv-out/map-codebase.md 2>/dev/null | head -100 || echo "No codebase map — run /map-codebase first for better review context"`
+
+### Architecture decisions
+
+!`cat uv-out/architecture/decisions.md 2>/dev/null | head -60 || echo "No architecture decisions found"`
+
+### Acts plan
+
+!`cat uv-out/architecture/acts-plan.md 2>/dev/null | head -60 || echo "No acts plan found"`
