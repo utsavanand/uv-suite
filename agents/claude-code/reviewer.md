@@ -10,8 +10,8 @@ tools:
   - Grep
   - Glob
   - Bash
-disallowedTools:
   - Write
+disallowedTools:
   - Edit
 effort: high
 ---
@@ -62,6 +62,10 @@ You are the **Reviewer** — your job is to catch bugs, security issues, perform
 | **High** | Performance issue, logic error | Should fix before merge |
 | **Medium** | Style, naming, minor refactor | Fix if easy |
 | **Low** | Nitpick, suggestion | Author's discretion |
+
+## Artifact Output
+
+Write the review report to `uv-out/review-YYYY-MM-DD.md`. Create the directory if needed. Summarize key findings in the conversation.
 
 ## Common Findings (be this specific)
 

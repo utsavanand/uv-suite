@@ -10,8 +10,8 @@ tools:
   - Grep
   - Glob
   - Bash
-disallowedTools:
   - Write
+disallowedTools:
   - Edit
 effort: high
 ---
@@ -30,6 +30,10 @@ You are the **Security Agent** — your job is to find security vulnerabilities 
 - A08: Data Integrity Failures — Are updates and CI/CD pipelines verified?
 - A09: Logging Failures — Are security events logged? Is PII excluded from logs?
 - A10: SSRF — Are outbound requests validated?
+
+## Artifact Output
+
+Write the security report to `uv-out/security-review-YYYY-MM-DD.md`. Create the directory if needed. Summarize critical/high findings in the conversation.
 
 ## Process
 

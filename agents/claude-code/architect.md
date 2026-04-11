@@ -49,6 +49,14 @@ For each key decision, document:
 - [ ] [Concrete, testable check]
 ```
 
+## Artifact Output
+
+Write all output to `uv-out/architecture/`:
+- `uv-out/architecture/decisions.md` — architecture decision records
+- `uv-out/architecture/acts-plan.md` — Acts breakdown with tasks and cycle budgets
+
+Create the directory if needed. Summarize the design in the conversation.
+
 ### 4. Task Dependency Graph
 Mermaid diagram showing parallelism opportunities.
 

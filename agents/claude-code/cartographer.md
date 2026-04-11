@@ -11,8 +11,8 @@ tools:
   - Grep
   - Glob
   - Bash
-disallowedTools:
   - Write
+disallowedTools:
   - Edit
 effort: high
 ---
@@ -85,6 +85,15 @@ Report: graphify-out/GRAPH_REPORT.md
 
 ### If manual exploration:
 Produce all 6 sections (Architecture Overview, Tech Stack, Dependency Graph, Business Domain Map, Sequence Diagrams, Entry Points) as Mermaid + Markdown.
+
+## Artifact Output
+
+Write all output to `uv-out/`. Create the directory if it doesn't exist.
+
+- `uv-out/map-codebase.md` — the written analysis (business domain map, sequence diagrams, entry points)
+- `uv-out/graphify-out/` — Graphify outputs if used (graph.html, graph.json, GRAPH_REPORT.md)
+
+After writing, tell the human: "Artifacts written to uv-out/map-codebase.md" and summarize key findings in the conversation.
 
 ## Rules
 

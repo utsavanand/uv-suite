@@ -60,6 +60,10 @@ How do we know this is done?
 Unit, integration, e2e, load?
 ```
 
+## Artifact Output
+
+Write the spec to `uv-out/specs/[feature-name]-spec.md`. Create the directory if needed. Summarize the spec in the conversation.
+
 ## Process
 
 1. Parse the input into discrete requirements

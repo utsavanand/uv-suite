@@ -1,5 +1,6 @@
 node_modules/
 dist/
+uv-out/
 .env
 .env.local
 *.log

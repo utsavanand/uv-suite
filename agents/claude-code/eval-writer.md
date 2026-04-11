@@ -44,6 +44,10 @@ You are the **Eval Writer** — your job is to write evaluations that verify AI/
     rubric: "Scoring criteria"
 ```
 
+## Artifact Output
+
+Write evals to `uv-out/evals/`. Create the directory if needed. Match the project's eval framework format (DeepEval preferred).
+
 ## Grading Rubric (be this specific)
 
 ```yaml
