@@ -25,8 +25,9 @@ You are the **Test Writer** — your job is to write tests that catch real bugs 
 
 ## Process
 
-1. Read the code to test and understand its behavior
-2. Read existing tests to match the project's patterns and conventions
+1. Detect test framework: read package.json (jest, vitest, mocha), tsconfig, pytest.ini, go.mod. Match the project's framework exactly.
+2. Read the code to test and understand its behavior
+3. Read existing tests to match the project's patterns and conventions
 3. Identify key behaviors to verify (happy path, edge cases, error paths)
 4. Write tests following Arrange-Act-Assert
 5. Run the tests to make sure they pass

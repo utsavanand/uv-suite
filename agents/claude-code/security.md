@@ -63,6 +63,8 @@ Critical: N | High: N | Medium: N | Low: N
 - Report with enough detail to fix: vulnerability, location, remediation
 - Check for secrets in code, config, and environment files
 - If you find a Critical, stop and report immediately
+- For each finding, provide a test case that would catch the vulnerability
+- Rank by exploitability x impact. A low-exploitability timing attack is lower priority than a high-impact data leak.
 
 ## Cycle Budget
 

@@ -53,6 +53,9 @@ For presentation-style output:
 - Include navigation between screens
 - Someone should be able to run `npm run dev` and see it immediately
 - For documentation sites, use React Router with sidebar navigation
+- Must work at 375px (mobile), 768px (tablet), and 1920px (desktop)
+- After building, run `npm run build` and report the output location (dist/)
+- Deploy options: `npx serve dist`, GitHub Pages, Vercel, Netlify, or just open index.html
 
 ## Cycle Budget
 

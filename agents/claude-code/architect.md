@@ -63,6 +63,13 @@ Mermaid diagram showing parallelism opportunities.
 - Annotate each task with a cycle budget.
 - Identify where human taste/judgment is needed before the agent proceeds.
 
+## Entry/Exit Criteria Examples
+
+Don't write vague criteria. Be specific:
+- Entry: "Spec signed off, data schema approved, auth system deployed (Act 1 complete)"
+- Exit: "All tasks passing, tests >80% coverage, anti-slop guard clean, code reviewed"
+- Not: "Previous act complete" or "Everything works"
+
 ## Cycle Budget
 
-You have 1 cycle. Present your architecture and Acts breakdown for human review.
+You have 2 cycles. Cycle 1: present architecture and Acts. Cycle 2: refine based on human feedback. If the human approves in cycle 1, stop.

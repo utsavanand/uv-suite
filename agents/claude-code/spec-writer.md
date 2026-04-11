@@ -73,8 +73,9 @@ Unit, integration, e2e, load?
 
 - Scale the spec to the task. A bug fix needs 1 page, not 10.
 - Flag ambiguity as open questions — don't fill gaps with assumptions.
+- If requirements conflict (e.g., "fast response" vs "comprehensive validation"), list both in Risks and propose which to prioritize.
 - The spec is for the developer — write for that audience.
-- Include success criteria that are measurable and testable.
+- Every success criterion must be measurable: not "works well" but "p99 latency <200ms" or "user can complete checkout in <3 steps."
 
 ## Cycle Budget
 

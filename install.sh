@@ -142,43 +142,83 @@ if [ "$INSTALL_MODE" = "project" ]; then
   done
 fi
 
-# --- Install optional tools (Graphify, Semgrep, Gitleaks) ---
-echo "Checking optional integrations..."
+# --- Install bundled tools ---
+echo "Installing bundled integrations..."
 
-if command -v graphify &>/dev/null; then
-  echo "  ✓ Graphify (already installed)"
-else
-  echo "  Installing Graphify (knowledge graph for Cartographer)..."
-  pip install graphifyy --quiet 2>/dev/null && graphify install --quiet 2>/dev/null
+# Python tools (Graphify, Semgrep, DeepEval)
+PIP_CMD=""
+if command -v pip3 &>/dev/null; then PIP_CMD="pip3"
+elif command -v pip &>/dev/null; then PIP_CMD="pip"
+fi
+
+if [ -n "$PIP_CMD" ]; then
+  for pkg_info in "graphifyy:graphify:Graphify (knowledge graphs for Cartographer)" \
+                  "semgrep:semgrep:Semgrep (SAST for Security Agent)" \
+                  "deepeval:deepeval:DeepEval (LLM evaluation for Eval Writer)"; do
+    pkg=$(echo "$pkg_info" | cut -d: -f1)
+    cmd=$(echo "$pkg_info" | cut -d: -f2)
+    label=$(echo "$pkg_info" | cut -d: -f3)
+    if command -v "$cmd" &>/dev/null; then
+      echo "  ✓ $label (already installed)"
+    else
+      echo "  Installing $label..."
+      $PIP_CMD install "$pkg" --quiet 2>/dev/null
+      if command -v "$cmd" &>/dev/null || $PIP_CMD show "$pkg" &>/dev/null; then
+        echo "  ✓ $label installed"
+      else
+        echo "  ✗ $label failed — install manually: $PIP_CMD install $pkg"
+      fi
+    fi
+  done
+
+  # Graphify needs an extra install step
   if command -v graphify &>/dev/null; then
-    echo "  ✓ Graphify installed"
+    graphify install --quiet 2>/dev/null || true
+  fi
+else
+  echo "  ✗ pip not found — skipping Python tools (Graphify, Semgrep, DeepEval)"
+  echo "    Install Python 3 and retry, or install manually:"
+  echo "    pip install graphifyy semgrep deepeval"
+fi
+
+# Node tools (Repomix — installed as npm dependency)
+if command -v repomix &>/dev/null; then
+  echo "  ✓ Repomix (already installed)"
+else
+  echo "  Installing Repomix (codebase context packing)..."
+  npm install -g repomix --quiet 2>/dev/null
+  if command -v repomix &>/dev/null; then
+    echo "  ✓ Repomix installed"
   else
-    echo "  ✗ Graphify install failed — install manually: pip install graphifyy && graphify install"
+    echo "  ✗ Repomix failed — install manually: npm install -g repomix"
   fi
 fi
 
-if command -v semgrep &>/dev/null; then
-  echo "  ✓ Semgrep (already installed)"
+# Go tools (Gitleaks, Trivy — brew or binary)
+if command -v brew &>/dev/null; then
+  for tool_info in "gitleaks:Gitleaks (secret detection)" \
+                   "trivy:Trivy (dependency vulnerability scanning)"; do
+    tool=$(echo "$tool_info" | cut -d: -f1)
+    label=$(echo "$tool_info" | cut -d: -f2)
+    if command -v "$tool" &>/dev/null; then
+      echo "  ✓ $label (already installed)"
+    else
+      echo "  Installing $label..."
+      brew install "$tool" --quiet 2>/dev/null
+      if command -v "$tool" &>/dev/null; then
+        echo "  ✓ $label installed"
+      else
+        echo "  ✗ $label failed — install manually: brew install $tool"
+      fi
+    fi
+  done
 else
-  echo "  Installing Semgrep (SAST for Security Agent)..."
-  pip install semgrep --quiet 2>/dev/null
-  if command -v semgrep &>/dev/null; then
-    echo "  ✓ Semgrep installed"
-  else
-    echo "  ✗ Semgrep install failed — install manually: pip install semgrep"
+  if ! command -v gitleaks &>/dev/null; then
+    echo "  · Gitleaks not found — install: brew install gitleaks"
   fi
-fi
-
-if command -v gitleaks &>/dev/null; then
-  echo "  ✓ Gitleaks (already installed)"
-else
-  echo "  · Gitleaks not found — install for secret detection: brew install gitleaks"
-fi
-
-if command -v trivy &>/dev/null; then
-  echo "  ✓ Trivy (already installed)"
-else
-  echo "  · Trivy not found — install for dependency scanning: brew install trivy"
+  if ! command -v trivy &>/dev/null; then
+    echo "  · Trivy not found — install: brew install trivy"
+  fi
 fi
 
 # --- Install launcher script ---
