@@ -125,7 +125,7 @@ else
   cp "$UV_SUITE_DIR/personas/$PERSONA.json" "$TARGET_DIR/settings.local.json"
   echo "  ✓ Persona applied via settings.local.json (preserves existing settings.json)"
 fi
-echo "  ✓ All 3 personas available in $TARGET_DIR/personas/"
+echo "  ✓ All 4 personas available in $TARGET_DIR/personas/"
 echo "    Switch with: cp .claude/personas/sport.json .claude/settings.local.json"
 
 # --- Install portable standards (project root, not .claude/) ---
@@ -140,6 +140,45 @@ if [ "$INSTALL_MODE" = "project" ]; then
       echo "  ✓ $std_file"
     fi
   done
+fi
+
+# --- Install optional tools (Graphify, Semgrep, Gitleaks) ---
+echo "Checking optional integrations..."
+
+if command -v graphify &>/dev/null; then
+  echo "  ✓ Graphify (already installed)"
+else
+  echo "  Installing Graphify (knowledge graph for Cartographer)..."
+  pip install graphifyy --quiet 2>/dev/null && graphify install --quiet 2>/dev/null
+  if command -v graphify &>/dev/null; then
+    echo "  ✓ Graphify installed"
+  else
+    echo "  ✗ Graphify install failed — install manually: pip install graphifyy && graphify install"
+  fi
+fi
+
+if command -v semgrep &>/dev/null; then
+  echo "  ✓ Semgrep (already installed)"
+else
+  echo "  Installing Semgrep (SAST for Security Agent)..."
+  pip install semgrep --quiet 2>/dev/null
+  if command -v semgrep &>/dev/null; then
+    echo "  ✓ Semgrep installed"
+  else
+    echo "  ✗ Semgrep install failed — install manually: pip install semgrep"
+  fi
+fi
+
+if command -v gitleaks &>/dev/null; then
+  echo "  ✓ Gitleaks (already installed)"
+else
+  echo "  · Gitleaks not found — install for secret detection: brew install gitleaks"
+fi
+
+if command -v trivy &>/dev/null; then
+  echo "  ✓ Trivy (already installed)"
+else
+  echo "  · Trivy not found — install for dependency scanning: brew install trivy"
 fi
 
 # --- Install launcher script ---
