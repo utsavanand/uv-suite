@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --color-uv-index: #0071e3;
+  --color-uv-acts: #1d1d1f;
+  --color-uv-guard: #bf4800;
+  --color-uv-index-light: #f0f6ff;
+  --color-uv-acts-light: #f5f5f7;
+  --color-uv-guard-light: #fff8f0;
+  --color-surface: #ffffff;
+  --color-surface-dim: #f5f5f7;
+  --color-surface-code: #f5f5f7;
+  --color-text-primary: #1d1d1f;
+  --color-text-secondary: #6e6e73;
+  --color-text-tertiary: #86868b;
+  --color-border: #d2d2d7;
+  --color-border-light: #e8e8ed;
+  --color-accent: #0071e3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: #000000;
+    --color-surface-dim: #1d1d1f;
+    --color-surface-code: #161617;
+    --color-text-primary: #f5f5f7;
+    --color-text-secondary: #a1a1a6;
+    --color-text-tertiary: #6e6e73;
+    --color-border: #424245;
+    --color-border-light: #2d2d2f;
+    --color-uv-index: #2997ff;
+    --color-uv-acts: #f5f5f7;
+    --color-uv-guard: #ff9f0a;
+    --color-uv-index-light: #0a1a2f;
+    --color-uv-acts-light: #1d1d1f;
+    --color-uv-guard-light: #1f1508;
+    --color-accent: #2997ff;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+}
+
+code, pre {
+  font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+}

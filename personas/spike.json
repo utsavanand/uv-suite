@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "claude-opus-4-6",
+  "effort": "max",
+
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Write(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Agent(cartographer)",
+      "Agent(anti-slop-guard)",
+      "Agent(spec-writer)",
+      "Agent(architect)",
+      "Agent(Explore)",
+      "Agent(Plan)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git ls-files *)",
+      "Bash(find *)",
+      "Bash(wc *)",
+      "Bash(head *)",
+      "Bash(tail *)"
+    ],
+    "deny": [
+      "Edit(*)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(rm *)",
+      "Bash(npm run *)",
+      "Bash(npx *)"
+    ]
+  },
+
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "The agent just wrote a documentation or analysis file. Check for documentation slop: (1) vague adjectives like 'robust', 'scalable', 'comprehensive', 'leverages', 'facilitates', (2) feature lists that could describe any system, (3) overview sections that don't say what the system actually does, (4) claims without specifics ('industry-standard best practices'). If you find slop, respond {\"ok\": false, \"reason\": \"Doc slop: [finding]. Fix: replace with specific facts.\"}. If clean, respond {\"ok\": true}.",
+            "model": "claude-haiku",
+            "timeout": 15,
+            "statusMessage": "Checking documentation quality..."
+          }
+        ]
+      }
+    ]
+  }
+}
