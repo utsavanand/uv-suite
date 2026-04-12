@@ -43,7 +43,7 @@
           {
             "type": "prompt",
             "prompt": "The agent just wrote a documentation or analysis file. Check for documentation slop: (1) vague adjectives like 'robust', 'scalable', 'comprehensive', 'leverages', 'facilitates', (2) feature lists that could describe any system, (3) overview sections that don't say what the system actually does, (4) claims without specifics ('industry-standard best practices'). If you find slop, respond {\"ok\": false, \"reason\": \"Doc slop: [finding]. Fix: replace with specific facts.\"}. If clean, respond {\"ok\": true}.",
-            "model": "claude-haiku",
+            "model": "claude-haiku-4-5",
             "timeout": 15,
             "statusMessage": "Checking documentation quality..."
           }

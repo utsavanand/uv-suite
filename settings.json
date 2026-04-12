@@ -84,7 +84,7 @@
           {
             "type": "prompt",
             "prompt": "Quickly scan the code that was just written or edited for the most obvious AI slop patterns: (1) comments that restate the code like '// Initialize the database' above initDatabase(), (2) try/catch around code that can't throw, (3) single-implementation interfaces or factories, (4) toBeTruthy()/toBeDefined() in tests. If you find any of these specific patterns, respond with {\"ok\": false, \"reason\": \"Slop detected: [specific finding with line reference]. Fix: [specific fix].\"} If the code is clean, respond with {\"ok\": true}. Only flag the most obvious violations — do not be overly strict.",
-            "model": "claude-haiku",
+            "model": "claude-haiku-4-5",
             "timeout": 15,
             "statusMessage": "Checking for AI slop..."
           }
