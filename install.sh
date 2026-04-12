@@ -112,13 +112,16 @@ echo "  ✓ /map-codebase, /spec, /architect, /review, /write-tests"
 echo "  ✓ /write-evals, /slop-check, /prototype, /security-review"
 
 # --- Install hooks ---
-echo "Installing 4 hook scripts..."
+echo "Installing hook scripts..."
 cp "$UV_SUITE_DIR/hooks/"*.sh "$TARGET_DIR/hooks/"
 chmod +x "$TARGET_DIR/hooks/"*.sh
-echo "  ✓ auto-lint.sh (PostToolUse: auto-format on write)"
+echo "  ✓ auto-lint.sh (PostToolUse: auto-format)"
 echo "  ✓ danger-zone-check.sh (PreToolUse: warn on danger zone files)"
 echo "  ✓ block-destructive.sh (PreToolUse: block rm -rf, force push, etc.)"
-echo "  ✓ session-review-reminder.sh (Stop: remind to review uncommitted changes)"
+echo "  ✓ session-start.sh (SessionStart: track session start time)"
+echo "  ✓ session-timer.sh (PostToolUse: warn at 45/90/180 min)"
+echo "  ✓ session-end.sh (Stop: reflection + duration + review reminder)"
+echo "  ✓ status-line.sh (statusLine: show session time continuously)"
 echo "  + Real-time slop check (Haiku prompt hook, wired in settings.json)"
 
 # --- Install guardrail rules (Sport only) ---

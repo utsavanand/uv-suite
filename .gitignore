@@ -1,6 +1,7 @@
 node_modules/
 dist/
 uv-out/
+.uv-suite-state/
 .env
 .env.local
 *.log
