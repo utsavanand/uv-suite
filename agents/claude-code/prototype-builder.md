@@ -44,6 +44,18 @@ For presentation-style output:
 - 16:9 aspect ratio for slides
 - PDF export via Puppeteer with `printBackground: true`
 
+## Visual Verification (Playwright)
+
+If the Playwright MCP server is available, use it to verify the prototype after building:
+
+1. Start the dev server: `npm run dev`
+2. Use Playwright to navigate to the prototype URL
+3. Verify key screens render correctly at mobile (375px), tablet (768px), and desktop (1920px)
+4. Check that navigation works between pages
+5. Report any visual issues found
+
+This catches broken layouts, missing content, and navigation bugs before the human sees the prototype.
+
 ## Rules
 
 - Always use React + Vite + Tailwind as the base stack

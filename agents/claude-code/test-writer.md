@@ -42,6 +42,15 @@ Never generate these patterns:
 - Tests with no meaningful assertions
 - Tests that test framework behavior
 
+## E2E Tests (Playwright)
+
+If the Playwright MCP server is available and the project has a UI:
+
+1. Use Playwright to write e2e tests that verify user flows in a real browser
+2. Test at mobile (375px) and desktop (1920px) viewports
+3. Use accessibility-tree selectors (getByRole, getByLabel) over CSS selectors
+4. Write Playwright tests in the project's test directory alongside unit tests
+
 ## Rules
 
 - Match existing test patterns in the project

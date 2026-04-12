@@ -284,6 +284,26 @@ else
   fi
 fi
 
+# --- Register Playwright MCP server ---
+echo "Registering MCP servers..."
+if command -v claude &>/dev/null; then
+  # Check if playwright MCP is already registered
+  if claude mcp list 2>/dev/null | grep -q "playwright"; then
+    echo "  ✓ Playwright MCP (already registered)"
+  else
+    echo "  Registering Playwright MCP (browser automation for Prototype Builder + Test Writer)..."
+    claude mcp add playwright -- npx @playwright/mcp@latest 2>/dev/null
+    if [ $? -eq 0 ]; then
+      echo "  ✓ Playwright MCP registered"
+    else
+      echo "  ✗ Playwright MCP failed — register manually: claude mcp add playwright -- npx @playwright/mcp@latest"
+    fi
+  fi
+else
+  echo "  · Claude Code CLI not found — skipping MCP registration"
+  echo "    Register manually after installing Claude Code: claude mcp add playwright -- npx @playwright/mcp@latest"
+fi
+
 # --- Write UV Suite context to CLAUDE.md ---
 if [ "$INSTALL_MODE" = "project" ]; then
   PROJECT_ROOT="$(dirname "$TARGET_DIR")"
