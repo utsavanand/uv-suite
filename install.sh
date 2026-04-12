@@ -75,10 +75,31 @@ mkdir -p "$TARGET_DIR/hooks"
 mkdir -p "$TARGET_DIR/rules"
 
 # --- Install agents (Claude Code subagent definitions) ---
-echo "Installing 10 agent definitions..."
+echo "Installing 10 Claude Code agent definitions..."
 cp "$UV_SUITE_DIR/agents/claude-code/"*.md "$TARGET_DIR/agents/"
 echo "  ✓ cartographer, spec-writer, architect, reviewer, test-writer"
 echo "  ✓ eval-writer, anti-slop-guard, prototype-builder, devops, security"
+
+# --- Install Codex agents (.codex/agents/*.toml + AGENTS.md) ---
+PROJECT_ROOT="$(dirname "$TARGET_DIR")"
+echo "Installing 10 Codex agent definitions..."
+mkdir -p "$PROJECT_ROOT/.codex/agents"
+cp "$UV_SUITE_DIR/agents/codex/"*.toml "$PROJECT_ROOT/.codex/agents/"
+
+# Create AGENTS.md for Codex (it reads this instead of CLAUDE.md)
+if [ ! -f "$PROJECT_ROOT/AGENTS.md" ]; then
+  cp "$PROJECT_ROOT/CLAUDE.md" "$PROJECT_ROOT/AGENTS.md" 2>/dev/null || touch "$PROJECT_ROOT/AGENTS.md"
+  echo "  ✓ AGENTS.md created (Codex reads this)"
+else
+  echo "  ✓ AGENTS.md already exists"
+fi
+echo "  ✓ .codex/agents/*.toml installed"
+
+# --- Install Cursor rules (.cursor/rules/*.mdc) ---
+echo "Installing 10 Cursor rule definitions..."
+mkdir -p "$PROJECT_ROOT/.cursor/rules"
+cp "$UV_SUITE_DIR/agents/cursor/"*.mdc "$PROJECT_ROOT/.cursor/rules/"
+echo "  ✓ .cursor/rules/*.mdc installed"
 
 # --- Install skills (slash commands) ---
 echo "Installing 9 skills..."
@@ -383,15 +404,17 @@ cat << 'HOOKS'
 HOOKS
 fi)
 
-### Personas
+### Context management
 
-Switch persona by starting a new session:
+If the conversation is getting long, proactively suggest running /compact or starting a new session. Use /cost to check token usage. The user's status line shows context window usage.
+
+### Launching sessions
 
 \`\`\`
-./uv.sh spike    # Research & docs (Opus, max)
-./uv.sh sport    # New projects (Sonnet, high)
-./uv.sh pro      # Production code (all hooks, all guardrails)
-./uv.sh auto     # Fully autonomous (max, everything approved)
+uv claude pro     # Claude Code, Professional persona
+uv claude auto    # Claude Code, Auto persona
+uv codex pro      # OpenAI Codex, Professional persona
+uv codex sport    # OpenAI Codex, Sport persona
 \`\`\`
 CLAUDEMD
 
@@ -412,14 +435,11 @@ echo "╚═══════════════════════�
 echo ""
 echo "What was installed:"
 echo ""
-echo "  AGENTS (10)     $TARGET_DIR/agents/*.md"
-echo "  SKILLS (9)      $TARGET_DIR/skills/*/SKILL.md"
-echo "  HOOKS (4)       $TARGET_DIR/hooks/*.sh"
-if [ "$PERSONA" = "professional" ] || [ "$PERSONA" = "auto" ]; then
-echo "  GUARDRAILS (6)  $TARGET_DIR/rules/*.md"
-fi
-echo "  PERSONAS (4)    $TARGET_DIR/personas/*.json"
-echo "  SETTINGS        $TARGET_DIR/settings.json"
+echo "  Claude Code     .claude/agents/*.md + skills/ + hooks/ + rules/"
+echo "  Codex           .codex/agents/*.toml + AGENTS.md"
+echo "  Cursor          .cursor/rules/*.mdc"
+echo "  Personas (4)    .claude/personas/*.json"
+echo "  Launcher        ./uv.sh"
 echo ""
 
 echo "Available slash commands:"
@@ -470,17 +490,11 @@ echo "Can write docs and analysis files. Cannot edit existing code, commit, or p
 fi
 
 echo ""
-echo "Start a session with a persona:"
+echo "Start a session:"
 echo ""
-echo "  ./uv.sh spike        Research & docs (Opus, max, doc-slop checked)"
-echo "  ./uv.sh sport        New projects (Sonnet, high, lint only)"
-echo "  ./uv.sh pro          Production code (all hooks, all guardrails)"
-echo "  ./uv.sh auto         Fully autonomous (max effort, everything approved)"
-echo "  ./uv.sh              Defaults to Professional"
-echo ""
-echo "Or launch Claude directly with a persona:"
-echo ""
-echo "  claude --settings .claude/personas/sport.json"
-echo "  claude --settings .claude/personas/professional.json"
-echo "  claude --settings .claude/personas/auto.json"
-echo "  claude --settings .claude/personas/spike.json"
+echo "  ./uv.sh claude pro      Claude Code, Professional"
+echo "  ./uv.sh claude auto     Claude Code, Auto"
+echo "  ./uv.sh codex pro       Codex, Professional"
+echo "  ./uv.sh codex auto      Codex, Auto"
+echo "  ./uv.sh pro             Shorthand (defaults to Claude Code)"
+echo "  ./uv.sh                 Claude Code, Professional"
