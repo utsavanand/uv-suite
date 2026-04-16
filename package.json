@@ -1,6 +1,6 @@
 {
   "name": "uv-suite",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Portable framework for AI-assisted software development. 10 agents, 9 skills, 5 hooks, 4 personas. Works with Claude Code, Cursor, and Codex.",
   "author": "Utsav Anand",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "repomix": "^0.3.0"
   },
   "bin": {
-    "uv": "./bin/cli.js",
+    "uvs": "./bin/cli.js",
     "uv-suite": "./bin/cli.js"
   },
   "files": [

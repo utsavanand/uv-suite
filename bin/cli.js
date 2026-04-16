@@ -14,20 +14,20 @@ const TOOLS = ['claude', 'codex'];
 
 function usage() {
   console.log(`
-  uv v${pkg.version} — AI-assisted development framework
+  uvs v${pkg.version} — AI-assisted development framework
 
   Launch a session:
-    uv claude pro          Claude Code, Professional persona
-    uv claude auto         Claude Code, Auto persona
-    uv codex pro           Codex, Professional persona
-    uv codex sport         Codex, Sport persona
-    uv pro                 Shorthand (defaults to Claude Code)
-    uv                     Claude Code, Professional
+    uvs claude pro          Claude Code, Professional persona
+    uvs claude auto         Claude Code, Auto persona
+    uvs codex pro           Codex, Professional persona
+    uvs codex sport         Codex, Sport persona
+    uvs pro                 Shorthand (defaults to Claude Code)
+    uvs                    Claude Code, Professional
 
   Setup:
-    uv install             Install UV Suite into current project
-    uv install --persona sport
-    uv info                Show what's installed
+    uvs install             Install UV Suite into current project
+    uvs install --persona sport
+    uvs info                Show what's installed
 
   Personas:
     spike        Research & docs (Opus, max effort)
