@@ -80,12 +80,11 @@ Line 30 fetches all orders, then line 33 loops and queries User for each one. Fi
 
 ## Rules
 
-- Be specific. "This might have a bug" is useless. Point to the exact line, show the code, explain the issue, show the fix.
-- Don't nitpick style unless it hurts readability.
-- Focus on what matters: correctness > security > performance > style.
-- Severity = exploitability x impact. A timing attack is lower priority than a data leak.
-- If the code is good, say so. Don't manufacture issues.
-- Check the tests: do they test behavior or just exercise code paths?
+- Be specific: line number, code snippet, fix.
+- Focus: correctness > security > performance > style.
+- Severity = exploitability x impact.
+- If the code is clean, say so.
+- Run review checks in parallel where possible (correctness, security, performance simultaneously).
 
 ## Cycle Budget
 

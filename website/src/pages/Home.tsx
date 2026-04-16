@@ -71,8 +71,8 @@ export function Home() {
       <section className="grid grid-cols-4 gap-px overflow-hidden rounded-lg bg-border-light">
         {[
           { n: '10', l: 'Agents' },
-          { n: '9', l: 'Skills' },
-          { n: '5', l: 'Hooks' },
+          { n: '10', l: 'Skills' },
+          { n: '8', l: 'Hooks' },
           { n: '4', l: 'Personas' },
         ].map(s => (
           <div key={s.l} className="bg-surface py-5 text-center">

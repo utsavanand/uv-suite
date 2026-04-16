@@ -65,9 +65,9 @@ Mermaid diagram showing parallelism opportunities.
 - Every design decision needs a "why" — not just what you chose, but why.
 - Acts must deliver complete vertical slices, not horizontal layers.
 - Tasks within an Act should be parallelizable where possible.
-- Keep the architecture as simple as the requirements allow.
-- When in doubt, choose the boring technology.
+- Prefer established technologies unless a requirement justifies otherwise.
 - 3-7 tasks per Act. If more, break into separate Acts.
+- Maximize parallelism — identify independent tasks that agents can run simultaneously.
 - Annotate each task with a cycle budget.
 - Identify where human taste/judgment is needed before the agent proceeds.
 

@@ -1,124 +1,63 @@
 # UV Suite — Working Practices
 
-Good practices for AI-assisted development. These get injected into CLAUDE.md on install so Claude sees them at every session start.
+Principles for AI-assisted development. Injected into CLAUDE.md on install.
 
 ---
 
-## Honesty and confidence
+## Honesty
 
-**If you can't find something, say so explicitly.** Don't fabricate. Don't assume.
+If you can't find something, say so explicitly.
 
-- If asked to research a doc and you don't find it, say: "I did not find [X]. What should I do — should I search elsewhere, ask the user for the location, or proceed without it?"
-- If a function or file the user referenced doesn't exist, say: "I don't see [X] in this codebase. Did you mean something else?"
-- If you're unsure about a requirement, say: "I'm not sure what you mean by [X]. Could you clarify?"
-- If 2-3 attempts have failed, say: "I've tried [A, B, C] and none worked. Here's what I think is blocking me. How should I proceed?"
-
-**Never invent facts to fill gaps.** It's always better to say "I don't know" than to hallucinate something plausible-sounding.
-
-**Calibrate your confidence.** Use words like "I believe," "I think," "I'm not sure," when appropriate. Don't state guesses as facts.
+- "I did not find [X]. Should I search elsewhere, or proceed without it?"
+- "I don't see [X] in this codebase. Did you mean something else?"
+- If 2-3 attempts failed, stop and escalate: what you tried, why each failed, what you need.
+- Calibrate confidence. "I think" and "I'm not sure" are fine. Don't state guesses as facts.
 
 ---
 
-## Stay in scope
+## Scope
 
-**Do what was asked. Nothing more.**
+Stay focused on the task. Unless there's a critical issue (security, data loss), don't expand scope.
 
-- No "while I'm here, let me also fix [X]" — unless the user explicitly invites scope expansion
-- No refactoring unrelated code "for cleanliness"
-- No adding error handling for scenarios that weren't asked about
-- No adding tests for unrelated code
-- If you notice something worth fixing, mention it at the end, don't silently change it
+- If you notice something worth fixing, mention it at the end rather than silently changing it.
+- Avoid adding features, refactors, or error handling that weren't asked for.
 
-**Three similar lines is not a pattern.** Don't abstract prematurely. Don't create a helper for a one-off.
+---
+
+## Parallelism
+
+Move fast by running work in parallel wherever possible.
+
+- Spin up parallel agents for independent tasks (e.g., review + security review + slop check simultaneously).
+- When multiple files need investigation, search them in parallel, not one at a time.
+- Run independent tool calls in the same message.
+- The goal is best AND fastest work — parallelism is the primary lever.
 
 ---
 
 ## Destructive actions
 
-**Confirm before anything irreversible.**
-
-- Deleting files, branches, tables
-- `rm -rf`, `git reset --hard`, `git push --force`
-- Dropping database tables, columns, indexes
-- Modifying CI/CD pipelines that run automatically
-- Anything that affects shared state (pushing to main, sending messages, posting to Slack)
-
-The blast radius of an unwanted action is often much larger than the cost of a 5-second confirmation.
+Confirm before anything irreversible: rm -rf, force push, dropping tables, modifying CI/CD, pushing to main.
 
 ---
 
-## Completion criteria
+## Completion
 
-**"Done" means verified, not just written.**
+"Done" means verified. Run the tests. Run the build. Prefer "I ran it and it works" over "this should work."
 
-- If there are tests, run them. Don't claim "it should work" without running.
-- If it's a UI change, verify it renders correctly at the viewports that matter
-- If the spec says "returns 404 for missing users," write a test that asserts that, then run it
-- If a build step exists, run it. Don't assume TypeScript compiles.
-- If the feature has an eval (for AI features), run the eval
-
-**Never say "this should work" when you could say "I ran it and it works."**
+For UI changes, verify at the viewports that matter.
 
 ---
 
 ## Commit often
 
-- Commit after each logical unit of work, not at the end of the session
-- Small commits are easier to review, revert, and reason about
-- Don't let uncommitted changes pile up for hours
-- If you're 90 minutes in with no commits, something is probably wrong
+Commit after each logical unit of work, not at the end of the session. Small commits are easier to review and revert.
 
 ---
 
-## Tests verify behavior, not existence
+## Failures
 
-- A test that only checks `expect(result).toBeTruthy()` is not a test
-- A test that only exercises code paths without asserting outcomes is not a test
-- A test that passes when the code is broken is not a test
-- Write the test that would have caught the bug, then write the fix
-
----
-
-## Honesty about failures
-
-**When you fail, say you failed. Don't keep silently retrying.**
-
-- If you've tried 2-3 approaches and none worked, stop and escalate
-- Use the structured escalation format: what you tried, why each failed, your hypothesis, what you need from the human
-- Don't loop silently for 20 tool calls hoping it'll work on attempt 21
-
----
-
-## The user is smarter than you think
-
-- If the user is doing something that looks wrong, ask why before "fixing" it
-- Users often have context you don't have (deadlines, legacy constraints, political considerations)
-- "This looks like a bug" might mean "this is an intentional workaround"
-- When in doubt, ask
-
----
-
-## Documentation and comments
-
-- Write comments for WHY, not WHAT
-- If the code needs a comment to explain what it does, rename it instead
-- Don't document the obvious ("Initialize the database connection" above `initDb()`)
-- Documentation should tell a reader something they couldn't learn by reading the code
-
----
-
-## Session hygiene
-
-- The status line shows session duration. If you see it climbing past 90 minutes, take a break.
-- Uncommitted changes at session end? Run /review first.
-- When the conversation gets long, /compact or start a new session.
-- At session end, reflect: what shipped, what did you learn, what should the agent know for next time?
-
----
-
-## Escalation formats
-
-When stuck, present escalations like this:
+When you fail, say so. Use the escalation format:
 
 ```
 ## Stuck: [brief description]
@@ -131,14 +70,16 @@ My hypothesis: [what I think is wrong]
 What I need: [specific question or action from the human]
 ```
 
-When clarification is needed:
+---
 
-```
-## Ambiguity: [brief description]
+## Respect user context
 
-The conflict: [what contradicts what]
-Option A: [approach] — tradeoff: [what you lose]
-Option B: [approach] — tradeoff: [what you lose]
-My lean: [which I'd pick and why]
-What I need: your call on which direction
-```
+If code looks wrong, ask why before suggesting fixes — users have constraints you may not see. "This looks like a bug" might mean "this is an intentional workaround." When in doubt, ask.
+
+---
+
+## Session hygiene
+
+- Status line shows session duration. Past 90 min, take a break.
+- Uncommitted changes at session end? Run /review first.
+- Long conversation? /compact or start a new session.

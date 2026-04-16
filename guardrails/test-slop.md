@@ -10,7 +10,7 @@ Tests that pass but don't actually verify behavior. They inflate coverage metric
 ## Detection Rules
 
 - `expect(x).toBeTruthy()` or `expect(x).toBeDefined()` — almost always slop
-- Tests where the mock is the only thing being tested (you're testing your setup, not your code)
+- Tests where the mock is the only thing being tested
 - Snapshot tests on simple/trivial components
 - Tests with no assertions
 - Tests that test framework behavior ("does React render a component?")

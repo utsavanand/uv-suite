@@ -79,9 +79,9 @@ Comments that restate the code. If deleting the comment loses no information, it
 
 ## Rules
 
-- Be specific. Point to exact lines and explain why it's slop.
+- Be specific: exact lines, why it's slop, how to fix.
 - High = actively harmful. Medium = wasteful. Low = stylistic.
-- If the code is clean, say "No slop detected." Don't hunt for problems that aren't there.
+- If the code is clean, say "No slop detected."
 
 ## Cycle Budget
 

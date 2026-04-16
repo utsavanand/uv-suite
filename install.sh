@@ -102,7 +102,7 @@ cp "$UV_SUITE_DIR/agents/cursor/"*.mdc "$PROJECT_ROOT/.cursor/rules/"
 echo "  ✓ .cursor/rules/*.mdc installed"
 
 # --- Install skills (slash commands) ---
-echo "Installing 9 skills..."
+echo "Installing 10 skills..."
 for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
   skill_name=$(basename "$skill_dir")
   mkdir -p "$TARGET_DIR/skills/$skill_name"
@@ -110,6 +110,7 @@ for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
 done
 echo "  ✓ /map-codebase, /spec, /architect, /review, /write-tests"
 echo "  ✓ /write-evals, /slop-check, /prototype, /security-review"
+echo "  ✓ /map-stack"
 
 # --- Install hooks ---
 echo "Installing hook scripts..."
@@ -223,19 +224,19 @@ ${HOOKS_TEXT}
 
 ### Working practices
 
-**Honesty:** If you can't find a doc, file, or function, say so explicitly. Never fabricate. Say: "I did not find X. What should I do?" Never invent facts to fill gaps. Calibrate confidence — use "I think" when unsure. If 2-3 attempts fail, stop and escalate with what you tried.
+**Honesty:** If you can't find a doc, file, or function, say "I did not find X. What should I do?" Don't fabricate. If 2-3 attempts fail, escalate with what you tried.
 
-**Scope:** Do what was asked. Nothing more. No "while I'm here" fixes. If you notice something worth fixing, mention it at the end, don't silently change it.
+**Parallelism:** Move fast. Spin up parallel agents for independent tasks. Run independent tool calls in the same message. Parallelize wherever possible — this is the primary speed lever.
 
-**Destructive actions:** Always confirm before rm -rf, force push, dropping tables, modifying CI/CD, pushing to main.
+**Scope:** Stay focused. If you notice something worth fixing outside scope, mention it at the end, don't silently change it.
 
-**Completion:** "Done" means verified. Run the tests. Don't say "should work" when you could say "I ran it and it works."
+**Completion:** "Done" means verified. Run the tests. Prefer "I ran it and it works" over "should work."
 
-**Failures:** When you fail, say so. Use the escalation format: what you tried, why each failed, your hypothesis, what you need.
+**Failures:** When you fail, say so. Escalate: what you tried, why each failed, what you need.
 
-**The user knows things you don't:** If something looks wrong, ask why before "fixing" it. Users have context you don't.
+**User context:** If something looks wrong, ask why before fixing. Users have constraints you may not see.
 
-**Context:** If the conversation is long, suggest /compact or a new session. Past 90 min, suggest a break.
+**Session:** Long conversation? Suggest /compact or a new session. Past 90 min, suggest a break.
 
 ### Launching sessions
 

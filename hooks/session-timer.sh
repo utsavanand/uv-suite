@@ -33,13 +33,13 @@ MESSAGE=""
 WARN_LEVEL=0
 
 if [ "$MINUTES" -ge 180 ] && [ "$LAST_WARN" -lt 3 ]; then
-  MESSAGE="SESSION HEALTH (3+ hours): You've been in this session for ${MINUTES} minutes. This is a long stretch. Strongly consider: (1) commit what you have, (2) close this session, (3) take a real break away from the screen. Long uninterrupted agent sessions lead to goal drift, lower judgment quality, and burnout. /compact if you must continue, but a break is better."
+  MESSAGE="CHECKPOINT (${MINUTES} min): Long session. Commit what you have, then consider a fresh session. /compact if continuing."
   WARN_LEVEL=3
 elif [ "$MINUTES" -ge 90 ] && [ "$LAST_WARN" -lt 2 ]; then
-  MESSAGE="SESSION HEALTH (90+ min): You've been in this session for ${MINUTES} minutes. Consider taking a 10-minute break — stretch, water, walk. Come back with fresh eyes. Also a good time to commit progress."
+  MESSAGE="CHECKPOINT (${MINUTES} min): Good time to commit progress and take a break."
   WARN_LEVEL=2
 elif [ "$MINUTES" -ge 45 ] && [ "$LAST_WARN" -lt 1 ]; then
-  MESSAGE="SESSION HEALTH (45 min): You've been in this session for ${MINUTES} minutes. Good time for a quick break and to commit any progress."
+  MESSAGE="CHECKPOINT (${MINUTES} min): Consider committing progress."
   WARN_LEVEL=1
 fi
 

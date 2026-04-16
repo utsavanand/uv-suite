@@ -20,7 +20,7 @@ export function Install() {
       <motion.section {...fade}>
         <h1 className="text-[40px] font-semibold leading-[1.1] tracking-tight">Install</h1>
         <p className="mt-4 max-w-xl text-base text-text-secondary leading-relaxed">
-          One command. 10 agents, 9 skills, 5 hooks, 6 guardrails, 4 personas. Pick a persona and go.
+          One command. 10 agents, 10 skills, 8 hooks, 6 guardrails, 4 personas. Pick a persona and go.
         </p>
       </motion.section>
 
@@ -97,8 +97,8 @@ export function Install() {
             <tbody>
               {[
                 { cat: 'Agents', n: '10', loc: '.claude/agents/*.md' },
-                { cat: 'Skills', n: '9', loc: '.claude/skills/*/SKILL.md' },
-                { cat: 'Hooks', n: '4', loc: '.claude/hooks/*.sh' },
+                { cat: 'Skills', n: '10', loc: '.claude/skills/*/SKILL.md' },
+                { cat: 'Hooks', n: '7+1', loc: '.claude/hooks/*.sh + prompt hook' },
                 { cat: 'Guardrails', n: '6', loc: '.claude/rules/*.md' },
                 { cat: 'Personas', n: '4', loc: '.claude/personas/*.json' },
                 { cat: 'Settings', n: '1', loc: '.claude/settings.json' },
@@ -130,7 +130,8 @@ export function Install() {
             </thead>
             <tbody>
               {[
-                { cmd: '/map-codebase', agent: 'Cartographer', does: 'Architecture map, dependency graph, entry points' },
+                { cmd: '/map-codebase', agent: 'Cartographer', does: 'Knowledge graph of a single codebase' },
+                { cmd: '/map-stack', agent: 'Cartographer', does: 'Map multiple services and their connections' },
                 { cmd: '/spec', agent: 'Spec Writer', does: 'Requirements to structured specification' },
                 { cmd: '/architect', agent: 'Architect', does: 'System design, Acts breakdown with cycle budgets' },
                 { cmd: '/review', agent: 'Reviewer', does: 'Correctness, security, performance, slop check' },
