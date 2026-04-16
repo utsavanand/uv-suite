@@ -224,19 +224,25 @@ ${HOOKS_TEXT}
 
 ### Working practices
 
-**Honesty:** If you can't find a doc, file, or function, say "I did not find X. What should I do?" Don't fabricate. If 2-3 attempts fail, escalate with what you tried.
+**Honesty:** If you can't find something, say "I did not find X. What should I do?" Don't fabricate. If 2-3 attempts fail, escalate with what you tried.
 
-**Parallelism:** Move fast. Spin up parallel agents for independent tasks. Run independent tool calls in the same message. Parallelize wherever possible — this is the primary speed lever.
+**Simplicity:** Minimum code that solves the problem. If 200 lines could be 50, rewrite. No abstractions for single-use code. No features beyond what was asked.
 
-**Scope:** Stay focused. If you notice something worth fixing outside scope, mention it at the end, don't silently change it.
+**Surgical changes:** Touch only what's relevant. Don't improve adjacent code, comments, or formatting. Every changed line should trace to the request. Match existing style.
 
-**Completion:** "Done" means verified. Run the tests. Prefer "I ran it and it works" over "should work."
+**Goal-driven:** Define success criteria before coding. Write the test first, then make it pass. For multi-step tasks, state a brief plan with verification for each step.
+
+**Parallelism:** Spin up parallel agents for independent tasks. Run independent tool calls in the same message. This is the primary speed lever.
+
+**Completion:** "Done" means verified. Run the tests. Run the build. Prefer "I ran it and it works" over "should work."
 
 **Failures:** When you fail, say so. Escalate: what you tried, why each failed, what you need.
 
 **User context:** If something looks wrong, ask why before fixing. Users have constraints you may not see.
 
-**Session:** Long conversation? Suggest /compact or a new session. Past 90 min, suggest a break.
+**Planning:** Use plan mode for complex tasks. Break work small enough to complete in under 50% context.
+
+**Session:** /compact at ~50% context. Past 90 min, take a break.
 
 ### Launching sessions
 

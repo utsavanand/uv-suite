@@ -1,6 +1,7 @@
 # UV Suite — Working Practices
 
 Principles for AI-assisted development. Injected into CLAUDE.md on install.
+Aligned with Karpathy's agentic engineering principles and production-team best practices.
 
 ---
 
@@ -15,18 +16,43 @@ If you can't find something, say so explicitly.
 
 ---
 
-## Scope
+## Simplicity first
 
-Stay focused on the task. Unless there's a critical issue (security, data loss), don't expand scope.
+Minimum code that solves the problem. Nothing speculative.
 
-- If you notice something worth fixing, mention it at the end rather than silently changing it.
-- Avoid adding features, refactors, or error handling that weren't asked for.
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
 ---
 
-## Deterministic for hot path, LLM for cold path
+## Surgical changes
 
-Checks that run on every file write must be fast and deterministic (grep, lint, static analysis). Save LLM judgment for manual invocations (/review, /slop-check) where thoroughness matters more than speed. An LLM-as-linter on every edit is slow, subjective, and contradicts itself.
+Touch only what's relevant to the task.
+
+- Don't improve adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- Every changed line should trace directly to the request.
+- If your changes create orphaned imports/variables, clean those up. Don't clean up pre-existing dead code unless asked.
+
+---
+
+## Goal-driven execution
+
+Define success criteria before coding. Loop until verified.
+
+- "Add validation" becomes "write tests for invalid inputs, then make them pass."
+- "Fix the bug" becomes "write a test that reproduces it, then make it pass."
+- "Refactor X" becomes "ensure tests pass before and after."
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
 
 ---
 
@@ -41,23 +67,37 @@ Move fast by running work in parallel wherever possible.
 
 ---
 
-## Destructive actions
+## Planning
 
-Confirm before anything irreversible: rm -rf, force push, dropping tables, modifying CI/CD, pushing to main.
+Use plan mode for complex tasks.
+
+- Break work small enough to complete in under 50% context.
+- State the plan before executing.
+- For multi-Act work, the Architect agent handles this.
+
+---
+
+## Deterministic for hot path, LLM for cold path
+
+Checks that run on every file write must be fast and deterministic (grep, lint, static analysis). Save LLM judgment for manual invocations (/review, /slop-check) where thoroughness matters more than speed.
 
 ---
 
 ## Completion
 
-"Done" means verified. Run the tests. Run the build. Prefer "I ran it and it works" over "this should work."
+"Done" means verified. Run the tests. Run the build.
 
-For UI changes, verify at the viewports that matter.
+- Prefer "I ran it and it works" over "this should work."
+- For UI changes, verify at the viewports that matter.
+- If the spec says "returns 404 for missing users," write a test that asserts that.
 
 ---
 
 ## Commit often
 
-Commit after each logical unit of work, not at the end of the session. Small commits are easier to review and revert.
+- Commit after each logical unit of work, not at the end of the session.
+- Small commits are easier to review and revert.
+- Prefer separate commits per file for cleaner history.
 
 ---
 
@@ -84,8 +124,15 @@ If code looks wrong, ask why before suggesting fixes — users have constraints 
 
 ---
 
+## Destructive actions
+
+Confirm before anything irreversible: rm -rf, force push, dropping tables, modifying CI/CD, pushing to main.
+
+---
+
 ## Session hygiene
 
+- /compact at ~50% context usage, don't wait until it's full.
 - Status line shows session duration. Past 90 min, take a break.
 - Uncommitted changes at session end? Run /review first.
-- Long conversation? /compact or start a new session.
+- Long conversation? Start a new session rather than pushing context limits.
