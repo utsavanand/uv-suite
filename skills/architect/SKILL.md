@@ -36,3 +36,7 @@ $ARGUMENTS
 !`ls uv-out/specs/*.md 2>/dev/null | head -5 || echo "No specs found"`
 
 !`cat $(ls -t uv-out/specs/*.md 2>/dev/null | head -1) 2>/dev/null | head -80 || echo ""`
+
+### Session checkpoint
+
+!`cat uv-out/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`

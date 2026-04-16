@@ -208,7 +208,7 @@ This project uses [UV Suite](https://github.com/utsavanand/uv-suite) v${UV_VERSI
 
 ### Skills
 
-/map-codebase, /map-stack, /spec, /architect, /review, /write-tests, /write-evals, /slop-check, /prototype, /security-review
+/map-codebase, /map-stack, /spec, /architect, /review, /write-tests, /write-evals, /slop-check, /prototype, /security-review, /checkpoint, /restore
 
 ### Artifacts
 
@@ -242,7 +242,7 @@ ${HOOKS_TEXT}
 
 **Planning:** Use plan mode for complex tasks. Break work small enough to complete in under 50% context.
 
-**Session:** /compact at ~50% context. Past 90 min, take a break.
+**Session:** /compact at ~50% context. Past 90 min, take a break. Run /checkpoint before ending a session. Run /restore at the start of the next one.
 
 ### Launching sessions
 

@@ -51,3 +51,7 @@ $ARGUMENTS
 ### Acts plan
 
 !`cat uv-out/architecture/acts-plan.md 2>/dev/null | head -60 || echo "No acts plan found"`
+
+### Session checkpoint (what's in progress)
+
+!`cat uv-out/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`

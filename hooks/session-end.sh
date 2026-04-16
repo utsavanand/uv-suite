@@ -36,10 +36,10 @@ if [ -n "$STAGED" ] || [ -n "$UNSTAGED" ] || [ -n "$UNTRACKED" ]; then
   REVIEW_MSG="Uncommitted changes — consider /review and /slop-check before committing. "
 fi
 
-# Reflection prompt
-REFLECTION_MSG="Before closing: What shipped? What did you learn? What would you teach the agent for next time (add to CLAUDE.md or DANGER-ZONES.md)?"
+# Checkpoint prompt
+CHECKPOINT_MSG="Run /checkpoint to save session state for next time. Run /restore at the start of your next session."
 
-FULL_MSG="${DURATION_MSG}${REVIEW_MSG}${REFLECTION_MSG}"
+FULL_MSG="${DURATION_MSG}${REVIEW_MSG}${CHECKPOINT_MSG}"
 
 cat <<EOF
 {

@@ -48,3 +48,7 @@ $ARGUMENTS
 ### Acts plan (current task context)
 
 !`cat uv-out/architecture/acts-plan.md 2>/dev/null | head -40 || echo "No acts plan found"`
+
+### Session checkpoint
+
+!`cat uv-out/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
