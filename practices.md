@@ -24,6 +24,12 @@ Stay focused on the task. Unless there's a critical issue (security, data loss),
 
 ---
 
+## Deterministic for hot path, LLM for cold path
+
+Checks that run on every file write must be fast and deterministic (grep, lint, static analysis). Save LLM judgment for manual invocations (/review, /slop-check) where thoroughness matters more than speed. An LLM-as-linter on every edit is slow, subjective, and contradicts itself.
+
+---
+
 ## Parallelism
 
 Move fast by running work in parallel wherever possible.
