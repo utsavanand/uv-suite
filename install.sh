@@ -221,9 +221,25 @@ Agent output is written to uv-out/. Agents read prior artifacts automatically:
 
 ${HOOKS_TEXT}
 
-### Personas
+### Working practices
 
-Start sessions with: ./uv.sh spike | sport | pro | auto
+**Honesty:** If you can't find a doc, file, or function, say so explicitly. Never fabricate. Say: "I did not find X. What should I do?" Never invent facts to fill gaps. Calibrate confidence — use "I think" when unsure. If 2-3 attempts fail, stop and escalate with what you tried.
+
+**Scope:** Do what was asked. Nothing more. No "while I'm here" fixes. If you notice something worth fixing, mention it at the end, don't silently change it.
+
+**Destructive actions:** Always confirm before rm -rf, force push, dropping tables, modifying CI/CD, pushing to main.
+
+**Completion:** "Done" means verified. Run the tests. Don't say "should work" when you could say "I ran it and it works."
+
+**Failures:** When you fail, say so. Use the escalation format: what you tried, why each failed, your hypothesis, what you need.
+
+**The user knows things you don't:** If something looks wrong, ask why before "fixing" it. Users have context you don't.
+
+**Context:** If the conversation is long, suggest /compact or a new session. Past 90 min, suggest a break.
+
+### Launching sessions
+
+uv claude pro | uv codex pro | uv pro (shorthand)
 EOF
 
   echo "  ✓ UV Suite section added to CLAUDE.md"
@@ -326,102 +342,6 @@ if command -v claude &>/dev/null; then
 else
   echo "  · Claude Code CLI not found — skipping MCP registration"
   echo "    Register manually after installing Claude Code: claude mcp add playwright -- npx @playwright/mcp@latest"
-fi
-
-# --- Write UV Suite context to CLAUDE.md ---
-if [ "$INSTALL_MODE" = "project" ]; then
-  PROJECT_ROOT="$(dirname "$TARGET_DIR")"
-  CLAUDE_MD="$PROJECT_ROOT/CLAUDE.md"
-
-  # Check if UV Suite section already exists
-  if [ -f "$CLAUDE_MD" ] && grep -q "## UV Suite" "$CLAUDE_MD" 2>/dev/null; then
-    echo "Updating UV Suite section in CLAUDE.md..."
-    # Remove old UV Suite section and rewrite
-    sed -i.bak '/^## UV Suite$/,/^## [^U]/{ /^## [^U]/!d; }' "$CLAUDE_MD" 2>/dev/null || true
-    rm -f "$CLAUDE_MD.bak" 2>/dev/null
-  else
-    echo "Adding UV Suite section to CLAUDE.md..."
-  fi
-
-  cat >> "$CLAUDE_MD" << CLAUDEMD
-
-## UV Suite
-
-This project uses [UV Suite](https://github.com/utsavanand/uv-suite) for AI-assisted development.
-
-**Active persona:** $PERSONA_LABEL
-**Version:** $(cat "$UV_SUITE_DIR/package.json" 2>/dev/null | grep '"version"' | head -1 | sed 's/.*: "//;s/".*//')
-
-### Available skills (slash commands)
-
-| Command | Agent | What it does |
-|---------|-------|-------------|
-| /map-codebase [dir] | Cartographer | Build knowledge graph of codebase |
-| /map-stack [dir] | Cartographer | Map multiple services and their connections |
-| /spec [requirements] | Spec Writer | Write technical specification |
-| /architect [spec] | Architect | Design architecture, decompose into Acts |
-| /review | Reviewer | Code review (correctness, security, perf, slop) |
-| /write-tests [file] | Test Writer | Generate tests matching project conventions |
-| /write-evals [prompt] | Eval Writer | Write AI/LLM evaluation cases |
-| /slop-check | Anti-Slop Guard | Detect 6 categories of AI-generated slop |
-| /prototype [concept] | Prototype Builder | Build static React prototype |
-| /security-review | Security Agent | OWASP audit, dependency scan, secret detection |
-
-### Artifacts
-
-All agent output is written to \`uv-out/\`. Each agent reads relevant prior artifacts from this directory automatically.
-
-| Artifact | Written by | Read by |
-|----------|-----------|---------|
-| uv-out/map-codebase.md | /map-codebase | /architect, /review, /security-review |
-| uv-out/specs/*.md | /spec | /architect, /write-tests, /write-evals |
-| uv-out/architecture/*.md | /architect | /review, /write-tests, /slop-check |
-| uv-out/review-*.md | /review | /slop-check, /security-review |
-| uv-out/security-review-*.md | /security-review | — |
-| uv-out/slop-check-*.md | /slop-check | — |
-
-### Active hooks
-
-Hooks fire automatically on every relevant action. You do not invoke these.
-
-$(if [ "$PERSONA" = "professional" ]; then
-cat << 'HOOKS'
-- **auto-lint** (on file write) — runs prettier/ruff/gofmt
-- **slop check** (on file write) — Haiku scans for obvious slop
-- **danger zone** (on file edit) — warns if file is in DANGER-ZONES.md
-- **destructive block** (on bash) — blocks rm -rf, force push
-- **review reminder** (on session end) — reminds to /review if uncommitted changes
-HOOKS
-elif [ "$PERSONA" = "auto" ]; then
-cat << 'HOOKS'
-- **auto-lint** (on file write) — runs prettier/ruff/gofmt
-- **destructive block** (on bash) — blocks rm -rf, force push
-HOOKS
-elif [ "$PERSONA" = "sport" ]; then
-cat << 'HOOKS'
-- **auto-lint** (on file write) — runs prettier/ruff/gofmt
-HOOKS
-elif [ "$PERSONA" = "spike" ]; then
-cat << 'HOOKS'
-- **doc slop check** (on file write) — Haiku checks documentation quality
-HOOKS
-fi)
-
-### Context management
-
-If the conversation is getting long, proactively suggest running /compact or starting a new session. Use /cost to check token usage. The user's status line shows context window usage.
-
-### Launching sessions
-
-\`\`\`
-uv claude pro     # Claude Code, Professional persona
-uv claude auto    # Claude Code, Auto persona
-uv codex pro      # OpenAI Codex, Professional persona
-uv codex sport    # OpenAI Codex, Sport persona
-\`\`\`
-CLAUDEMD
-
-  echo "  ✓ UV Suite section added to CLAUDE.md"
 fi
 
 # --- Install launcher script ---
