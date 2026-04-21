@@ -118,12 +118,12 @@ let humanOnly = false;
 let selectedSession = '';
 let selectedType = '';
 
-// Session colors
+// Session colors and naming
 const palette = ['#0a84ff','#30d158','#ff9f0a','#bf5af2','#ff375f','#64d2ff','#ffd60a','#ac8ee0','#ff6961','#5e5ce6'];
 let colorIdx = 0;
 function sessionColor(id) {
   if (!sessions[id]) {
-    sessions[id] = { color: palette[colorIdx++ % palette.length], count: 0, lastEvent: null };
+    sessions[id] = { color: palette[colorIdx++ % palette.length], count: 0, lastEvent: null, label: null, app: null };
     updateSessionBar();
     updateFilterSession();
   }
@@ -132,14 +132,47 @@ function sessionColor(id) {
   return sessions[id].color;
 }
 
+// Build a meaningful session label from the first user prompt or app name
+function updateSessionLabel(sid, ev) {
+  if (!sessions[sid]) return;
+  // Capture source_app as fallback name
+  if (!sessions[sid].app && ev.source_app) {
+    sessions[sid].app = ev.source_app;
+  }
+  // Use first UserPromptSubmit content as the session label
+  if (!sessions[sid].label && ev.event_type === 'UserPromptSubmit') {
+    const prompt = ev.tool_input?.prompt || ev.tool_input?.content || ev.message || '';
+    if (prompt.length > 0) {
+      // Take first 40 chars, trim to last word boundary
+      let label = prompt.slice(0, 40).replace(/\s+\S*$/, '');
+      if (prompt.length > label.length) label += '...';
+      sessions[sid].label = label;
+      updateSessionBar();
+      updateFilterSession();
+    }
+  }
+}
+
+function sessionDisplayName(id) {
+  const s = sessions[id];
+  if (!s) return shortId(id);
+  if (s.label) return s.label;
+  if (s.app) return s.app;
+  return shortId(id);
+}
+
+function shortId(id) {
+  if (!id) return '—';
+  return id.length > 10 ? id.slice(0, 8) + '..' : id;
+}
+
 function formatTime(ts) {
   const d = new Date(ts);
   return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 function shortSession(id) {
-  if (!id) return '—';
-  return id.length > 12 ? id.slice(0, 8) + '...' : id;
+  return sessionDisplayName(id);
 }
 
 // Detect if event needs human intervention
@@ -245,6 +278,8 @@ function renderEvent(ev) {
 function addEvent(ev) {
   events.push(ev);
   if (emptyState.parentNode) emptyState.remove();
+  const sid = ev.session_id || ev.source_app || 'unknown';
+  updateSessionLabel(sid, ev);
   timeline.appendChild(renderEvent(ev));
   updateStats();
   updateFilterType(ev);
