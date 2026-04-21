@@ -23,20 +23,35 @@
   .stat { text-align: center; }
   .stat .n { font-size: 20px; font-weight: 600; }
   .stat .l { font-size: 10px; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .stat .n.alert { color: #ff375f; }
 
   .sessions { padding: 12px 24px; border-bottom: 1px solid #1d1d1f; display: flex; gap: 8px; flex-wrap: wrap; }
   .session-tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid transparent; }
   .session-tag:hover { border-color: #424245; }
   .session-tag.active { border-color: #fff; }
 
-  .timeline { padding: 8px 0; overflow-y: auto; max-height: calc(100vh - 220px); }
-  .event { padding: 6px 24px; display: grid; grid-template-columns: 70px 100px 120px 1fr 80px; gap: 8px; align-items: center; font-size: 12px; border-bottom: 1px solid #0d0d0d; }
+  .timeline { padding: 8px 0; overflow-y: auto; max-height: calc(100vh - 240px); }
+  .event { padding: 8px 24px; display: grid; grid-template-columns: 70px 110px 120px 60px 1fr; gap: 8px; align-items: start; font-size: 12px; border-bottom: 1px solid #0d0d0d; transition: background 0.15s; }
   .event:hover { background: #0d0d0d; }
   .event .time { color: #6e6e73; font-variant-numeric: tabular-nums; font-family: 'SF Mono', monospace; font-size: 11px; }
   .event .type { font-weight: 500; }
   .event .session { font-size: 11px; border-radius: 8px; padding: 1px 8px; display: inline-block; }
-  .event .detail { color: #a1a1a6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .event .duration { color: #6e6e73; font-family: 'SF Mono', monospace; font-size: 11px; text-align: right; }
+  .event .tool { color: #a1a1a6; font-family: 'SF Mono', monospace; font-size: 11px; }
+  .event .detail { color: #a1a1a6; font-size: 11px; line-height: 1.4; }
+  .event .detail .filepath { color: #64d2ff; }
+  .event .detail .cmd { color: #ffd60a; }
+
+  /* Human intervention — pulsing highlight */
+  .event.needs-human { background: #ff375f12; border-left: 3px solid #ff375f; }
+  .event.needs-human .type { color: #ff375f; }
+  .event.needs-human::after { content: 'NEEDS HUMAN'; position: absolute; right: 24px; font-size: 9px; font-weight: 700; color: #ff375f; letter-spacing: 0.5px; }
+  .event.needs-human { position: relative; }
+
+  /* Failure highlight */
+  .event.failure { background: #ff696112; border-left: 3px solid #ff6961; }
+
+  /* Session start/end highlight */
+  .event.session-boundary { background: #30d15808; }
 
   .empty { padding: 60px 24px; text-align: center; color: #6e6e73; }
   .empty p { margin-top: 8px; font-size: 13px; }
@@ -67,6 +82,7 @@
   <div class="stat"><div class="n" id="eventCount">0</div><div class="l">Events</div></div>
   <div class="stat"><div class="n" id="toolCount">0</div><div class="l">Tool calls</div></div>
   <div class="stat"><div class="n" id="errorCount">0</div><div class="l">Errors</div></div>
+  <div class="stat"><div class="n" id="humanCount">0</div><div class="l">Need human</div></div>
 </div>
 
 <div class="sessions" id="sessionBar"></div>
@@ -74,6 +90,7 @@
 <div class="filters">
   <select id="filterType"><option value="">All events</option></select>
   <select id="filterSession"><option value="">All sessions</option></select>
+  <button id="btnHumanOnly" onclick="toggleHumanOnly()">Human needed</button>
   <button id="btnClear" onclick="clearEvents()">Clear</button>
   <button id="btnAutoScroll" class="active" onclick="toggleAutoScroll()">Auto-scroll</button>
 </div>
@@ -97,9 +114,9 @@ const sessionBar = document.getElementById('sessionBar');
 let events = [];
 let sessions = {};
 let autoScroll = true;
+let humanOnly = false;
 let selectedSession = '';
 let selectedType = '';
-let ws;
 
 // Session colors
 const palette = ['#0a84ff','#30d158','#ff9f0a','#bf5af2','#ff375f','#64d2ff','#ffd60a','#ac8ee0','#ff6961','#5e5ce6'];
@@ -125,31 +142,102 @@ function shortSession(id) {
   return id.length > 12 ? id.slice(0, 8) + '...' : id;
 }
 
+// Detect if event needs human intervention
+function needsHuman(ev) {
+  const type = ev.event_type || ev.hook_event_name || '';
+  // Permission requests always need human
+  if (type === 'PermissionRequest') return true;
+  // Notifications that are permission prompts
+  if (type === 'Notification' && ev.notification_type === 'permission_prompt') return true;
+  // Tool failures after multiple attempts
+  if (type === 'PostToolUseFailure') return true;
+  // Stuck indicators in messages
+  if (ev.message && /stuck|blocked|escalat|need.*help|can.?t.*find/i.test(ev.message)) return true;
+  return false;
+}
+
+function isFailure(ev) {
+  const type = ev.event_type || ev.hook_event_name || '';
+  return type.includes('Failure') || type === 'StopFailure';
+}
+
+function isSessionBoundary(ev) {
+  const type = ev.event_type || ev.hook_event_name || '';
+  return type === 'SessionStart' || type === 'SessionEnd' || type === 'Stop';
+}
+
+// Build rich detail string
 function eventDetail(ev) {
-  if (ev.tool_name) return ev.tool_name + (ev.tool_input?.command ? ': ' + ev.tool_input.command.slice(0, 60) : '');
-  if (ev.tool_input?.file_path) return ev.tool_input.file_path;
-  if (ev.source_app) return ev.source_app;
-  if (ev.message) return ev.message;
-  return '';
+  const parts = [];
+  const tool = ev.tool_name || '';
+  const input = ev.tool_input || {};
+
+  if (tool === 'Read' && input.file_path) {
+    parts.push(`<span class="filepath">${input.file_path}</span>`);
+    if (input.offset) parts.push(`offset:${input.offset}`);
+    if (input.limit) parts.push(`limit:${input.limit}`);
+  } else if (tool === 'Write' && input.file_path) {
+    parts.push(`<span class="filepath">${input.file_path}</span>`);
+    if (input.content) parts.push(`(${input.content.length} chars)`);
+  } else if (tool === 'Edit' && input.file_path) {
+    parts.push(`<span class="filepath">${input.file_path}</span>`);
+    if (input.old_string) parts.push(`replacing "${input.old_string.slice(0, 30)}..."`);
+  } else if (tool === 'Bash' && input.command) {
+    parts.push(`<span class="cmd">$ ${input.command.slice(0, 80)}</span>`);
+    if (input.timeout) parts.push(`timeout:${input.timeout}ms`);
+  } else if (tool === 'Grep' && input.pattern) {
+    parts.push(`pattern: "${input.pattern}"`);
+    if (input.path) parts.push(`in <span class="filepath">${input.path}</span>`);
+  } else if (tool === 'Glob' && input.pattern) {
+    parts.push(`<span class="filepath">${input.pattern}</span>`);
+  } else if (tool === 'Agent') {
+    parts.push(input.description || input.prompt?.slice(0, 60) || 'subagent');
+  } else if (tool === 'WebSearch' && input.query) {
+    parts.push(`"${input.query.slice(0, 60)}"`);
+  } else if (tool === 'WebFetch' && input.url) {
+    parts.push(`<span class="filepath">${input.url.slice(0, 60)}</span>`);
+  } else if (ev.message) {
+    parts.push(ev.message.slice(0, 80));
+  } else if (input.file_path) {
+    parts.push(`<span class="filepath">${input.file_path}</span>`);
+  } else if (input.command) {
+    parts.push(`<span class="cmd">$ ${input.command.slice(0, 60)}</span>`);
+  } else if (ev.source_app) {
+    parts.push(ev.source_app);
+  }
+
+  return parts.join(' ');
 }
 
 function renderEvent(ev) {
   const sid = ev.session_id || ev.source_app || 'unknown';
   const color = sessionColor(sid);
+  const type = ev.event_type || ev.hook_event_name || '?';
+  const tool = ev.tool_name || '';
+  const human = needsHuman(ev);
+  const fail = isFailure(ev);
+  const boundary = isSessionBoundary(ev);
+
   const div = document.createElement('div');
-  div.className = 'event';
+  let cls = 'event';
+  if (human) cls += ' needs-human';
+  else if (fail) cls += ' failure';
+  else if (boundary) cls += ' session-boundary';
+  div.className = cls;
+
   div.innerHTML = `
     <span class="time">${formatTime(ev._ts)}</span>
-    <span class="type type-${ev.event_type || ev.hook_event_name || ''}">${ev.event_type || ev.hook_event_name || '?'}</span>
+    <span class="type type-${type}">${type}</span>
     <span class="session" style="background:${color}22;color:${color}">${shortSession(sid)}</span>
-    <span class="detail" title="${eventDetail(ev)}">${eventDetail(ev)}</span>
-    <span class="duration">${ev.duration_ms ? ev.duration_ms + 'ms' : ''}</span>
+    <span class="tool">${tool}</span>
+    <span class="detail">${eventDetail(ev)}</span>
   `;
 
   // Check filters
-  const typeMatch = !selectedType || (ev.event_type || ev.hook_event_name) === selectedType;
+  const typeMatch = !selectedType || type === selectedType;
   const sessMatch = !selectedSession || sid === selectedSession;
-  if (!typeMatch || !sessMatch) div.style.display = 'none';
+  const humanMatch = !humanOnly || human;
+  if (!typeMatch || !sessMatch || !humanMatch) div.style.display = 'none';
 
   return div;
 }
@@ -167,7 +255,12 @@ function updateStats() {
   document.getElementById('sessionCount').textContent = Object.keys(sessions).length;
   document.getElementById('eventCount').textContent = events.length;
   document.getElementById('toolCount').textContent = events.filter(e => (e.event_type || e.hook_event_name || '').includes('ToolUse')).length;
-  document.getElementById('errorCount').textContent = events.filter(e => (e.event_type || e.hook_event_name || '').includes('Failure')).length;
+  const errors = events.filter(e => (e.event_type || e.hook_event_name || '').includes('Failure')).length;
+  document.getElementById('errorCount').textContent = errors;
+  document.getElementById('errorCount').className = 'n' + (errors > 0 ? ' alert' : '');
+  const humans = events.filter(needsHuman).length;
+  document.getElementById('humanCount').textContent = humans;
+  document.getElementById('humanCount').className = 'n' + (humans > 0 ? ' alert' : '');
 }
 
 function updateSessionBar() {
@@ -211,7 +304,9 @@ function refilter() {
     const ev = events[i];
     const sid = ev.session_id || ev.source_app || 'unknown';
     const type = ev.event_type || ev.hook_event_name || '';
-    const show = (!selectedType || type === selectedType) && (!selectedSession || sid === selectedSession);
+    const show = (!selectedType || type === selectedType)
+              && (!selectedSession || sid === selectedSession)
+              && (!humanOnly || needsHuman(ev));
     row.style.display = show ? '' : 'none';
   });
 }
@@ -224,8 +319,13 @@ function toggleAutoScroll() {
   autoScroll = !autoScroll;
   document.getElementById('btnAutoScroll').classList.toggle('active', autoScroll);
 }
+function toggleHumanOnly() {
+  humanOnly = !humanOnly;
+  document.getElementById('btnHumanOnly').classList.toggle('active', humanOnly);
+  refilter();
+}
 
-// Server-Sent Events connection (replaces WebSocket — simpler, auto-reconnects)
+// Server-Sent Events connection
 function connect() {
   const source = new EventSource('/stream');
 
@@ -237,7 +337,6 @@ function connect() {
   source.onerror = () => {
     statusDot.className = 'dot off';
     statusText.textContent = 'Reconnecting...';
-    // EventSource auto-reconnects — no manual retry needed
   };
 
   source.onmessage = (msg) => {
@@ -248,9 +347,7 @@ function connect() {
       } else {
         addEvent(data);
       }
-    } catch (e) {
-      // ignore parse errors (ping frames, etc.)
-    }
+    } catch (e) {}
   };
 }
 
