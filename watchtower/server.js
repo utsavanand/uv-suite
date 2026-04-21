@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
 // UV Suite Watchtower — lightweight observability server
-// Zero dependencies beyond Node.js (uses built-in http, fs, ws via raw upgrade)
+// Zero dependencies beyond Node.js
+// Uses Server-Sent Events (SSE) instead of WebSocket — simpler, auto-reconnects
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const PORT = process.env.UVS_WATCHTOWER_PORT || 4200;
 const DATA_FILE = path.join(__dirname, 'events.json');
@@ -21,64 +23,29 @@ try {
   events = [];
 }
 
-// WebSocket clients
-const clients = new Set();
+// SSE clients
+const sseClients = new Set();
 
 function broadcast(event) {
-  const msg = JSON.stringify(event);
-  for (const ws of clients) {
-    try { ws.send(msg); } catch (e) { clients.delete(ws); }
+  const data = JSON.stringify(event);
+  for (const res of sseClients) {
+    try {
+      res.write(`data: ${data}\n\n`);
+    } catch (e) {
+      sseClients.delete(res);
+    }
   }
 }
 
 function saveEvents() {
-  // Keep only the last MAX_EVENTS
   if (events.length > MAX_EVENTS) {
     events = events.slice(-MAX_EVENTS);
   }
-  fs.writeFileSync(DATA_FILE, JSON.stringify(events, null, 2));
-}
-
-// Minimal WebSocket handshake (no dependency needed)
-const crypto = require('crypto');
-
-function upgradeToWebSocket(req, socket) {
-  const key = req.headers['sec-websocket-key'];
-  const accept = crypto.createHash('sha1')
-    .update(key + '258EAFA5-E914-47DA-95CA-5AB5DC085B11')
-    .digest('base64');
-
-  socket.write(
-    'HTTP/1.1 101 Switching Protocols\r\n' +
-    'Upgrade: websocket\r\n' +
-    'Connection: Upgrade\r\n' +
-    `Sec-WebSocket-Accept: ${accept}\r\n` +
-    '\r\n'
-  );
-
-  const ws = {
-    send(data) {
-      const buf = Buffer.from(data);
-      const frame = [];
-      frame.push(0x81); // text frame
-      if (buf.length < 126) {
-        frame.push(buf.length);
-      } else if (buf.length < 65536) {
-        frame.push(126, (buf.length >> 8) & 0xff, buf.length & 0xff);
-      } else {
-        frame.push(127);
-        for (let i = 7; i >= 0; i--) frame.push((buf.length >> (i * 8)) & 0xff);
-      }
-      socket.write(Buffer.concat([Buffer.from(frame), buf]));
-    }
-  };
-
-  clients.add(ws);
-  socket.on('close', () => clients.delete(ws));
-  socket.on('error', () => clients.delete(ws));
-
-  // Send recent events on connect
-  ws.send(JSON.stringify({ type: 'init', events: events.slice(-100) }));
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(events, null, 2));
+  } catch (e) {
+    // ignore write errors
+  }
 }
 
 const server = http.createServer((req, res) => {
@@ -114,7 +81,32 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // GET /events — fetch recent events
+  // GET /stream — SSE endpoint (replaces WebSocket)
+  if (req.method === 'GET' && req.url === '/stream') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+
+    // Send recent events as init
+    res.write(`data: ${JSON.stringify({ type: 'init', events: events.slice(-100) })}\n\n`);
+
+    sseClients.add(res);
+
+    // Keep-alive ping every 15 seconds
+    const keepAlive = setInterval(() => {
+      try { res.write(': ping\n\n'); } catch (e) { clearInterval(keepAlive); }
+    }, 15000);
+
+    req.on('close', () => {
+      sseClients.delete(res);
+      clearInterval(keepAlive);
+    });
+    return;
+  }
+
+  // GET /events — fetch recent events (REST fallback)
   if (req.method === 'GET' && req.url.startsWith('/events')) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(events.slice(-100)));
@@ -131,14 +123,6 @@ const server = http.createServer((req, res) => {
 
   res.writeHead(404);
   res.end('not found');
-});
-
-server.on('upgrade', (req, socket, head) => {
-  if (req.url === '/ws') {
-    upgradeToWebSocket(req, socket);
-  } else {
-    socket.destroy();
-  }
 });
 
 server.listen(PORT, () => {

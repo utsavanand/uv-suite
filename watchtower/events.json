@@ -7,5 +7,16 @@
     "cwd": "/tmp",
     "_ts": 1776756371726,
     "_id": "3f130976-6226-47ea-a477-18a16e194415"
+  },
+  {
+    "event_type": "PostToolUse",
+    "session_id": "test-session",
+    "source_app": "my-project",
+    "tool_name": "Edit",
+    "tool_input": {
+      "file_path": "src/app.ts"
+    },
+    "_ts": 1776757586012,
+    "_id": "efa9ae75-c0e0-48c2-a078-e7075ccef5a7"
   }
 ]

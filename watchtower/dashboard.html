@@ -225,28 +225,31 @@ function toggleAutoScroll() {
   document.getElementById('btnAutoScroll').classList.toggle('active', autoScroll);
 }
 
-// WebSocket connection
+// Server-Sent Events connection (replaces WebSocket — simpler, auto-reconnects)
 function connect() {
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  ws = new WebSocket(`${proto}//${location.host}/ws`);
+  const source = new EventSource('/stream');
 
-  ws.onopen = () => {
+  source.onopen = () => {
     statusDot.className = 'dot on';
     statusText.textContent = 'Connected';
   };
 
-  ws.onclose = () => {
+  source.onerror = () => {
     statusDot.className = 'dot off';
-    statusText.textContent = 'Disconnected — reconnecting...';
-    setTimeout(connect, 2000);
+    statusText.textContent = 'Reconnecting...';
+    // EventSource auto-reconnects — no manual retry needed
   };
 
-  ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
-    if (data.type === 'init' && data.events) {
-      data.events.forEach(addEvent);
-    } else {
-      addEvent(data);
+  source.onmessage = (msg) => {
+    try {
+      const data = JSON.parse(msg.data);
+      if (data.type === 'init' && data.events) {
+        data.events.forEach(addEvent);
+      } else {
+        addEvent(data);
+      }
+    } catch (e) {
+      // ignore parse errors (ping frames, etc.)
     }
   };
 }
