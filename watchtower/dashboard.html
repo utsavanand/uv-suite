@@ -111,7 +111,12 @@
   <select id="filterSession"><option value="">All sessions</option></select>
   <button id="btnHumanOnly" onclick="toggleHumanOnly()">Human needed</button>
   <button id="btnClear" onclick="clearEvents()">Clear</button>
-  <button id="btnAutoScroll" class="active" onclick="toggleAutoScroll()">Auto-scroll</button>
+</div>
+
+<!-- Loader at top — latest events appear here -->
+<div class="timeline-end" id="timelineEnd">
+  <div class="loader"></div>
+  <div class="waiting" id="waitingText">Listening for events...</div>
 </div>
 
 <div class="timeline" id="timeline">
@@ -121,11 +126,6 @@
   </div>
 </div>
 
-<!-- Bottom loader — always visible, shows system is listening -->
-<div class="timeline-end" id="timelineEnd">
-  <div class="loader"></div>
-  <div class="waiting" id="waitingText">Listening for events...</div>
-</div>
 
 <script>
 const timeline = document.getElementById('timeline');
@@ -329,14 +329,17 @@ function addEvent(ev) {
   const div = renderEvent(ev);
   div.classList.add('latest');
   lastEventDiv = div;
-  timeline.appendChild(div);
+
+  // Prepend — newest at top
+  timeline.prepend(div);
 
   updateStats();
   updateFilterType(ev);
   updateWaitingText(ev);
 
+  // Scroll to top to show latest
   if (autoScroll) {
-    document.getElementById('timelineEnd').scrollIntoView({ behavior: 'smooth' });
+    timeline.scrollTop = 0;
   }
 }
 
