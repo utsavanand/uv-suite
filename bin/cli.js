@@ -87,16 +87,80 @@ function personaLabel(p) {
 }
 
 function ensureInstalled(persona) {
-  const settings = path.resolve('.claude/personas', `${persona}.json`);
-  if (!fs.existsSync(settings)) {
-    console.log('UV Suite not installed in this project. Installing...');
+  const hooksDir = path.resolve('.claude/hooks');
+  const personasDir = path.resolve('.claude/personas');
+  const needsInstall = !fs.existsSync(personasDir) || !fs.existsSync(hooksDir);
+
+  if (needsInstall) {
+    console.log('UV Suite not installed in this project. Installing core files...');
     console.log('');
-    const installScript = path.join(UV_SUITE_DIR, 'install.sh');
-    try {
-      execSync(`bash "${installScript}" --persona ${persona}`, { stdio: 'inherit', timeout: 60000 });
-    } catch (e) {
-      // Install may timeout on pip installs but core files are already copied
+
+    // Fast install: copy essential files directly (no pip, no brew, no slow stuff)
+    const srcDir = UV_SUITE_DIR;
+    const targetDir = path.resolve('.claude');
+
+    // Create directories
+    for (const dir of ['agents', 'skills', 'hooks', 'rules', 'personas']) {
+      fs.mkdirSync(path.join(targetDir, dir), { recursive: true });
     }
+
+    // Copy agents
+    const agentsSrc = path.join(srcDir, 'agents', 'claude-code');
+    if (fs.existsSync(agentsSrc)) {
+      for (const f of fs.readdirSync(agentsSrc)) {
+        fs.copyFileSync(path.join(agentsSrc, f), path.join(targetDir, 'agents', f));
+      }
+    }
+
+    // Copy hooks
+    const hooksSrc = path.join(srcDir, 'hooks');
+    if (fs.existsSync(hooksSrc)) {
+      for (const f of fs.readdirSync(hooksSrc)) {
+        const dest = path.join(targetDir, 'hooks', f);
+        fs.copyFileSync(path.join(hooksSrc, f), dest);
+        fs.chmodSync(dest, 0o755);
+      }
+    }
+
+    // Copy skills
+    const skillsSrc = path.join(srcDir, 'skills');
+    if (fs.existsSync(skillsSrc)) {
+      for (const d of fs.readdirSync(skillsSrc)) {
+        const skillFile = path.join(skillsSrc, d, 'SKILL.md');
+        if (fs.existsSync(skillFile)) {
+          const destDir = path.join(targetDir, 'skills', d);
+          fs.mkdirSync(destDir, { recursive: true });
+          fs.copyFileSync(skillFile, path.join(destDir, 'SKILL.md'));
+        }
+      }
+    }
+
+    // Copy guardrails (for professional and auto)
+    if (persona === 'professional' || persona === 'auto') {
+      const guardSrc = path.join(srcDir, 'guardrails');
+      if (fs.existsSync(guardSrc)) {
+        for (const f of fs.readdirSync(guardSrc)) {
+          fs.copyFileSync(path.join(guardSrc, f), path.join(targetDir, 'rules', f));
+        }
+      }
+    }
+
+    // Copy personas
+    const personasSrc = path.join(srcDir, 'personas');
+    if (fs.existsSync(personasSrc)) {
+      for (const f of fs.readdirSync(personasSrc)) {
+        fs.copyFileSync(path.join(personasSrc, f), path.join(targetDir, 'personas', f));
+      }
+    }
+
+    // Set settings.json from persona
+    const personaFile = path.join(targetDir, 'personas', `${persona}.json`);
+    const settingsFile = path.join(targetDir, 'settings.json');
+    if (fs.existsSync(personaFile) && !fs.existsSync(settingsFile)) {
+      fs.copyFileSync(personaFile, settingsFile);
+    }
+
+    console.log(`  Installed: agents, skills, hooks, guardrails, personas`);
     console.log('');
   }
 }
