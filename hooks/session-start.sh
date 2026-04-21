@@ -15,4 +15,8 @@ if [ ! -f "$TODAY_FILE" ]; then
   echo "0" > "$TODAY_FILE"
 fi
 
+# Send to watchtower
+echo '{"session_id":"'$(cat "$STATE_DIR/session-start.txt")'","cwd":"'${CLAUDE_PROJECT_DIR:-.}'"}' | \
+  "${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/watchtower-send.sh" "SessionStart" 2>/dev/null
+
 exit 0

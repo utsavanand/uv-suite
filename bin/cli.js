@@ -29,6 +29,10 @@ function usage() {
     uvs install --persona sport
     uvs info                Show what's installed
 
+  Monitoring:
+    uvs watch               Start Watchtower dashboard (open browser)
+    uvs watch --bg          Start Watchtower in background
+
   Personas:
     spike        Research & docs (Opus, max effort)
     sport        New projects (Sonnet, high effort)
@@ -108,6 +112,42 @@ function launchCodex(persona, extra) {
   child.on('exit', (code) => process.exit(code || 0));
 }
 
+function watch() {
+  const serverScript = path.join(UV_SUITE_DIR, 'watchtower', 'server.js');
+  if (!fs.existsSync(serverScript)) {
+    console.error('Error: watchtower server not found at', serverScript);
+    process.exit(1);
+  }
+
+  const bg = args.includes('--bg') || args.includes('--background');
+  console.log('UV Suite Watchtower starting...');
+  console.log('Dashboard: http://localhost:' + (process.env.UVS_WATCHTOWER_PORT || 4200));
+  console.log('');
+
+  if (bg) {
+    const child = spawn('node', [serverScript], {
+      stdio: 'ignore',
+      detached: true,
+    });
+    child.unref();
+    console.log(`Running in background (PID: ${child.pid})`);
+    console.log('Stop with: kill ' + child.pid);
+
+    // Open browser
+    const opener = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+    spawn(opener, ['http://localhost:' + (process.env.UVS_WATCHTOWER_PORT || 4200)], { stdio: 'ignore' });
+  } else {
+    // Foreground — open browser after a short delay
+    setTimeout(() => {
+      const opener = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+      spawn(opener, ['http://localhost:' + (process.env.UVS_WATCHTOWER_PORT || 4200)], { stdio: 'ignore' });
+    }, 1000);
+
+    const child = spawn('node', [serverScript], { stdio: 'inherit' });
+    child.on('exit', (code) => process.exit(code || 0));
+  }
+}
+
 // --- Parse and route ---
 
 if (!command || command === '--help' || command === '-h') {
@@ -115,7 +155,9 @@ if (!command || command === '--help' || command === '-h') {
   process.exit(0);
 }
 
-if (command === 'install') {
+if (command === 'watch') {
+  watch();
+} else if (command === 'install') {
   install();
 } else if (command === 'info') {
   info();

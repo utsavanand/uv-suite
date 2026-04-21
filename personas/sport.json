@@ -32,6 +32,12 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/watchtower-send.sh PostToolUse", "timeout": 2, "async": true }
+        ]
+      },
+      {
         "matcher": "Edit|Write",
         "hooks": [
           {

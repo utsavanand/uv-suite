@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UV Suite Watchtower</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; background: #000; color: #f5f5f7; }
+  .header { padding: 16px 24px; border-bottom: 1px solid #2d2d2f; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .header .status { font-size: 11px; color: #86868b; }
+  .header .status .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+  .header .status .dot.on { background: #30d158; }
+  .header .status .dot.off { background: #ff453a; }
+
+  .filters { padding: 8px 24px; border-bottom: 1px solid #1d1d1f; display: flex; gap: 8px; flex-wrap: wrap; }
+  .filters select, .filters button { background: #1d1d1f; color: #a1a1a6; border: 1px solid #2d2d2f; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+  .filters select:focus, .filters button:hover { border-color: #424245; color: #f5f5f7; }
+  .filters button.active { background: #0071e3; color: #fff; border-color: #0071e3; }
+
+  .stats { padding: 12px 24px; display: flex; gap: 24px; border-bottom: 1px solid #1d1d1f; }
+  .stat { text-align: center; }
+  .stat .n { font-size: 20px; font-weight: 600; }
+  .stat .l { font-size: 10px; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  .sessions { padding: 12px 24px; border-bottom: 1px solid #1d1d1f; display: flex; gap: 8px; flex-wrap: wrap; }
+  .session-tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid transparent; }
+  .session-tag:hover { border-color: #424245; }
+  .session-tag.active { border-color: #fff; }
+
+  .timeline { padding: 8px 0; overflow-y: auto; max-height: calc(100vh - 220px); }
+  .event { padding: 6px 24px; display: grid; grid-template-columns: 70px 100px 120px 1fr 80px; gap: 8px; align-items: center; font-size: 12px; border-bottom: 1px solid #0d0d0d; }
+  .event:hover { background: #0d0d0d; }
+  .event .time { color: #6e6e73; font-variant-numeric: tabular-nums; font-family: 'SF Mono', monospace; font-size: 11px; }
+  .event .type { font-weight: 500; }
+  .event .session { font-size: 11px; border-radius: 8px; padding: 1px 8px; display: inline-block; }
+  .event .detail { color: #a1a1a6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .event .duration { color: #6e6e73; font-family: 'SF Mono', monospace; font-size: 11px; text-align: right; }
+
+  .empty { padding: 60px 24px; text-align: center; color: #6e6e73; }
+  .empty p { margin-top: 8px; font-size: 13px; }
+
+  /* Event type colors */
+  .type-SessionStart { color: #30d158; }
+  .type-SessionEnd, .type-Stop { color: #ff453a; }
+  .type-PreToolUse { color: #0a84ff; }
+  .type-PostToolUse { color: #64d2ff; }
+  .type-PostToolUseFailure { color: #ff6961; }
+  .type-UserPromptSubmit { color: #ffd60a; }
+  .type-SubagentStart { color: #bf5af2; }
+  .type-SubagentStop { color: #ac8ee0; }
+  .type-Notification { color: #ff9f0a; }
+  .type-PermissionRequest { color: #ff375f; }
+  .type-PreCompact { color: #6e6e73; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>UV Suite Watchtower</h1>
+  <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Connecting...</span></div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="n" id="sessionCount">0</div><div class="l">Sessions</div></div>
+  <div class="stat"><div class="n" id="eventCount">0</div><div class="l">Events</div></div>
+  <div class="stat"><div class="n" id="toolCount">0</div><div class="l">Tool calls</div></div>
+  <div class="stat"><div class="n" id="errorCount">0</div><div class="l">Errors</div></div>
+</div>
+
+<div class="sessions" id="sessionBar"></div>
+
+<div class="filters">
+  <select id="filterType"><option value="">All events</option></select>
+  <select id="filterSession"><option value="">All sessions</option></select>
+  <button id="btnClear" onclick="clearEvents()">Clear</button>
+  <button id="btnAutoScroll" class="active" onclick="toggleAutoScroll()">Auto-scroll</button>
+</div>
+
+<div class="timeline" id="timeline">
+  <div class="empty" id="emptyState">
+    <p><strong>Waiting for events</strong></p>
+    <p>Start a Claude Code session with UV Suite hooks.<br>Events will appear here in real-time.</p>
+  </div>
+</div>
+
+<script>
+const timeline = document.getElementById('timeline');
+const emptyState = document.getElementById('emptyState');
+const filterType = document.getElementById('filterType');
+const filterSession = document.getElementById('filterSession');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const sessionBar = document.getElementById('sessionBar');
+
+let events = [];
+let sessions = {};
+let autoScroll = true;
+let selectedSession = '';
+let selectedType = '';
+let ws;
+
+// Session colors
+const palette = ['#0a84ff','#30d158','#ff9f0a','#bf5af2','#ff375f','#64d2ff','#ffd60a','#ac8ee0','#ff6961','#5e5ce6'];
+let colorIdx = 0;
+function sessionColor(id) {
+  if (!sessions[id]) {
+    sessions[id] = { color: palette[colorIdx++ % palette.length], count: 0, lastEvent: null };
+    updateSessionBar();
+    updateFilterSession();
+  }
+  sessions[id].count++;
+  sessions[id].lastEvent = Date.now();
+  return sessions[id].color;
+}
+
+function formatTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function shortSession(id) {
+  if (!id) return '—';
+  return id.length > 12 ? id.slice(0, 8) + '...' : id;
+}
+
+function eventDetail(ev) {
+  if (ev.tool_name) return ev.tool_name + (ev.tool_input?.command ? ': ' + ev.tool_input.command.slice(0, 60) : '');
+  if (ev.tool_input?.file_path) return ev.tool_input.file_path;
+  if (ev.source_app) return ev.source_app;
+  if (ev.message) return ev.message;
+  return '';
+}
+
+function renderEvent(ev) {
+  const sid = ev.session_id || ev.source_app || 'unknown';
+  const color = sessionColor(sid);
+  const div = document.createElement('div');
+  div.className = 'event';
+  div.innerHTML = `
+    <span class="time">${formatTime(ev._ts)}</span>
+    <span class="type type-${ev.event_type || ev.hook_event_name || ''}">${ev.event_type || ev.hook_event_name || '?'}</span>
+    <span class="session" style="background:${color}22;color:${color}">${shortSession(sid)}</span>
+    <span class="detail" title="${eventDetail(ev)}">${eventDetail(ev)}</span>
+    <span class="duration">${ev.duration_ms ? ev.duration_ms + 'ms' : ''}</span>
+  `;
+
+  // Check filters
+  const typeMatch = !selectedType || (ev.event_type || ev.hook_event_name) === selectedType;
+  const sessMatch = !selectedSession || sid === selectedSession;
+  if (!typeMatch || !sessMatch) div.style.display = 'none';
+
+  return div;
+}
+
+function addEvent(ev) {
+  events.push(ev);
+  if (emptyState.parentNode) emptyState.remove();
+  timeline.appendChild(renderEvent(ev));
+  updateStats();
+  updateFilterType(ev);
+  if (autoScroll) timeline.scrollTop = timeline.scrollHeight;
+}
+
+function updateStats() {
+  document.getElementById('sessionCount').textContent = Object.keys(sessions).length;
+  document.getElementById('eventCount').textContent = events.length;
+  document.getElementById('toolCount').textContent = events.filter(e => (e.event_type || e.hook_event_name || '').includes('ToolUse')).length;
+  document.getElementById('errorCount').textContent = events.filter(e => (e.event_type || e.hook_event_name || '').includes('Failure')).length;
+}
+
+function updateSessionBar() {
+  sessionBar.innerHTML = '';
+  for (const [id, s] of Object.entries(sessions)) {
+    const tag = document.createElement('span');
+    tag.className = 'session-tag' + (selectedSession === id ? ' active' : '');
+    tag.style.background = s.color + '22';
+    tag.style.color = s.color;
+    tag.textContent = shortSession(id) + ' (' + s.count + ')';
+    tag.onclick = () => { selectedSession = selectedSession === id ? '' : id; refilter(); updateSessionBar(); };
+    sessionBar.appendChild(tag);
+  }
+}
+
+const knownTypes = new Set();
+function updateFilterType(ev) {
+  const t = ev.event_type || ev.hook_event_name;
+  if (t && !knownTypes.has(t)) {
+    knownTypes.add(t);
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    filterType.appendChild(opt);
+  }
+}
+
+function updateFilterSession() {
+  filterSession.innerHTML = '<option value="">All sessions</option>';
+  for (const id of Object.keys(sessions)) {
+    const opt = document.createElement('option');
+    opt.value = id; opt.textContent = shortSession(id);
+    filterSession.appendChild(opt);
+  }
+}
+
+function refilter() {
+  selectedType = filterType.value;
+  selectedSession = filterSession.value;
+  const rows = timeline.querySelectorAll('.event');
+  rows.forEach((row, i) => {
+    const ev = events[i];
+    const sid = ev.session_id || ev.source_app || 'unknown';
+    const type = ev.event_type || ev.hook_event_name || '';
+    const show = (!selectedType || type === selectedType) && (!selectedSession || sid === selectedSession);
+    row.style.display = show ? '' : 'none';
+  });
+}
+
+filterType.onchange = refilter;
+filterSession.onchange = refilter;
+
+function clearEvents() { events = []; sessions = {}; colorIdx = 0; timeline.innerHTML = ''; updateStats(); sessionBar.innerHTML = ''; }
+function toggleAutoScroll() {
+  autoScroll = !autoScroll;
+  document.getElementById('btnAutoScroll').classList.toggle('active', autoScroll);
+}
+
+// WebSocket connection
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}/ws`);
+
+  ws.onopen = () => {
+    statusDot.className = 'dot on';
+    statusText.textContent = 'Connected';
+  };
+
+  ws.onclose = () => {
+    statusDot.className = 'dot off';
+    statusText.textContent = 'Disconnected — reconnecting...';
+    setTimeout(connect, 2000);
+  };
+
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if (data.type === 'init' && data.events) {
+      data.events.forEach(addEvent);
+    } else {
+      addEvent(data);
+    }
+  };
+}
+
+connect();
+</script>
+</body>
+</html>
