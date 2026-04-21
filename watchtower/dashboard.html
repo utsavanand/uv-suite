@@ -30,28 +30,47 @@
   .session-tag:hover { border-color: #424245; }
   .session-tag.active { border-color: #fff; }
 
-  .timeline { padding: 8px 0; overflow-y: auto; max-height: calc(100vh - 240px); }
-  .event { padding: 8px 24px; display: grid; grid-template-columns: 70px 110px 120px 60px 1fr; gap: 8px; align-items: start; font-size: 12px; border-bottom: 1px solid #0d0d0d; transition: background 0.15s; }
-  .event:hover { background: #0d0d0d; }
-  .event .time { color: #6e6e73; font-variant-numeric: tabular-nums; font-family: 'SF Mono', monospace; font-size: 11px; }
-  .event .type { font-weight: 500; }
-  .event .session { font-size: 11px; border-radius: 8px; padding: 1px 8px; display: inline-block; }
-  .event .tool { color: #a1a1a6; font-family: 'SF Mono', monospace; font-size: 11px; }
-  .event .detail { color: #a1a1a6; font-size: 11px; line-height: 1.4; }
+  .timeline { padding: 8px 0; overflow-y: auto; max-height: calc(100vh - 280px); }
+
+  .event { padding: 10px 24px; display: grid; grid-template-columns: 70px 110px 140px 65px 1fr; gap: 10px; align-items: start; font-size: 13px; border-bottom: 1px solid #0d0d0d; transition: all 0.2s; opacity: 0.75; }
+  .event:hover { background: #0d0d0d; opacity: 1; }
+  .event .time { color: #6e6e73; font-variant-numeric: tabular-nums; font-family: 'SF Mono', monospace; font-size: 11px; padding-top: 2px; }
+  .event .type { font-weight: 500; font-size: 12px; }
+  .event .session { font-size: 11px; border-radius: 8px; padding: 2px 8px; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .event .tool { color: #a1a1a6; font-family: 'SF Mono', monospace; font-size: 11px; padding-top: 2px; }
+  .event .detail { color: #a1a1a6; font-size: 12px; line-height: 1.5; word-break: break-all; }
   .event .detail .filepath { color: #64d2ff; }
   .event .detail .cmd { color: #ffd60a; }
 
-  /* Human intervention — pulsing highlight */
-  .event.needs-human { background: #ff375f12; border-left: 3px solid #ff375f; }
+  /* Latest event — full opacity, larger, highlighted */
+  .event.latest { opacity: 1; font-size: 14px; background: #0a0a0a; border-bottom: 2px solid #2d2d2f; }
+  .event.latest .type { font-size: 13px; }
+  .event.latest .detail { font-size: 13px; color: #d1d1d6; }
+
+  /* Human intervention — strong highlight */
+  .event.needs-human { background: #ff375f18; border-left: 4px solid #ff375f; opacity: 1; }
   .event.needs-human .type { color: #ff375f; }
-  .event.needs-human::after { content: 'NEEDS HUMAN'; position: absolute; right: 24px; font-size: 9px; font-weight: 700; color: #ff375f; letter-spacing: 0.5px; }
-  .event.needs-human { position: relative; }
+  .event.needs-human .human-badge { display: inline-block; background: #ff375f; color: #fff; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: 0.5px; margin-left: 8px; vertical-align: middle; }
 
   /* Failure highlight */
-  .event.failure { background: #ff696112; border-left: 3px solid #ff6961; }
+  .event.failure { background: #ff696115; border-left: 4px solid #ff6961; opacity: 1; }
 
-  /* Session start/end highlight */
+  /* Session start/end */
   .event.session-boundary { background: #30d15808; }
+
+  /* User prompt — show what was asked */
+  .event.user-prompt { background: #ffd60a08; }
+  .event.user-prompt .detail { color: #ffd60a; font-style: italic; }
+
+  /* Bottom loader area */
+  .timeline-end { padding: 24px; text-align: center; }
+  .loader { display: inline-block; width: 40px; height: 4px; position: relative; }
+  .loader::before { content: ''; position: absolute; width: 8px; height: 4px; background: #424245; border-radius: 2px; animation: loader 1.2s ease-in-out infinite; }
+  @keyframes loader {
+    0%, 100% { left: 0; }
+    50% { left: 32px; }
+  }
+  .timeline-end .waiting { font-size: 11px; color: #424245; margin-top: 8px; }
 
   .empty { padding: 60px 24px; text-align: center; color: #6e6e73; }
   .empty p { margin-top: 8px; font-size: 13px; }
@@ -102,6 +121,12 @@
   </div>
 </div>
 
+<!-- Bottom loader — always visible, shows system is listening -->
+<div class="timeline-end" id="timelineEnd">
+  <div class="loader"></div>
+  <div class="waiting" id="waitingText">Listening for events...</div>
+</div>
+
 <script>
 const timeline = document.getElementById('timeline');
 const emptyState = document.getElementById('emptyState');
@@ -110,6 +135,7 @@ const filterSession = document.getElementById('filterSession');
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const sessionBar = document.getElementById('sessionBar');
+const waitingText = document.getElementById('waitingText');
 
 let events = [];
 let sessions = {};
@@ -117,6 +143,7 @@ let autoScroll = true;
 let humanOnly = false;
 let selectedSession = '';
 let selectedType = '';
+let lastEventDiv = null;
 
 // Session colors and naming
 const palette = ['#0a84ff','#30d158','#ff9f0a','#bf5af2','#ff375f','#64d2ff','#ffd60a','#ac8ee0','#ff6961','#5e5ce6'];
@@ -132,19 +159,17 @@ function sessionColor(id) {
   return sessions[id].color;
 }
 
-// Build a meaningful session label from the first user prompt or app name
 function updateSessionLabel(sid, ev) {
   if (!sessions[sid]) return;
-  // Capture source_app as fallback name
   if (!sessions[sid].app && ev.source_app) {
     sessions[sid].app = ev.source_app;
   }
-  // Use first UserPromptSubmit content as the session label
-  if (!sessions[sid].label && ev.event_type === 'UserPromptSubmit') {
+  // Use first UserPromptSubmit as session label
+  const type = ev.event_type || ev.hook_event_name || '';
+  if (!sessions[sid].label && type === 'UserPromptSubmit') {
     const prompt = ev.tool_input?.prompt || ev.tool_input?.content || ev.message || '';
     if (prompt.length > 0) {
-      // Take first 40 chars, trim to last word boundary
-      let label = prompt.slice(0, 40).replace(/\s+\S*$/, '');
+      let label = prompt.slice(0, 45).replace(/\s+\S*$/, '');
       if (prompt.length > label.length) label += '...';
       sessions[sid].label = label;
       updateSessionBar();
@@ -156,7 +181,9 @@ function updateSessionLabel(sid, ev) {
 function sessionDisplayName(id) {
   const s = sessions[id];
   if (!s) return shortId(id);
-  if (s.label) return s.label;
+  if (s.label) {
+    return s.app ? s.app + ': ' + s.label : s.label;
+  }
   if (s.app) return s.app;
   return shortId(id);
 }
@@ -166,32 +193,36 @@ function shortId(id) {
   return id.length > 10 ? id.slice(0, 8) + '..' : id;
 }
 
+function shortSession(id) {
+  return sessionDisplayName(id);
+}
+
 function formatTime(ts) {
   const d = new Date(ts);
   return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-function shortSession(id) {
-  return sessionDisplayName(id);
+function timeSince(ts) {
+  const secs = Math.floor((Date.now() - ts) / 1000);
+  if (secs < 5) return 'just now';
+  if (secs < 60) return secs + 's ago';
+  if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+  return Math.floor(secs / 3600) + 'h ago';
 }
 
-// Detect if event needs human intervention
+// Detect human intervention needed
 function needsHuman(ev) {
   const type = ev.event_type || ev.hook_event_name || '';
-  // Permission requests always need human
   if (type === 'PermissionRequest') return true;
-  // Notifications that are permission prompts
   if (type === 'Notification' && ev.notification_type === 'permission_prompt') return true;
-  // Tool failures after multiple attempts
   if (type === 'PostToolUseFailure') return true;
-  // Stuck indicators in messages
   if (ev.message && /stuck|blocked|escalat|need.*help|can.?t.*find/i.test(ev.message)) return true;
   return false;
 }
 
 function isFailure(ev) {
   const type = ev.event_type || ev.hook_event_name || '';
-  return type.includes('Failure') || type === 'StopFailure';
+  return type.includes('Failure');
 }
 
 function isSessionBoundary(ev) {
@@ -199,7 +230,12 @@ function isSessionBoundary(ev) {
   return type === 'SessionStart' || type === 'SessionEnd' || type === 'Stop';
 }
 
-// Build rich detail string
+function isUserPrompt(ev) {
+  const type = ev.event_type || ev.hook_event_name || '';
+  return type === 'UserPromptSubmit';
+}
+
+// Rich detail
 function eventDetail(ev) {
   const parts = [];
   const tool = ev.tool_name || '';
@@ -214,27 +250,29 @@ function eventDetail(ev) {
     if (input.content) parts.push(`(${input.content.length} chars)`);
   } else if (tool === 'Edit' && input.file_path) {
     parts.push(`<span class="filepath">${input.file_path}</span>`);
-    if (input.old_string) parts.push(`replacing "${input.old_string.slice(0, 30)}..."`);
+    if (input.old_string) parts.push(`"${input.old_string.slice(0, 40)}..."`);
   } else if (tool === 'Bash' && input.command) {
-    parts.push(`<span class="cmd">$ ${input.command.slice(0, 80)}</span>`);
-    if (input.timeout) parts.push(`timeout:${input.timeout}ms`);
+    parts.push(`<span class="cmd">$ ${input.command.slice(0, 100)}</span>`);
   } else if (tool === 'Grep' && input.pattern) {
     parts.push(`pattern: "${input.pattern}"`);
     if (input.path) parts.push(`in <span class="filepath">${input.path}</span>`);
   } else if (tool === 'Glob' && input.pattern) {
     parts.push(`<span class="filepath">${input.pattern}</span>`);
   } else if (tool === 'Agent') {
-    parts.push(input.description || input.prompt?.slice(0, 60) || 'subagent');
+    parts.push(input.description || input.prompt?.slice(0, 80) || 'subagent');
   } else if (tool === 'WebSearch' && input.query) {
-    parts.push(`"${input.query.slice(0, 60)}"`);
+    parts.push(`"${input.query.slice(0, 80)}"`);
   } else if (tool === 'WebFetch' && input.url) {
-    parts.push(`<span class="filepath">${input.url.slice(0, 60)}</span>`);
+    parts.push(`<span class="filepath">${input.url.slice(0, 80)}</span>`);
+  } else if (isUserPrompt(ev)) {
+    const prompt = input.prompt || input.content || ev.message || '';
+    parts.push(prompt.slice(0, 120));
   } else if (ev.message) {
-    parts.push(ev.message.slice(0, 80));
+    parts.push(ev.message.slice(0, 100));
   } else if (input.file_path) {
     parts.push(`<span class="filepath">${input.file_path}</span>`);
   } else if (input.command) {
-    parts.push(`<span class="cmd">$ ${input.command.slice(0, 60)}</span>`);
+    parts.push(`<span class="cmd">$ ${input.command.slice(0, 80)}</span>`);
   } else if (ev.source_app) {
     parts.push(ev.source_app);
   }
@@ -250,18 +288,22 @@ function renderEvent(ev) {
   const human = needsHuman(ev);
   const fail = isFailure(ev);
   const boundary = isSessionBoundary(ev);
+  const prompt = isUserPrompt(ev);
 
   const div = document.createElement('div');
   let cls = 'event';
   if (human) cls += ' needs-human';
   else if (fail) cls += ' failure';
+  else if (prompt) cls += ' user-prompt';
   else if (boundary) cls += ' session-boundary';
   div.className = cls;
 
+  const humanBadge = human ? '<span class="human-badge">NEEDS HUMAN</span>' : '';
+
   div.innerHTML = `
     <span class="time">${formatTime(ev._ts)}</span>
-    <span class="type type-${type}">${type}</span>
-    <span class="session" style="background:${color}22;color:${color}">${shortSession(sid)}</span>
+    <span class="type type-${type}">${type}${humanBadge}</span>
+    <span class="session" style="background:${color}22;color:${color}" title="${sessionDisplayName(sid)}">${shortSession(sid)}</span>
     <span class="tool">${tool}</span>
     <span class="detail">${eventDetail(ev)}</span>
   `;
@@ -280,11 +322,35 @@ function addEvent(ev) {
   if (emptyState.parentNode) emptyState.remove();
   const sid = ev.session_id || ev.source_app || 'unknown';
   updateSessionLabel(sid, ev);
-  timeline.appendChild(renderEvent(ev));
+
+  // Remove "latest" class from previous latest
+  if (lastEventDiv) lastEventDiv.classList.remove('latest');
+
+  const div = renderEvent(ev);
+  div.classList.add('latest');
+  lastEventDiv = div;
+  timeline.appendChild(div);
+
   updateStats();
   updateFilterType(ev);
-  if (autoScroll) timeline.scrollTop = timeline.scrollHeight;
+  updateWaitingText(ev);
+
+  if (autoScroll) {
+    document.getElementById('timelineEnd').scrollIntoView({ behavior: 'smooth' });
+  }
 }
+
+function updateWaitingText(ev) {
+  if (ev) {
+    const sid = ev.session_id || ev.source_app || 'unknown';
+    waitingText.textContent = `Last: ${sessionDisplayName(sid)} — ${timeSince(ev._ts)}`;
+  }
+}
+
+// Keep "time since" updated
+setInterval(() => {
+  if (events.length > 0) updateWaitingText(events[events.length - 1]);
+}, 5000);
 
 function updateStats() {
   document.getElementById('sessionCount').textContent = Object.keys(sessions).length;
@@ -305,7 +371,8 @@ function updateSessionBar() {
     tag.className = 'session-tag' + (selectedSession === id ? ' active' : '');
     tag.style.background = s.color + '22';
     tag.style.color = s.color;
-    tag.textContent = shortSession(id) + ' (' + s.count + ')';
+    tag.textContent = sessionDisplayName(id) + ' (' + s.count + ')';
+    tag.title = id;
     tag.onclick = () => { selectedSession = selectedSession === id ? '' : id; refilter(); updateSessionBar(); };
     sessionBar.appendChild(tag);
   }
@@ -326,7 +393,7 @@ function updateFilterSession() {
   filterSession.innerHTML = '<option value="">All sessions</option>';
   for (const id of Object.keys(sessions)) {
     const opt = document.createElement('option');
-    opt.value = id; opt.textContent = shortSession(id);
+    opt.value = id; opt.textContent = sessionDisplayName(id);
     filterSession.appendChild(opt);
   }
 }
@@ -349,7 +416,7 @@ function refilter() {
 filterType.onchange = refilter;
 filterSession.onchange = refilter;
 
-function clearEvents() { events = []; sessions = {}; colorIdx = 0; timeline.innerHTML = ''; updateStats(); sessionBar.innerHTML = ''; }
+function clearEvents() { events = []; sessions = {}; colorIdx = 0; timeline.innerHTML = ''; lastEventDiv = null; updateStats(); sessionBar.innerHTML = ''; }
 function toggleAutoScroll() {
   autoScroll = !autoScroll;
   document.getElementById('btnAutoScroll').classList.toggle('active', autoScroll);
@@ -360,7 +427,7 @@ function toggleHumanOnly() {
   refilter();
 }
 
-// Server-Sent Events connection
+// Server-Sent Events
 function connect() {
   const source = new EventSource('/stream');
 
