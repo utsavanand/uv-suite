@@ -86,10 +86,26 @@ function personaLabel(p) {
   return labels[p] || p;
 }
 
-function launchClaude(persona, extra) {
+function ensureInstalled(persona) {
   const settings = path.resolve('.claude/personas', `${persona}.json`);
   if (!fs.existsSync(settings)) {
-    console.error(`Error: ${settings} not found. Run 'uv install' first.`);
+    console.log('UV Suite not installed in this project. Installing...');
+    console.log('');
+    const installScript = path.join(UV_SUITE_DIR, 'install.sh');
+    try {
+      execSync(`bash "${installScript}" --persona ${persona}`, { stdio: 'inherit', timeout: 60000 });
+    } catch (e) {
+      // Install may timeout on pip installs but core files are already copied
+    }
+    console.log('');
+  }
+}
+
+function launchClaude(persona, extra) {
+  ensureInstalled(persona);
+  const settings = path.resolve('.claude/personas', `${persona}.json`);
+  if (!fs.existsSync(settings)) {
+    console.error(`Error: installation failed. Run 'uvs install --persona ${persona}' manually.`);
     process.exit(1);
   }
   console.log(`UV Suite | Claude Code | ${personaLabel(persona)}`);
