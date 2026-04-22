@@ -22,7 +22,11 @@ Create the directory `uv-out/checkpoints/` if it doesn't exist.
 
 Write a file named `uv-out/checkpoints/YYYY-MM-DD-HHMM.md` (using the current timestamp).
 
-Also write/overwrite `uv-out/checkpoints/latest.md` with the same content (so the next session can always find the most recent checkpoint).
+Also write/overwrite **both**:
+- `uv-out/checkpoints/latest.md` — the global "most recent checkpoint" pointer.
+- `uv-out/checkpoints/latest-[branch].md` — the per-branch pointer, where `[branch]` is the current git branch (slashes replaced with `-`). Skip this one if not in a git repo.
+
+Both pointers get the same content as the timestamped file. The per-branch pointer lets `/restore` find the right handoff when you switch between branches/worktrees.
 
 ## Label
 

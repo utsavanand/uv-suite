@@ -85,11 +85,11 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 
 ## Hooks (automatic, you don't invoke these)
 
-!`ls .claude/hooks/*.sh 2>/dev/null | while read f; do echo "- $(basename $f)"; done || echo "No hooks installed"`
+!`ls .claude/hooks/ 2>/dev/null | grep '\.sh$' | sed 's/^/- /' || echo "No hooks installed"`
 
 ## Guardrails (anti-slop rules, active as context)
 
-!`ls .claude/rules/*.md 2>/dev/null | while read f; do echo "- $(basename $f .md)"; done || echo "No guardrails installed"`
+!`ls .claude/rules/ 2>/dev/null | sed -n 's/\.md$//p' | sed 's/^/- /' || echo "No guardrails installed"`
 
 ## Personas
 
