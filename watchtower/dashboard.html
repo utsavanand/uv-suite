@@ -553,6 +553,8 @@ function renderEvent(ev) {
     <span class="detail">${eventDetail(ev)}</span>
   `;
 
+  div._ev = ev;
+
   // Check filters
   const typeMatch = !selectedType || type === selectedType;
   const sessMatch = !selectedSession || sid === selectedSession;
@@ -607,7 +609,14 @@ function updateStats() {
   const errors = events.filter(e => (e.event_type || e.hook_event_name || '').includes('Failure')).length;
   document.getElementById('errorCount').textContent = errors;
   document.getElementById('errorCount').className = 'n' + (errors > 0 ? ' alert' : '');
-  const humans = events.filter(needsHuman).length;
+  // Count sessions whose most recent event is waiting on a human — so the
+  // number drops back down once the session continues past the prompt.
+  const latestBySession = {};
+  for (const ev of events) {
+    const sid = ev.session_id || ev.source_app || 'unknown';
+    latestBySession[sid] = ev;
+  }
+  const humans = Object.values(latestBySession).filter(needsHuman).length;
   document.getElementById('humanCount').textContent = humans;
   document.getElementById('humanCount').className = 'n' + (humans > 0 ? ' alert' : '');
 }
@@ -650,8 +659,9 @@ function refilter() {
   selectedType = filterType.value;
   selectedSession = filterSession.value;
   const rows = timeline.querySelectorAll('.event');
-  rows.forEach((row, i) => {
-    const ev = events[i];
+  rows.forEach((row) => {
+    const ev = row._ev;
+    if (!ev) return;
     const sid = ev.session_id || ev.source_app || 'unknown';
     const type = ev.event_type || ev.hook_event_name || '';
     const show = (!selectedType || type === selectedType)
