@@ -7,15 +7,18 @@ user-invocable: true
 allowed-tools:
   - Read(*)
   - Bash(ls *)
+  - Bash(cat *)
+  - Bash(grep *)
+  - Bash(git rev-parse *)
 ---
 
 ## Latest checkpoint
 
-!`cat uv-out/checkpoints/latest.md 2>/dev/null || echo "No checkpoint found. Run /checkpoint to create one."`
+!`DIR="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/uv-out/checkpoints"; if [ -f "$DIR/latest.md" ]; then cat "$DIR/latest.md"; else echo "No checkpoint found at $DIR. Run /checkpoint to create one."; fi`
 
 ## All checkpoints
 
-!`ls -la uv-out/checkpoints/*.md 2>/dev/null | tail -10 || echo "No checkpoints directory"`
+!`DIR="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/uv-out/checkpoints"; if [ -d "$DIR" ]; then matches=$(ls -la "$DIR"/ 2>/dev/null | grep '\.md$' | tail -10); if [ -n "$matches" ]; then echo "$matches"; else echo "No checkpoints in $DIR"; fi; else echo "No checkpoints directory at $DIR"; fi`
 
 ## Instructions
 

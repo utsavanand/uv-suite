@@ -9,3 +9,6 @@ uv-out/
 website/node_modules/
 website/dist/
 skills/persona/
+
+# Runtime watchtower data
+watchtower/events.json

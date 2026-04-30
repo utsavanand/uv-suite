@@ -12,23 +12,35 @@ allowed-tools:
   - Bash(git status *)
   - Bash(git diff *)
   - Bash(git log *)
+  - Bash(git rev-parse *)
   - Bash(date *)
   - Bash(ls *)
+  - Bash(mkdir *)
+  - Bash(echo *)
 ---
 
-## Write a checkpoint to uv-out/checkpoints/
+## Resolve checkpoint directory
 
-Create the directory `uv-out/checkpoints/` if it doesn't exist.
+Anchor checkpoints to `$CLAUDE_PROJECT_DIR` (or the git repo root, or the current
+working dir as a last resort) so `/checkpoint` and `/restore` always agree, no matter
+which subdirectory the session was launched from.
 
-Write a file named `uv-out/checkpoints/YYYY-MM-DD-HHMM.md` (using the current timestamp).
+!`DIR="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/uv-out/checkpoints"; mkdir -p "$DIR"; echo "$DIR"`
 
-Also write/overwrite `uv-out/checkpoints/latest.md` with the same content (so the next session can always find the most recent checkpoint).
+Use the absolute path printed above as `<checkpoint-dir>` for every file path below.
+
+## Write a checkpoint
+
+Write a file named `<checkpoint-dir>/YYYY-MM-DD-HHMM.md` using the current timestamp.
+
+Also write/overwrite `<checkpoint-dir>/latest.md` with the same content, so the next
+session's `/restore` always finds the freshest state.
 
 ## Label
 
 $ARGUMENTS
 
-If a label was provided, include it in the filename: `uv-out/checkpoints/YYYY-MM-DD-HHMM-[label].md`
+If a label was provided, include it in the filename: `<checkpoint-dir>/YYYY-MM-DD-HHMM-[label].md`
 
 ## What to capture
 

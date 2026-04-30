@@ -279,6 +279,42 @@
   .event.user-prompt { background: var(--user-prompt-bg); }
   .event.user-prompt .detail { color: var(--user-prompt-text); font-style: italic; }
 
+  /* Session priority: low rows are dimmed, high rows get an accent strip */
+  .event.priority-low { opacity: 0.45; }
+  .event.priority-low:hover { opacity: 0.85; }
+  .event.priority-high { border-left: 3px solid var(--accent); padding-left: 25px; }
+
+  /* Pills shown next to a session label */
+  .pill {
+    display: inline-block;
+    padding: 1px 7px;
+    margin-left: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    vertical-align: 1px;
+  }
+  .pill.persona-spike        { background: rgba(191, 90, 242, 0.18); color: var(--purple); }
+  .pill.persona-sport        { background: rgba(48, 209, 88, 0.18);  color: var(--success); }
+  .pill.persona-professional { background: rgba(10, 132, 255, 0.18); color: var(--accent); }
+  .pill.persona-auto         { background: rgba(255, 159, 10, 0.18); color: var(--warning); }
+  .pill.priority-low  { background: rgba(154, 154, 163, 0.18); color: var(--text-muted); }
+  .pill.priority-med  { background: rgba(255, 214, 10, 0.18);  color: var(--yellow); }
+  .pill.priority-high { background: rgba(255, 69, 58, 0.18);   color: var(--danger); }
+  .pill.kind-long-running { background: rgba(100, 210, 255, 0.18); color: var(--info); }
+  .pill.kind-outcome      { background: rgba(255, 105, 97, 0.18);  color: var(--peach); }
+
+  .session-tag.priority-low  { opacity: 0.6; }
+  .session-tag .meta-line {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
   .timeline-end { padding: 20px 24px; text-align: center; border-bottom: 1px solid var(--border-subtle); }
   .loader { display: inline-block; width: 48px; height: 4px; position: relative; }
   .loader::before {
@@ -393,9 +429,21 @@ let lastEventDiv = null;
 // Session colors and naming
 const palette = ['#0a84ff','#30d158','#ff9f0a','#bf5af2','#ff375f','#64d2ff','#ffd60a','#ac8ee0','#ff6961','#5e5ce6'];
 let colorIdx = 0;
+
+// Resolve the canonical session key for an event: prefer the UV Suite id (one
+// per `uv` launch), fall back to Claude Code's session id, then source_app.
+function eventSid(ev) {
+  return ev.uvs_session_id || ev.session_id || ev.source_app || 'unknown';
+}
+
 function sessionColor(id) {
   if (!sessions[id]) {
-    sessions[id] = { color: palette[colorIdx++ % palette.length], count: 0, lastEvent: null, label: null, app: null };
+    sessions[id] = {
+      color: palette[colorIdx++ % palette.length],
+      count: 0, lastEvent: null,
+      name: '', kind: '', purpose: '', priority: '', persona: '',
+      app: null, label: null,
+    };
     updateSessionBar();
     updateFilterSession();
   }
@@ -406,32 +454,53 @@ function sessionColor(id) {
 
 function updateSessionLabel(sid, ev) {
   if (!sessions[sid]) return;
-  if (!sessions[sid].app && ev.source_app) {
-    sessions[sid].app = ev.source_app;
+  const s = sessions[sid];
+  let changed = false;
+
+  if (!s.app && ev.source_app) { s.app = ev.source_app; changed = true; }
+
+  // Configured metadata wins over heuristics. Update on every event so a
+  // mid-session /session-init relabel is reflected without a refresh.
+  for (const [evKey, sKey] of [
+    ['session_name','name'], ['session_kind','kind'],
+    ['session_purpose','purpose'], ['session_priority','priority'],
+    ['persona','persona'],
+  ]) {
+    if (ev[evKey] !== undefined && ev[evKey] !== null && ev[evKey] !== s[sKey]) {
+      s[sKey] = ev[evKey];
+      changed = true;
+    }
   }
-  // Use first UserPromptSubmit as session label
+
+  // Fall back to first UserPromptSubmit if no configured name yet
   const type = ev.event_type || ev.hook_event_name || '';
-  if (!sessions[sid].label && type === 'UserPromptSubmit') {
+  if (!s.name && !s.label && type === 'UserPromptSubmit') {
     const prompt = ev.tool_input?.prompt || ev.tool_input?.content || ev.message || '';
     if (prompt.length > 0) {
       let label = prompt.slice(0, 45).replace(/\s+\S*$/, '');
       if (prompt.length > label.length) label += '...';
-      sessions[sid].label = label;
-      updateSessionBar();
-      updateFilterSession();
+      s.label = label;
+      changed = true;
     }
+  }
+
+  if (changed) {
+    updateSessionBar();
+    updateFilterSession();
   }
 }
 
 function sessionDisplayName(id) {
   const s = sessions[id];
   if (!s) return shortId(id);
-  if (s.label) {
-    return s.app ? s.app + ': ' + s.label : s.label;
-  }
+  if (s.name) return s.name;
+  if (s.label) return s.app ? s.app + ': ' + s.label : s.label;
   if (s.app) return s.app;
   return shortId(id);
 }
+
+// Sort order: high → med → unset → low (low last so it groups at the bottom)
+const PRIORITY_ORDER = { high: 0, med: 1, '': 2, low: 3 };
 
 function shortId(id) {
   if (!id) return '—';
@@ -526,7 +595,7 @@ function eventDetail(ev) {
 }
 
 function renderEvent(ev) {
-  const sid = ev.session_id || ev.source_app || 'unknown';
+  const sid = eventSid(ev);
   const color = sessionColor(sid);
   const type = ev.event_type || ev.hook_event_name || '?';
   const tool = ev.tool_name || '';
@@ -534,6 +603,7 @@ function renderEvent(ev) {
   const fail = isFailure(ev);
   const boundary = isSessionBoundary(ev);
   const prompt = isUserPrompt(ev);
+  const priority = sessions[sid]?.priority || '';
 
   const div = document.createElement('div');
   let cls = 'event';
@@ -541,6 +611,8 @@ function renderEvent(ev) {
   else if (fail) cls += ' failure';
   else if (prompt) cls += ' user-prompt';
   else if (boundary) cls += ' session-boundary';
+  if (priority === 'high') cls += ' priority-high';
+  if (priority === 'low')  cls += ' priority-low';
   div.className = cls;
 
   const humanBadge = human ? '<span class="human-badge">NEEDS HUMAN</span>' : '';
@@ -567,7 +639,9 @@ function renderEvent(ev) {
 function addEvent(ev) {
   events.push(ev);
   if (emptyState.parentNode) emptyState.remove();
-  const sid = ev.session_id || ev.source_app || 'unknown';
+  const sid = eventSid(ev);
+  // Make sure the session is registered before we try to update its metadata
+  sessionColor(sid);
   updateSessionLabel(sid, ev);
 
   // Remove "latest" class from previous latest
@@ -592,7 +666,7 @@ function addEvent(ev) {
 
 function updateWaitingText(ev) {
   if (ev) {
-    const sid = ev.session_id || ev.source_app || 'unknown';
+    const sid = eventSid(ev);
     waitingText.textContent = `Last: ${sessionDisplayName(sid)} — ${timeSince(ev._ts)}`;
   }
 }
@@ -613,7 +687,7 @@ function updateStats() {
   // number drops back down once the session continues past the prompt.
   const latestBySession = {};
   for (const ev of events) {
-    const sid = ev.session_id || ev.source_app || 'unknown';
+    const sid = eventSid(ev);
     latestBySession[sid] = ev;
   }
   const humans = Object.values(latestBySession).filter(needsHuman).length;
@@ -621,15 +695,46 @@ function updateStats() {
   document.getElementById('humanCount').className = 'n' + (humans > 0 ? ' alert' : '');
 }
 
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function pill(cls, label) {
+  return `<span class="pill ${cls}">${escapeHtml(label)}</span>`;
+}
+
 function updateSessionBar() {
   sessionBar.innerHTML = '';
-  for (const [id, s] of Object.entries(sessions)) {
+  // Sort: high priority first, then med/unset, then low; within a tier, most
+  // recent activity wins so the dashboard surfaces what's happening now.
+  const ids = Object.keys(sessions).sort((a, b) => {
+    const pa = PRIORITY_ORDER[sessions[a].priority] ?? PRIORITY_ORDER[''];
+    const pb = PRIORITY_ORDER[sessions[b].priority] ?? PRIORITY_ORDER[''];
+    if (pa !== pb) return pa - pb;
+    return (sessions[b].lastEvent || 0) - (sessions[a].lastEvent || 0);
+  });
+
+  for (const id of ids) {
+    const s = sessions[id];
     const tag = document.createElement('span');
-    tag.className = 'session-tag' + (selectedSession === id ? ' active' : '');
+    let cls = 'session-tag';
+    if (selectedSession === id) cls += ' active';
+    if (s.priority === 'low')   cls += ' priority-low';
+    tag.className = cls;
     tag.style.background = s.color + '22';
     tag.style.color = s.color;
-    tag.textContent = sessionDisplayName(id) + ' (' + s.count + ')';
-    tag.title = id;
+    tag.title = `${id}${s.purpose ? '\n' + s.purpose : ''}`;
+
+    const pills = [];
+    if (s.persona)  pills.push(pill('persona-' + s.persona, s.persona));
+    if (s.priority) pills.push(pill('priority-' + s.priority, 'P:' + s.priority));
+    if (s.kind)     pills.push(pill('kind-' + s.kind, s.kind));
+
+    const namePart = `<strong>${escapeHtml(sessionDisplayName(id))}</strong>` +
+                     ` <span style="opacity:0.7">(${s.count})</span>`;
+    const meta = pills.length ? `<span class="meta-line">${pills.join('')}</span>` : '';
+    tag.innerHTML = namePart + meta;
+
     tag.onclick = () => { selectedSession = selectedSession === id ? '' : id; refilter(); updateSessionBar(); };
     sessionBar.appendChild(tag);
   }
@@ -662,7 +767,7 @@ function refilter() {
   rows.forEach((row) => {
     const ev = row._ev;
     if (!ev) return;
-    const sid = ev.session_id || ev.source_app || 'unknown';
+    const sid = eventSid(ev);
     const type = ev.event_type || ev.hook_event_name || '';
     const show = (!selectedType || type === selectedType)
               && (!selectedSession || sid === selectedSession)

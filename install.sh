@@ -102,7 +102,7 @@ cp "$UV_SUITE_DIR/agents/cursor/"*.mdc "$PROJECT_ROOT/.cursor/rules/"
 echo "  ✓ .cursor/rules/*.mdc installed"
 
 # --- Install skills (slash commands) ---
-echo "Installing 10 skills..."
+echo "Installing skills..."
 for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
   skill_name=$(basename "$skill_dir")
   mkdir -p "$TARGET_DIR/skills/$skill_name"
@@ -110,7 +110,7 @@ for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
 done
 echo "  ✓ /map-codebase, /spec, /architect, /review, /write-tests"
 echo "  ✓ /write-evals, /slop-check, /prototype, /security-review"
-echo "  ✓ /map-stack"
+echo "  ✓ /map-stack, /session-init"
 
 # --- Install hooks ---
 echo "Installing hook scripts..."
@@ -122,7 +122,9 @@ echo "  ✓ block-destructive.sh (PreToolUse: block rm -rf, force push, etc.)"
 echo "  ✓ session-start.sh (SessionStart: track session start time)"
 echo "  ✓ session-timer.sh (PostToolUse: warn at 45/90/180 min)"
 echo "  ✓ session-end.sh (Stop: reflection + duration + review reminder)"
-echo "  ✓ status-line.sh (statusLine: show session time continuously)"
+echo "  ✓ session-label-nag.sh (UserPromptSubmit: nudge to /session-init)"
+echo "  ✓ session-meta.sh (helper used by /session-init)"
+echo "  ✓ status-line.sh (statusLine: show session label + time)"
 echo "  + Real-time slop check (Haiku prompt hook, wired in settings.json)"
 
 # --- Install guardrail rules (Sport only) ---
