@@ -3,7 +3,8 @@ name: checkpoint
 description: >
   Save a checkpoint of the current session — what was done, key decisions, current state,
   and what's next. Use before ending a session, before /compact, or at any natural breakpoint.
-  The next session auto-loads the latest checkpoint.
+  Checkpoints are stored per-session under uv-out/checkpoints/<session-id>/, so concurrent
+  terminals don't clobber each other. /restore picks up the latest for the current session.
 argument-hint: "[optional-label]"
 user-invocable: true
 allowed-tools:
@@ -12,39 +13,51 @@ allowed-tools:
   - Bash(git status *)
   - Bash(git diff *)
   - Bash(git log *)
+  - Bash(git branch *)
   - Bash(git rev-parse *)
   - Bash(date *)
   - Bash(ls *)
   - Bash(mkdir *)
+  - Bash(cat *)
   - Bash(echo *)
+  - Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh *)
 ---
 
-## Resolve checkpoint directory
+## Resolve session and checkpoint directory
 
-Anchor checkpoints to `$CLAUDE_PROJECT_DIR` (or the git repo root, or the current
-working dir as a last resort) so `/checkpoint` and `/restore` always agree, no matter
-which subdirectory the session was launched from.
-
-!`DIR="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/uv-out/checkpoints"; mkdir -p "$DIR"; echo "$DIR"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh dir`
 
 Use the absolute path printed above as `<checkpoint-dir>` for every file path below.
+The directory is per-session — two `uv` launches in the same repo write to
+different folders, so checkpoints don't collide.
+
+## Session metadata
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh meta`
+
+## Frontmatter to embed at the top of the checkpoint
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh frontmatter`
 
 ## Write a checkpoint
 
-Write a file named `<checkpoint-dir>/YYYY-MM-DD-HHMM.md` using the current timestamp.
+Write a file named `<checkpoint-dir>/YYYY-MM-DD-HHMM.md` using the current
+timestamp. **Begin the file with the YAML frontmatter block printed above
+exactly as shown** — `/restore` parses these fields when picking which
+checkpoint to load.
 
-Also write/overwrite `<checkpoint-dir>/latest.md` with the same content, so the next
-session's `/restore` always finds the freshest state.
+Also write/overwrite `<checkpoint-dir>/latest.md` with the same content,
+so the next session's `/restore` always finds the freshest state for this
+session.
 
 ## Label
 
 $ARGUMENTS
 
-If a label was provided, include it in the filename: `<checkpoint-dir>/YYYY-MM-DD-HHMM-[label].md`
+If a label was provided, include it in the filename:
+`<checkpoint-dir>/YYYY-MM-DD-HHMM-[label].md`
 
-## What to capture
-
-Review the full conversation so far and write a structured checkpoint with these exact sections:
+## Body structure (after the frontmatter)
 
 ```markdown
 # Checkpoint: [date] [time] [label if provided]
@@ -88,5 +101,5 @@ Review the full conversation so far and write a structured checkpoint with these
 
 - Be specific. "Worked on auth" is useless. "Added JWT refresh token rotation with 7-day expiry" is useful.
 - Capture WHY decisions were made, not just what. The next session needs the rationale.
-- Keep it under 80 lines. This isn't a novel — it's a handoff.
-- Every checkpoint overwrites `latest.md` so the next session always finds the freshest state.
+- Keep the body under 80 lines. The frontmatter is required and not counted.
+- Always include the YAML frontmatter — `/restore` reads it to pick the right checkpoint and to display session context.

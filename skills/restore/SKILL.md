@@ -1,25 +1,55 @@
 ---
 name: restore
 description: >
-  Restore the latest checkpoint from a previous session. Shows what was done,
-  key decisions, current state, and what's next. Use at the start of a new session.
+  Restore the latest checkpoint for the current session — shows what was done,
+  key decisions, current state, and what's next. With no arguments, picks the
+  current `UVS_SESSION_ID`'s most recent checkpoint. Pass a session id prefix
+  or name to restore from a different session.
+argument-hint: "[<session-id-prefix> | <session-name> | list]"
 user-invocable: true
 allowed-tools:
   - Read(*)
   - Bash(ls *)
   - Bash(cat *)
   - Bash(grep *)
+  - Bash(find *)
   - Bash(git rev-parse *)
+  - Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh *)
 ---
 
-## Latest checkpoint
+## Available sessions with checkpoints
 
-!`DIR="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/uv-out/checkpoints"; if [ -f "$DIR/latest.md" ]; then cat "$DIR/latest.md"; else echo "No checkpoint found at $DIR. Run /checkpoint to create one."; fi`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh list`
 
-## All checkpoints
+(`*` marks the current session.)
 
-!`DIR="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/uv-out/checkpoints"; if [ -d "$DIR" ]; then matches=$(ls -la "$DIR"/ 2>/dev/null | grep '\.md$' | tail -10); if [ -n "$matches" ]; then echo "$matches"; else echo "No checkpoints in $DIR"; fi; else echo "No checkpoints directory at $DIR"; fi`
+## Latest checkpoint for the current session
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh latest`
+
+## Argument
+
+$ARGUMENTS
 
 ## Instructions
 
-Read the checkpoint above. Summarize it to the user in 3-4 sentences: what was done, what's the current state, and what's next. Then ask: "Ready to pick up from here, or do you want to take a different direction?"
+1. **If `$ARGUMENTS` is empty or "latest"**: read the checkpoint shown above (the
+   current session's `latest.md`). Summarize it in 3-4 sentences: what was
+   done, current state, what's next. Then ask: "Ready to pick up from here, or
+   do you want to take a different direction?"
+
+2. **If `$ARGUMENTS` is "list"**: just show the user the available-sessions
+   list above and ask which one they want to restore.
+
+3. **If `$ARGUMENTS` looks like a session id prefix** (8-char hex / UUID-ish)
+   **or a session name**: match it against the list above. Read the
+   matching session's `latest.md` from
+   `<project>/uv-out/checkpoints/<full-session-id>/latest.md` using the Read
+   tool, then summarize as in (1).
+
+4. If no match is found, list the available sessions and ask the user to
+   pick one.
+
+When summarizing, include the session's name and purpose from the
+frontmatter at the top of the checkpoint — that's the context the next
+session needs to know what it's picking up.
