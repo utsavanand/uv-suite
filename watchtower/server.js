@@ -8,6 +8,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const autoCheckpointRunner = require("./auto-checkpoint-runner");
 
 const PORT = process.env.UVS_WATCHTOWER_PORT || 4200;
 const DATA_FILE = path.join(__dirname, "events.json");
@@ -176,4 +177,24 @@ server.listen(PORT, () => {
   console.log(
     `Waiting for hook events on POST http://localhost:${PORT}/events`,
   );
+
+  // Tier B auto-checkpoint runner. Polls every minute, calls
+  // `claude -p --bare --model haiku` for each active session whose
+  // configured interval has elapsed. Disable with `/auto-checkpoint off`
+  // per project, or set UVS_AUTO_CHECKPOINT_DISABLED=1 to disable globally.
+  if (!process.env.UVS_AUTO_CHECKPOINT_DISABLED) {
+    autoCheckpointRunner.start({
+      getEvents: () => events,
+      broadcast: (ev) => {
+        ev._ts = ev._ts || Date.now();
+        ev._id = crypto.randomUUID();
+        events.push(ev);
+        broadcast(ev);
+        saveEvents();
+      },
+    });
+    console.log(
+      "Auto-checkpoint runner started (Tier B, polls every 60s, uses claude -p)",
+    );
+  }
 });

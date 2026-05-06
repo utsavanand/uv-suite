@@ -357,6 +357,53 @@
   .type-Notification { color: var(--warning); }
   .type-PermissionRequest { color: var(--danger-soft); }
   .type-PreCompact { color: var(--text-muted); }
+  .type-AutoCheckpoint { color: var(--success); font-weight: 700; }
+
+  /* Auto-checkpoint rows are full-width and expandable */
+  .event.checkpoint {
+    background: rgba(48, 209, 88, 0.06);
+    border-left: 3px solid var(--success);
+    padding-left: 25px;
+    opacity: 1;
+  }
+  .event.checkpoint .detail { cursor: pointer; }
+  .event.checkpoint .checkpoint-summary {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .event.checkpoint .checkpoint-kind {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    background: var(--success-soft);
+    color: var(--success);
+    vertical-align: 1px;
+  }
+  .event.checkpoint .checkpoint-body {
+    display: none;
+    margin-top: 10px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    line-height: 1.55;
+    max-height: 360px;
+    overflow-y: auto;
+  }
+  .event.checkpoint.expanded .checkpoint-body { display: block; }
+  .event.checkpoint .checkpoint-toggle {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-left: 8px;
+  }
 </style>
 </head>
 <body>
@@ -603,11 +650,13 @@ function renderEvent(ev) {
   const fail = isFailure(ev);
   const boundary = isSessionBoundary(ev);
   const prompt = isUserPrompt(ev);
+  const checkpoint = type === 'AutoCheckpoint';
   const priority = sessions[sid]?.priority || '';
 
   const div = document.createElement('div');
   let cls = 'event';
-  if (human) cls += ' needs-human';
+  if (checkpoint) cls += ' checkpoint';
+  else if (human) cls += ' needs-human';
   else if (fail) cls += ' failure';
   else if (prompt) cls += ' user-prompt';
   else if (boundary) cls += ' session-boundary';
@@ -617,13 +666,32 @@ function renderEvent(ev) {
 
   const humanBadge = human ? '<span class="human-badge">NEEDS HUMAN</span>' : '';
 
-  div.innerHTML = `
-    <span class="time">${formatTime(ev._ts)}</span>
-    <span class="type type-${type}">${type}${humanBadge}</span>
-    <span class="session" style="background:${color}22;color:${color}" title="${sessionDisplayName(sid)}">${shortSession(sid)}</span>
-    <span class="tool">${tool}</span>
-    <span class="detail">${eventDetail(ev)}</span>
-  `;
+  if (checkpoint) {
+    const kind = ev.checkpoint_kind || 'auto';
+    const kindLabel = kind === 'auto-mechanical' ? 'mechanical' : kind === 'auto-semantic' ? 'semantic' : kind;
+    const calls = ev.tool_calls_in_window || 0;
+    const interval = ev.interval_minutes || '';
+    const summary = `<span class="checkpoint-summary">${escapeHtml(ev.checkpoint_path?.split('/').slice(-1)[0] || 'checkpoint')}</span>` +
+                    `<span class="checkpoint-kind">${kindLabel}</span>` +
+                    `<span class="checkpoint-toggle">${calls} tool calls in last ${interval}m · click to expand</span>`;
+    const body = ev.checkpoint_preview ? `<div class="checkpoint-body">${escapeHtml(ev.checkpoint_preview)}</div>` : '';
+    div.innerHTML = `
+      <span class="time">${formatTime(ev._ts)}</span>
+      <span class="type type-${type}">${type}</span>
+      <span class="session" style="background:${color}22;color:${color}" title="${sessionDisplayName(sid)}">${shortSession(sid)}</span>
+      <span class="tool"></span>
+      <span class="detail">${summary}${body}</span>
+    `;
+    div.querySelector('.detail').addEventListener('click', () => div.classList.toggle('expanded'));
+  } else {
+    div.innerHTML = `
+      <span class="time">${formatTime(ev._ts)}</span>
+      <span class="type type-${type}">${type}${humanBadge}</span>
+      <span class="session" style="background:${color}22;color:${color}" title="${sessionDisplayName(sid)}">${shortSession(sid)}</span>
+      <span class="tool">${tool}</span>
+      <span class="detail">${eventDetail(ev)}</span>
+    `;
+  }
 
   div._ev = ev;
 
