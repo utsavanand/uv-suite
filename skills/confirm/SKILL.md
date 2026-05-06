@@ -7,15 +7,12 @@ description: >
 argument-hint: "[on|off|<number>|status]"
 user-invocable: true
 allowed-tools:
-  - Bash(mkdir *)
-  - Bash(echo *)
-  - Bash(cat *)
-  - Bash(printf *)
+  - Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/confirm-helper.sh *)
 ---
 
 ## Apply /confirm $ARGUMENTS
 
-!`STATE_DIR="${CLAUDE_PROJECT_DIR:-.}/.uv-suite-state"; mkdir -p "$STATE_DIR"; MODE_FILE="$STATE_DIR/confirm-mode.txt"; THRESH_FILE="$STATE_DIR/confirm-threshold.txt"; ARG=$(printf '%s' "$ARGUMENTS" | tr -d '[:space:]'); current_mode() { cat "$MODE_FILE" 2>/dev/null || echo "on"; }; current_thresh() { cat "$THRESH_FILE" 2>/dev/null || echo "50"; }; case "$ARG" in on) echo "on" > "$MODE_FILE"; echo "Confirm mode: ON (threshold: $(current_thresh) words)";; off) echo "off" > "$MODE_FILE"; echo "Confirm mode: OFF";; ''|status) echo "Confirm mode: $(current_mode) (threshold: $(current_thresh) words)";; *) if printf '%s' "$ARG" | grep -qE '^[0-9]+$'; then echo "$ARG" > "$THRESH_FILE"; echo "Threshold set to $ARG words (mode: $(current_mode))"; else echo "Usage: /confirm [on | off | <number> | status]"; fi;; esac`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/confirm-helper.sh $ARGUMENTS`
 
 ## Instructions
 
@@ -31,5 +28,5 @@ next user prompt; no restart needed.
   step. Slash commands (`/foo ...`) are always exempt.
 - `status` (or no argument) — print the current mode and threshold.
 
-State lives in `${CLAUDE_PROJECT_DIR}/.uv-suite-state/confirm-mode.txt` and
-`confirm-threshold.txt`. Defaults if missing: mode `on`, threshold `50`.
+State lives in `.uv-suite-state/confirm-mode.txt` and `.uv-suite-state/confirm-threshold.txt`
+under `$CLAUDE_PROJECT_DIR`. Defaults if missing: mode `on`, threshold `50`.
