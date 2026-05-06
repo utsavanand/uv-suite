@@ -22,15 +22,30 @@
       "Bash(find *)",
       "Bash(wc *)",
       "Bash(head *)",
-      "Bash(tail *)"
+      "Bash(tail *)",
+      "Edit(*)",
+      "Bash(git *)",
+      "Bash(npx prettier *)",
+      "Bash(npx markdown-* *)",
+      "Bash(curl *)",
+      "Bash(chmod *)",
+      "Bash(mkdir *)",
+      "Bash(rm /tmp/*)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(echo *)",
+      "Bash(printf *)",
+      "Bash(node --check *)",
+      "Bash(bash -n *)"
     ],
     "deny": [
-      "Edit(*)",
-      "Bash(git commit *)",
-      "Bash(git push *)",
-      "Bash(rm *)",
-      "Bash(npm run *)",
-      "Bash(npx *)"
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf .)",
+      "Bash(sudo rm *)",
+      "Bash(sudo rm -rf *)",
+      "Bash(git push --force * main)",
+      "Bash(git push --force * master)"
     ]
   },
   "hooks": {
@@ -122,6 +137,12 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/watchtower-send.sh PostToolUse",
             "timeout": 2,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/auto-checkpoint.sh",
+            "timeout": 5,
             "async": true
           }
         ]
