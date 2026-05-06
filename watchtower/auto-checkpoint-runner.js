@@ -256,26 +256,30 @@ async function processSession(session, broadcast) {
   broadcast(event);
 }
 
+// One pass over all sessions with recent activity. Exposed so tests (and
+// any future "force a checkpoint now" command) can drive a single tick.
+async function tick({ getEvents, broadcast }) {
+  try {
+    const events = getEvents();
+    const window = 60 * 60 * 1000; // 1h lookback for active sessions
+    const sessions = groupActiveSessions(events, window);
+    for (const s of sessions) {
+      await processSession(s, broadcast);
+    }
+  } catch (err) {
+    console.warn("[auto-checkpoint] tick error:", err.message);
+  }
+}
+
 // Public API: start the runner. `getEvents` returns the watchtower's event
 // store; `broadcast` injects an AutoCheckpoint event into the SSE stream.
+// First tick after POLL_INTERVAL_MS; subsequent ticks every POLL_INTERVAL_MS.
 function start({ getEvents, broadcast }) {
-  const tick = async () => {
-    try {
-      const events = getEvents();
-      // Use the longest configured interval to find candidate sessions; we'll
-      // re-check each session's actual interval inside processSession.
-      const window = 60 * 60 * 1000; // 1h lookback for active sessions
-      const sessions = groupActiveSessions(events, window);
-      for (const s of sessions) {
-        await processSession(s, broadcast);
-      }
-    } catch (err) {
-      console.warn("[auto-checkpoint] tick error:", err.message);
-    }
-  };
-  // First tick after one minute; subsequent ticks every minute.
-  const handle = setInterval(tick, POLL_INTERVAL_MS);
+  const handle = setInterval(
+    () => tick({ getEvents, broadcast }),
+    POLL_INTERVAL_MS,
+  );
   return () => clearInterval(handle);
 }
 
-module.exports = { start };
+module.exports = { start, tick };
