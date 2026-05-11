@@ -34,6 +34,15 @@ function readJsonSafe(p) {
   }
 }
 
+// In-process dedup for noisy warnings. Avoids 60-per-hour log floods when
+// the same condition fires every tick (e.g. stale events for a missing dir).
+const _warnedKeys = new Set();
+function warnOnce(key, msg) {
+  if (_warnedKeys.has(key)) return;
+  _warnedKeys.add(key);
+  console.warn(msg);
+}
+
 function readStringSafe(p) {
   try {
     return fs.readFileSync(p, "utf-8").trim();
@@ -115,7 +124,10 @@ function extractTextFromContent(content) {
 function readTranscriptMessages(transcriptPath, sinceMs) {
   if (!transcriptPath || !fs.existsSync(transcriptPath)) {
     if (transcriptPath) {
-      console.warn(`[auto-checkpoint] transcript not found: ${transcriptPath}`);
+      warnOnce(
+        `tx-missing:${transcriptPath}`,
+        `[auto-checkpoint] transcript not found: ${transcriptPath} (warning shown once)`,
+      );
     }
     return null;
   }
@@ -123,7 +135,10 @@ function readTranscriptMessages(transcriptPath, sinceMs) {
   try {
     raw = fs.readFileSync(transcriptPath, "utf-8");
   } catch (err) {
-    console.warn(`[auto-checkpoint] failed to read transcript: ${err.message}`);
+    warnOnce(
+      `tx-readfail:${transcriptPath}`,
+      `[auto-checkpoint] failed to read transcript: ${err.message}`,
+    );
     return null;
   }
   const out = [];
@@ -293,6 +308,17 @@ async function processSession(session, broadcast) {
   const { sid, cwd, events } = session;
   if (!cwd || !sid) return;
 
+  // Bail early when the session's project dir is gone — typically test
+  // events left in the watchtower's store after the temp dir was cleaned.
+  // Without this, every tick logs ENOENT writing the state file.
+  if (!fs.existsSync(cwd)) {
+    warnOnce(
+      `cwd:${cwd}`,
+      `[auto-checkpoint] project dir for session ${sid.slice(0, 8)} is gone (${cwd}); skipping`,
+    );
+    return;
+  }
+
   const state = readAutoCheckpointState(cwd);
   if (state.mode !== "on") return;
   const intervalMs = state.interval_minutes * 60 * 1000;
@@ -451,6 +477,7 @@ async function processSession(session, broadcast) {
   ].join("\n");
 
   fs.writeFileSync(cpFile, frontmatter + body);
+  fs.mkdirSync(path.dirname(lastFile), { recursive: true });
   fs.writeFileSync(lastFile, String(Math.floor(now / 1000)));
 
   // Broadcast — the dashboard's expand-on-click body uses the summary.
