@@ -9,6 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const autoCheckpointRunner = require("./auto-checkpoint-runner");
+const snapshotManager = require("./snapshot-manager");
 
 const PORT = process.env.UVS_WATCHTOWER_PORT || 4200;
 const DATA_FILE = path.join(__dirname, "events.json");
@@ -118,6 +119,68 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(events.slice(-100)));
     return;
+  }
+
+  // POST /snapshots — take a snapshot of every active session
+  if (req.method === "POST" && req.url === "/snapshots") {
+    (async () => {
+      try {
+        const manifest = await snapshotManager.takeSnapshot({
+          runner: autoCheckpointRunner,
+          getEvents: () => events,
+          broadcast: (ev) => {
+            ev._ts = ev._ts || Date.now();
+            ev._id = crypto.randomUUID();
+            events.push(ev);
+            broadcast(ev);
+            saveEvents();
+          },
+        });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(manifest));
+      } catch (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    })();
+    return;
+  }
+
+  // GET /snapshots — list bundles
+  if (req.method === "GET" && req.url === "/snapshots") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(snapshotManager.listSnapshots()));
+    return;
+  }
+
+  // GET /snapshots/<id> — get manifest
+  const snapshotMatch = req.url.match(/^\/snapshots\/([^/]+)$/);
+  if (req.method === "GET" && snapshotMatch) {
+    const m = snapshotManager.getSnapshot(snapshotMatch[1]);
+    if (!m) {
+      res.writeHead(404);
+      return res.end("not found");
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(m));
+  }
+
+  // POST /snapshots/<id>/sessions/<sid>/restore — open a new terminal tab
+  // that restores the given session.
+  const restoreMatch = req.url.match(
+    /^\/snapshots\/([^/]+)\/sessions\/([^/]+)\/restore$/,
+  );
+  if (req.method === "POST" && restoreMatch) {
+    const [, snapId, sid] = restoreMatch;
+    const m = snapshotManager.getSnapshot(snapId);
+    const session = m?.sessions?.find((s) => s.uvs_session_id === sid);
+    if (!session) {
+      res.writeHead(404);
+      return res.end(JSON.stringify({ error: "session not in snapshot" }));
+    }
+    const result = snapshotManager.openTerminalForSession(session);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(result));
   }
 
   // GET / — serve dashboard
