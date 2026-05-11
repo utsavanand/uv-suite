@@ -113,37 +113,66 @@ function extractTextFromContent(content) {
 // Read transcript messages whose timestamp falls in [sinceMs, +inf).
 // Returns a flat array of { role, text, ts, tool? } records, oldest first.
 function readTranscriptMessages(transcriptPath, sinceMs) {
-  if (!transcriptPath || !fs.existsSync(transcriptPath)) return null;
+  if (!transcriptPath || !fs.existsSync(transcriptPath)) {
+    if (transcriptPath) {
+      console.warn(`[auto-checkpoint] transcript not found: ${transcriptPath}`);
+    }
+    return null;
+  }
   let raw;
   try {
     raw = fs.readFileSync(transcriptPath, "utf-8");
-  } catch {
+  } catch (err) {
+    console.warn(`[auto-checkpoint] failed to read transcript: ${err.message}`);
     return null;
   }
   const out = [];
+  let totalLines = 0;
+  let parseFailures = 0;
+  let recognizedShapes = 0;
   for (const line of raw.split("\n")) {
     if (!line.trim()) continue;
+    totalLines++;
     let msg;
     try {
       msg = JSON.parse(line);
     } catch {
+      parseFailures++;
       continue;
     }
-    const tsStr = msg.timestamp || msg.ts || msg.createdAt;
+    const tsStr = msg.timestamp || msg.ts || msg.createdAt || msg.created_at;
     const ts = tsStr ? Date.parse(tsStr) : NaN;
     if (Number.isFinite(ts) && ts < sinceMs) continue;
 
-    // Common shapes: { type: "user"|"assistant", message: { role, content } }
-    // or { role, content }
-    const role = msg.role || msg.message?.role || msg.type;
-    const content = msg.message?.content ?? msg.content;
+    // Tolerate several shapes Claude Code has used:
+    //   { type: "user"|"assistant", message: { role, content } }
+    //   { role, content }
+    //   { sender: "user"|"assistant", text }                  (older)
+    //   { event: "message", role, content }                   (variant)
+    const role =
+      msg.role ||
+      msg.message?.role ||
+      msg.sender ||
+      (msg.type === "user" || msg.type === "assistant" ? msg.type : null);
+    const content = msg.message?.content ?? msg.content ?? msg.text ?? msg.body;
     const text = extractTextFromContent(content).trim();
 
     if (role === "user" && text) {
       out.push({ role: "user", text, ts });
+      recognizedShapes++;
     } else if (role === "assistant" && text) {
       out.push({ role: "assistant", text, ts });
+      recognizedShapes++;
     }
+  }
+  // Surface format drift loudly: if the file has content but nothing parsed
+  // as a recognizable message, the Claude Code schema has probably changed.
+  if (totalLines > 0 && recognizedShapes === 0) {
+    console.warn(
+      `[auto-checkpoint] transcript at ${transcriptPath}: ${totalLines} lines, ` +
+        `${parseFailures} JSON-parse failures, 0 recognized user/assistant messages. ` +
+        `Claude Code's transcript format may have changed — please file an issue.`,
+    );
   }
   return out;
 }
