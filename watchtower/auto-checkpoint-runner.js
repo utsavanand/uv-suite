@@ -1,17 +1,30 @@
 // UV Suite — Tier B auto-checkpoint runner.
 // Called from watchtower/server.js on a setInterval. For each active session
-// (one with at least one event in the last interval), shells out to
-// `claude -p --bare --model haiku` to write a semantic summary.
+// whose interval has elapsed, reads the Claude Code transcript JSONL at
+// ~/.claude/projects/<encoded-cwd>/<session_id>.jsonl, extracts the
+// conversation in the window, and writes a self-contained checkpoint:
+//
+//   ## Summary       — one paragraph from `claude -p --bare --model haiku`
+//                      using the transcript as input
+//   ## Conversation  — raw extract: user prompts verbatim + assistant
+//                      response openings (~250 chars each) + tool calls
+//   ## Mechanical    — git state + tool counts + files touched
+//
+// The transcript is copied into our checkpoint, so the file stands alone
+// even if Claude Code later deletes its source JSONL.
 
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const { spawn } = require("child_process");
 
 const PROMPT_TEMPLATE_PATH = path.join(__dirname, "auto-checkpoint-prompt.md");
 const DEFAULT_INTERVAL_MIN = 10;
-const POLL_INTERVAL_MS = 60 * 1000; // wake up every 60s; per-session cadence is honored individually
+const POLL_INTERVAL_MS = 60 * 1000;
 const MAX_BUDGET_USD = "0.05";
 const MODEL = "haiku";
+const MAX_ASSISTANT_PREVIEW_CHARS = 250;
+const MAX_CONVERSATION_LINES = 200;
 
 function readJsonSafe(p) {
   try {
@@ -62,6 +75,107 @@ function groupActiveSessions(events, windowMs) {
     bySession.get(sid).events.push(ev);
   }
   return [...bySession.values()];
+}
+
+// Claude Code stores transcripts at ~/.claude/projects/<encoded>/<sid>.jsonl
+// where <encoded> is the project path with "/" replaced by "-".
+function transcriptPathFor(cwd, ccSessionId) {
+  if (!ccSessionId) return null;
+  const encoded = cwd.replace(/\//g, "-");
+  return path.join(
+    os.homedir(),
+    ".claude",
+    "projects",
+    encoded,
+    `${ccSessionId}.jsonl`,
+  );
+}
+
+// Defensive parser: Claude Code's JSONL format is internal and may change.
+// We pull out user prompts, assistant responses, and tool calls — skipping
+// anything we can't interpret rather than blowing up.
+function extractTextFromContent(content) {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((block) => {
+        if (typeof block === "string") return block;
+        if (block && block.type === "text" && typeof block.text === "string")
+          return block.text;
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+  return "";
+}
+
+// Read transcript messages whose timestamp falls in [sinceMs, +inf).
+// Returns a flat array of { role, text, ts, tool? } records, oldest first.
+function readTranscriptMessages(transcriptPath, sinceMs) {
+  if (!transcriptPath || !fs.existsSync(transcriptPath)) return null;
+  let raw;
+  try {
+    raw = fs.readFileSync(transcriptPath, "utf-8");
+  } catch {
+    return null;
+  }
+  const out = [];
+  for (const line of raw.split("\n")) {
+    if (!line.trim()) continue;
+    let msg;
+    try {
+      msg = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    const tsStr = msg.timestamp || msg.ts || msg.createdAt;
+    const ts = tsStr ? Date.parse(tsStr) : NaN;
+    if (Number.isFinite(ts) && ts < sinceMs) continue;
+
+    // Common shapes: { type: "user"|"assistant", message: { role, content } }
+    // or { role, content }
+    const role = msg.role || msg.message?.role || msg.type;
+    const content = msg.message?.content ?? msg.content;
+    const text = extractTextFromContent(content).trim();
+
+    if (role === "user" && text) {
+      out.push({ role: "user", text, ts });
+    } else if (role === "assistant" && text) {
+      out.push({ role: "assistant", text, ts });
+    }
+  }
+  return out;
+}
+
+// Build the ## Conversation extract markdown block. Trims long assistant
+// turns; caps total lines.
+function buildConversationExtract(messages) {
+  if (!messages || messages.length === 0) return "";
+  const lines = [];
+  for (const m of messages) {
+    if (m.role === "user") {
+      lines.push(`**You:**`);
+      for (const ln of m.text.split("\n")) lines.push(`> ${ln}`);
+    } else {
+      let preview = m.text;
+      if (preview.length > MAX_ASSISTANT_PREVIEW_CHARS) {
+        preview =
+          preview.slice(0, MAX_ASSISTANT_PREVIEW_CHARS).trimEnd() + " …";
+      }
+      lines.push(`**Claude:** ${preview.replace(/\n+/g, " ")}`);
+    }
+    lines.push("");
+  }
+  if (lines.length > MAX_CONVERSATION_LINES) {
+    const trimmed = lines.slice(-MAX_CONVERSATION_LINES);
+    trimmed.unshift(
+      `_(earlier turns truncated; showing last ${MAX_CONVERSATION_LINES} lines)_`,
+      "",
+    );
+    return trimmed.join("\n");
+  }
+  return lines.join("\n");
 }
 
 function eventToCompactLine(ev) {
@@ -170,41 +284,94 @@ async function processSession(session, broadcast) {
     .sort((a, b) => (a._ts || 0) - (b._ts || 0));
   if (recent.length === 0) return;
 
-  const template = loadPromptTemplate();
-  if (!template) {
-    console.warn("[auto-checkpoint] prompt template missing; skipping");
-    return;
+  // Find the Claude Code session id from the most recent event (it differs
+  // from uvs_session_id) and read the conversation transcript.
+  const ccSessionId =
+    [...recent].reverse().find((e) => e.session_id)?.session_id || null;
+  const transcriptPath = transcriptPathFor(cwd, ccSessionId);
+  const sinceMs = lastTs > 0 ? lastTs * 1000 : now - intervalMs;
+  const transcriptMessages = readTranscriptMessages(transcriptPath, sinceMs);
+
+  const conversationExtract =
+    buildConversationExtract(transcriptMessages) ||
+    "_(no transcript content found; only mechanical activity captured below)_";
+
+  // Mechanical breakdown — tool counts and files touched.
+  const toolCounts = {};
+  const fileCounts = {};
+  for (const e of recent) {
+    const t = e.tool_name;
+    if (t) toolCounts[t] = (toolCounts[t] || 0) + 1;
+    const fp = e.tool_input?.file_path;
+    if (fp && (t === "Edit" || t === "Write" || t === "Read")) {
+      fileCounts[fp] = (fileCounts[fp] || 0) + 1;
+    }
   }
+  const mechanicalLines = [];
+  mechanicalLines.push("### Tool calls");
+  Object.entries(toolCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .forEach(([t, n]) => mechanicalLines.push(`- ${n}× ${t}`));
+  if (Object.keys(fileCounts).length) {
+    mechanicalLines.push("", "### Files touched");
+    Object.entries(fileCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .forEach(([f, n]) => mechanicalLines.push(`- ${f} (${n})`));
+  }
+  const mechanicalBlock = mechanicalLines.join("\n");
 
   const git = await gitState(cwd);
-  const eventList = recent.slice(-40).map(eventToCompactLine).join("\n");
-  const elapsedMin =
-    lastTs === 0
-      ? state.interval_minutes
-      : Math.round((now - lastTs * 1000) / 60000);
+  const gitBlock = [
+    git.branch ? `**Branch:** ${git.branch}` : "_(not a git repo)_",
+    git.status
+      ? "**Status:**\n```\n" + git.status + "\n```"
+      : "**Status:** clean",
+    git.log ? "**Recent commits:**\n```\n" + git.log + "\n```" : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
-  const prompt = buildPrompt(template, {
-    name: session.session_name || "(unset)",
-    kind: session.session_kind || "(unset)",
-    priority: session.session_priority || "(unset)",
-    persona: session.persona || "(unset)",
-    purpose: session.session_purpose || "(unset)",
-    elapsed_min: String(elapsedMin),
-    interval_min: String(state.interval_minutes),
-    event_list: eventList,
-    git_branch: git.branch ? `Branch: ${git.branch}` : "(not a git repo)",
-    git_status: git.status || "(no changes)",
-    git_log: git.log || "",
-    timestamp: new Date(now).toISOString(),
-  });
-
-  const result = await runClaudeP(prompt);
-  if (!result.ok || !result.stdout.trim()) {
-    console.warn(
-      `[auto-checkpoint] claude -p failed for ${sid.slice(0, 8)}:`,
-      result.error || result.stderr?.slice(0, 200) || `exit ${result.code}`,
-    );
-    return;
+  // Summary via claude -p, fed the actual conversation extract instead of
+  // just the event log. Falls back to a one-line stub if the call fails or
+  // the transcript is empty.
+  let summary = "";
+  const template = loadPromptTemplate();
+  if (template && transcriptMessages && transcriptMessages.length > 0) {
+    const elapsedMin =
+      lastTs === 0
+        ? state.interval_minutes
+        : Math.round((now - lastTs * 1000) / 60000);
+    const prompt = buildPrompt(template, {
+      name: session.session_name || "(unset)",
+      kind: session.session_kind || "(unset)",
+      priority: session.session_priority || "(unset)",
+      persona: session.persona || "(unset)",
+      purpose: session.session_purpose || "(unset)",
+      elapsed_min: String(elapsedMin),
+      interval_min: String(state.interval_minutes),
+      conversation: conversationExtract,
+      mechanical: mechanicalBlock,
+      git_branch: git.branch || "(not a git repo)",
+      git_status: git.status || "(no changes)",
+      git_log: git.log || "",
+      timestamp: new Date(now).toISOString(),
+    });
+    const result = await runClaudeP(prompt);
+    if (result.ok && result.stdout.trim()) {
+      summary = result.stdout.trim();
+    } else {
+      console.warn(
+        `[auto-checkpoint] summary call failed for ${sid.slice(0, 8)}:`,
+        result.error || result.stderr?.slice(0, 200) || `exit ${result.code}`,
+      );
+    }
+  }
+  if (!summary) {
+    summary = transcriptMessages
+      ? "_(summary generation failed; raw conversation below)_"
+      : "_(no conversation transcript available; only mechanical activity below)_";
   }
 
   // Write the checkpoint file
@@ -227,15 +394,37 @@ async function processSession(session, broadcast) {
     `persona: ${session.persona || ""}`,
     `checkpoint_at: ${new Date(now).toISOString()}`,
     `checkpoint_kind: auto-semantic`,
+    `transcript_messages: ${transcriptMessages ? transcriptMessages.length : 0}`,
+    `tool_calls_in_window: ${recent.length}`,
     "---",
     "",
   ].join("\n");
 
-  fs.writeFileSync(cpFile, frontmatter + result.stdout.trim() + "\n");
+  const body = [
+    `# Auto-checkpoint (semantic): ${new Date(now).toISOString()}`,
+    "",
+    "## Summary",
+    "",
+    summary,
+    "",
+    "## Conversation",
+    "",
+    conversationExtract,
+    "",
+    "## Mechanical",
+    "",
+    mechanicalBlock,
+    "",
+    "## Git",
+    "",
+    gitBlock,
+    "",
+  ].join("\n");
+
+  fs.writeFileSync(cpFile, frontmatter + body);
   fs.writeFileSync(lastFile, String(Math.floor(now / 1000)));
 
-  // Broadcast as AutoCheckpoint event
-  const preview = (frontmatter + result.stdout).slice(0, 2000);
+  // Broadcast — the dashboard's expand-on-click body uses the summary.
   const event = {
     event_type: "AutoCheckpoint",
     source_app: path.basename(cwd),
@@ -248,9 +437,11 @@ async function processSession(session, broadcast) {
     persona: session.persona,
     checkpoint_kind: "auto-semantic",
     checkpoint_path: cpFile,
-    checkpoint_preview: preview,
+    checkpoint_summary: summary,
+    checkpoint_preview: (frontmatter + body).slice(0, 2000),
     interval_minutes: state.interval_minutes,
     tool_calls_in_window: recent.length,
+    transcript_messages: transcriptMessages ? transcriptMessages.length : 0,
     _ts: now,
   };
   broadcast(event);

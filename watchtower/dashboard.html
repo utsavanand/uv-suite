@@ -305,7 +305,12 @@
   .pill.priority-high { background: rgba(255, 69, 58, 0.18);   color: var(--danger); }
   .pill.kind-long-running { background: rgba(100, 210, 255, 0.18); color: var(--info); }
   .pill.kind-outcome      { background: rgba(255, 105, 97, 0.18);  color: var(--peach); }
+  .pill.lifecycle-active     { background: rgba(48, 209, 88, 0.18);  color: var(--success); }
+  .pill.lifecycle-idle       { background: rgba(154, 154, 163, 0.18); color: var(--text-muted); }
+  .pill.lifecycle-terminated { background: rgba(255, 69, 58, 0.16);   color: var(--danger); }
 
+  .session-tag.lifecycle-terminated { opacity: 0.55; }
+  .session-tag.lifecycle-terminated strong { text-decoration: line-through; }
   .session-tag.priority-low  { opacity: 0.6; }
   .session-tag .meta-line {
     display: block;
@@ -487,9 +492,10 @@ function sessionColor(id) {
   if (!sessions[id]) {
     sessions[id] = {
       color: palette[colorIdx++ % palette.length],
-      count: 0, lastEvent: null,
+      count: 0, lastEvent: null, lastEventTs: 0,
       name: '', kind: '', purpose: '', priority: '', persona: '',
       app: null, label: null,
+      terminated: false, terminatedAt: 0,
     };
     updateSessionBar();
     updateFilterSession();
@@ -505,6 +511,7 @@ function updateSessionLabel(sid, ev) {
   let changed = false;
 
   if (!s.app && ev.source_app) { s.app = ev.source_app; changed = true; }
+  if (ev._ts && ev._ts > (s.lastEventTs || 0)) s.lastEventTs = ev._ts;
 
   // Configured metadata wins over heuristics. Update on every event so a
   // mid-session /session-init relabel is reflected without a refresh.
@@ -519,8 +526,17 @@ function updateSessionLabel(sid, ev) {
     }
   }
 
-  // Fall back to first UserPromptSubmit if no configured name yet
+  // Lifecycle: a session is Terminated when we receive Stop / SessionEnd
+  // (Claude Code's natural exit signal) OR when ev.lifecycle === 'terminated'
+  // (the /session-end slash command). Time-idleness alone does NOT terminate.
   const type = ev.event_type || ev.hook_event_name || '';
+  if (!s.terminated && (type === 'Stop' || type === 'SessionEnd' || ev.lifecycle === 'terminated')) {
+    s.terminated = true;
+    s.terminatedAt = ev._ts || Date.now();
+    changed = true;
+  }
+
+  // Fall back to first UserPromptSubmit if no configured name yet
   if (!s.name && !s.label && type === 'UserPromptSubmit') {
     const prompt = ev.tool_input?.prompt || ev.tool_input?.content || ev.message || '';
     if (prompt.length > 0) {
@@ -535,6 +551,16 @@ function updateSessionLabel(sid, ev) {
     updateSessionBar();
     updateFilterSession();
   }
+}
+
+// Active = event in last ACTIVE_WINDOW_MS; Terminated = explicit signal seen;
+// Idle = anything else (including long-running sessions sitting dormant).
+const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
+function sessionStatus(s) {
+  if (!s) return 'idle';
+  if (s.terminated) return 'terminated';
+  if ((Date.now() - (s.lastEventTs || 0)) <= ACTIVE_WINDOW_MS) return 'active';
+  return 'idle';
 }
 
 function sessionDisplayName(id) {
@@ -744,6 +770,10 @@ setInterval(() => {
   if (events.length > 0) updateWaitingText(events[events.length - 1]);
 }, 5000);
 
+// Refresh the session bar periodically so Active→Idle transitions show up
+// without requiring a new event to arrive.
+setInterval(updateSessionBar, 30000);
+
 function updateStats() {
   document.getElementById('sessionCount').textContent = Object.keys(sessions).length;
   document.getElementById('eventCount').textContent = events.length;
@@ -771,11 +801,18 @@ function pill(cls, label) {
   return `<span class="pill ${cls}">${escapeHtml(label)}</span>`;
 }
 
+// Lifecycle sort: active first, then idle, terminated last.
+const LIFECYCLE_ORDER = { active: 0, idle: 1, terminated: 2 };
+
 function updateSessionBar() {
   sessionBar.innerHTML = '';
-  // Sort: high priority first, then med/unset, then low; within a tier, most
-  // recent activity wins so the dashboard surfaces what's happening now.
+  // Sort: lifecycle (active → idle → terminated) trumps priority (high → low),
+  // then most-recent activity. So a high-priority terminated session sits
+  // below a low-priority active one — what's running now matters more.
   const ids = Object.keys(sessions).sort((a, b) => {
+    const la = LIFECYCLE_ORDER[sessionStatus(sessions[a])];
+    const lb = LIFECYCLE_ORDER[sessionStatus(sessions[b])];
+    if (la !== lb) return la - lb;
     const pa = PRIORITY_ORDER[sessions[a].priority] ?? PRIORITY_ORDER[''];
     const pb = PRIORITY_ORDER[sessions[b].priority] ?? PRIORITY_ORDER[''];
     if (pa !== pb) return pa - pb;
@@ -784,16 +821,19 @@ function updateSessionBar() {
 
   for (const id of ids) {
     const s = sessions[id];
+    const lifecycle = sessionStatus(s);
     const tag = document.createElement('span');
     let cls = 'session-tag';
     if (selectedSession === id) cls += ' active';
     if (s.priority === 'low')   cls += ' priority-low';
+    cls += ' lifecycle-' + lifecycle;
     tag.className = cls;
     tag.style.background = s.color + '22';
     tag.style.color = s.color;
     tag.title = `${id}${s.purpose ? '\n' + s.purpose : ''}`;
 
     const pills = [];
+    pills.push(pill('lifecycle-' + lifecycle, lifecycle));
     if (s.persona)  pills.push(pill('persona-' + s.persona, s.persona));
     if (s.priority) pills.push(pill('priority-' + s.priority, 'P:' + s.priority));
     if (s.kind)     pills.push(pill('kind-' + s.kind, s.kind));

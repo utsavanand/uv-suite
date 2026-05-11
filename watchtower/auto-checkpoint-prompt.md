@@ -1,6 +1,6 @@
-You are writing an auto-checkpoint for a UV Suite coding session. Be specific
-and tight — this is a state snapshot, not a narrative. Don't speculate beyond
-what the events show.
+You are writing a one-paragraph summary for the UV Suite auto-checkpoint
+system. The actual conversation transcript is provided below — base the
+summary on what was actually said and done, not on inference.
 
 ## Session
 
@@ -11,41 +11,32 @@ what the events show.
 - purpose: {{purpose}}
 - elapsed since last semantic checkpoint: {{elapsed_min}} min
 
-## Activity (last {{interval_min}} min, from the dashboard)
+## Conversation (verbatim, last {{interval_min}} min)
 
-{{event_list}}
+{{conversation}}
+
+## Mechanical (from the dashboard event log)
+
+{{mechanical}}
 
 ## Git
 
-```
-{{git_branch}}
-{{git_status}}
-{{git_log}}
-```
+Branch: {{git_branch}}
+Status: {{git_status}}
+Recent commits: {{git_log}}
 
-## Write the checkpoint
+## Write the summary
 
-Output **only** the markdown body below — no preamble, no closing remarks.
-Use this exact shape, max 30 lines total:
+Output **only** a single paragraph, 3-6 sentences, no headers, no bullets.
+The paragraph should answer, in order:
 
-```markdown
-# Auto-checkpoint: {{timestamp}}
+1. What was the user trying to do this window?
+2. What did Claude actually do — concrete files / commands / decisions?
+3. Where does the session stand right now (in progress / blocked / awaiting input)?
 
-## Done in the last {{interval_min}} min
-- 2-4 bullets — concrete: file edited, command run, decision visible in events.
-  Skip vague verbs ("worked on"); name the artifact and the change.
-
-## Files touched
-- list (omit section if empty)
-
-## In progress
-- 1-2 bullets — what the session appears to be working on right now, based
-  on the latest events.
-
-## Notable
-- only include this section if something stands out (a failure, a long pause
-  followed by a burst, a clear pattern shift). Otherwise omit the section.
-```
-
-If the activity log is sparse or ambiguous, say so plainly in "In progress"
-rather than inventing details.
+Rules:
+- Use the user's own words for the topic when possible ("user asked about X")
+- Name the artifacts (file paths, command names, function names) — no vague verbs
+- If the conversation is sparse, say "Quiet window — only X tool calls, no
+  substantive exchange" and stop. Don't invent activity.
+- Don't restate the session metadata; it's already in the frontmatter.
