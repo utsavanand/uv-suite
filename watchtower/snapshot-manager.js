@@ -192,9 +192,10 @@ function getSnapshot(id) {
 }
 
 // Spawn a new terminal tab restoring the given session.
-//   macOS: AppleScript drives Terminal.app
-//   Linux: prefers gnome-terminal then x-terminal-emulator
-//   Other: returns { ok: false, command: <copy-paste string> }
+//   macOS:  iTerm2 if TERM_PROGRAM=iTerm.app (or UVS_TERMINAL_APP=iterm),
+//           otherwise Terminal.app. Override either way with UVS_TERMINAL_APP.
+//   Linux:  prefers gnome-terminal then x-terminal-emulator
+//   Other:  returns { ok: false, command: <copy-paste string> }
 function buildRestoreCommand(session) {
   const persona = session.persona || "professional";
   const sid = session.uvs_session_id;
@@ -208,20 +209,56 @@ function shellEscape(s) {
   return "'" + String(s).replace(/'/g, "'\\''") + "'";
 }
 
+function appleScriptEscape(s) {
+  return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+// Pick the macOS terminal app. UVS_TERMINAL_APP wins (values: iterm, terminal),
+// else look at $TERM_PROGRAM, else default to Terminal.app.
+function macTerminalApp() {
+  const explicit = (process.env.UVS_TERMINAL_APP || "").toLowerCase();
+  if (explicit === "iterm" || explicit === "iterm2") return "iterm";
+  if (explicit === "terminal") return "terminal";
+  const tp = process.env.TERM_PROGRAM || "";
+  if (tp === "iTerm.app") return "iterm";
+  return "terminal";
+}
+
+// iTerm2 AppleScript: opens a new tab in the front window if one exists,
+// otherwise a new window. Both code paths end with `write text "..."`.
+function iTermScript(command) {
+  const esc = appleScriptEscape(command);
+  return `
+    tell application "iTerm"
+      activate
+      if (count of windows) = 0 then
+        create window with default profile
+      else
+        tell current window to create tab with default profile
+      end if
+      tell current session of current window to write text "${esc}"
+    end tell
+  `;
+}
+
+function terminalAppScript(command) {
+  return `tell app "Terminal" to do script "${appleScriptEscape(command)}"`;
+}
+
 function openTerminalForSession(session) {
   const command = buildRestoreCommand(session);
   const platform = process.platform;
 
   if (platform === "darwin") {
-    // Escape for AppleScript string (double-quotes + backslashes)
-    const escaped = command.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-    const script = `tell app "Terminal" to do script "${escaped}"`;
+    const app = macTerminalApp();
+    const script =
+      app === "iterm" ? iTermScript(command) : terminalAppScript(command);
     const child = spawn("osascript", ["-e", script], {
       stdio: "ignore",
       detached: true,
     });
     child.unref();
-    return { ok: true, platform, command };
+    return { ok: true, platform, terminal_app: app, command };
   }
 
   if (platform === "linux") {
