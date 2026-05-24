@@ -23,7 +23,16 @@
       "Bash(find *)",
       "Bash(wc *)",
       "Bash(head *)",
-      "Bash(tail *)"
+      "Bash(tail *)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(jq *)",
+      "Bash(less *)",
+      "Bash(sed -n *)",
+      "Bash(awk *)",
+      "Bash(file *)",
+      "WebFetch(*)"
     ],
     "deny": [
       "Edit(*)",
