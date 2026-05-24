@@ -1,6 +1,39 @@
 # UV Suite
 
-Portable framework for AI-assisted software development. Works with Claude Code, Cursor, and OpenAI Codex.
+> Anti-slop guardrails, specialized agents, and live observability for AI-assisted coding. Works with Claude Code, Cursor, and OpenAI Codex.
+
+[![npm version](https://img.shields.io/npm/v/uv-suite.svg)](https://www.npmjs.com/package/uv-suite)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/utsavanand/uv-suite?style=social)](https://github.com/utsavanand/uv-suite)
+
+---
+
+## Why UV Suite
+
+AI coding agents move fast — and produce a lot of slop along the way: redundant comments, single-implementation factories, tests that assert truthiness, docs full of "robust, scalable, comprehensive."
+
+UV Suite is the seatbelt:
+
+- **6 anti-slop guardrails** loaded as context on every turn — stop slop before it lands
+- **10 specialized agents** for Index → Acts → Guard (map, spec, build, review, secure)
+- **15 slash commands** to drive the workflow
+- **11 hooks** that lint, slop-check, block destructive commands, track sessions
+- **Watchtower** — a zero-dep observability dashboard for everything your agent is doing
+- **4 personas** to match risk tolerance: Spike (research), Sport (build), Professional (ship), Auto (autonomous)
+
+Portable: one `uv install` drops the right format into `.claude/`, `.cursor/`, and `.codex/`.
+
+---
+
+## See it work
+
+![Watchtower dashboard](docs/img/watchtower-demo.gif)
+
+A 60-second tour: [concept video](https://example.com/concept) · [live demo](https://example.com/demo)
+
+> **Concrete example.** You ask Claude to "add a payment processor." It writes a `PaymentProcessor` interface, a `PaymentProcessorFactory`, and a single `StripePaymentProcessor` implementation. The `overengineering-slop` guardrail catches it on the next turn: *"Interface with one implementation. Delete the abstraction. Call `stripe.charges.create` directly."* The agent reverts and ships ~20 lines instead of 80. Watchtower logs the catch so you can see why.
+
+---
 
 ## Install
 
@@ -9,15 +42,13 @@ npm install -g uv-suite
 uv install
 ```
 
-Or with npx:
+Or run without installing:
 
 ```bash
 npx uv-suite install
 ```
 
-This installs 10 agents, 10 skills, 8 hooks, 6 guardrails, and 4 personas into your project.
-
-## Quick Start
+This drops 10 agents, 15 skills, 11 hooks, 6 guardrails, and 4 personas into your project, formatted for Claude Code, Cursor, and Codex simultaneously.
 
 ```bash
 uv install                    # Install UV Suite into current project
@@ -26,9 +57,46 @@ uv codex auto                 # Start Codex, Auto persona
 uv pro                        # Shorthand for uv claude pro
 ```
 
-## Modes
+---
 
-Four personas for different contexts. Pick one when you start a session.
+## The mental model
+
+UV Suite is three subsystems that map to the SDLC:
+
+```mermaid
+flowchart LR
+  subgraph Index["UV Index — Understand"]
+    A1[/map-codebase/]
+    A2[/map-stack/]
+    A3[Cartographer]
+  end
+  subgraph Acts["UV Acts — Build"]
+    B1[/spec/]
+    B2[/architect/]
+    B3[/write-tests/]
+    B4[/write-evals/]
+    B5[/prototype/]
+  end
+  subgraph Guard["UV Guard — Review"]
+    C1[/review/]
+    C2[/slop-check/]
+    C3[/security-review/]
+    C4[6 guardrails]
+    C5[Watchtower]
+  end
+  Index --> Acts --> Guard
+  Guard -.feedback.-> Acts
+```
+
+- **UV Index** — map the codebase with [Graphify](https://github.com/safishamsi/graphify) knowledge graphs, capture context, build memory.
+- **UV Acts** — deliver in sequential phases (Acts) with parallel tasks, human-in-the-loop cycle budgets, spec-driven development.
+- **UV Guard** — catch slop in real time, review for security ([Semgrep](https://github.com/semgrep/semgrep), [Gitleaks](https://github.com/gitleaks/gitleaks), [Trivy](https://github.com/aquasecurity/trivy)), enforce danger zones.
+
+---
+
+## Personas
+
+Pick one when you start a session. Each tunes 7 knobs at once.
 
 ```
              Spike          Sport        Professional       Auto
@@ -43,8 +111,8 @@ Writes       New files      Anything     Anything           Anything
              only                        (reviewed)         (autonomous)
 Edits        Blocked        Allowed      Allowed            Allowed
 
-Hooks        1              1            8                  3
-             doc-slop       lint         all                lint, block,
+Hooks        1              1            All                3
+             doc-slop       lint                            lint, block,
                                                             timer
 
 Guardrails   Doc slop       None         All 6              All 6
@@ -53,82 +121,92 @@ Human gates  After each     End only     Every Act          Final output
              map                         boundary           only
 ```
 
-### When to use what
-
-| Situation | Mode | Why |
-|-----------|------|-----|
-| Joining a new codebase | **Spike** | Understand before changing. Writes docs, not code. |
-| Architecture review | **Spike** | Map the system, write ADRs, document findings. |
-| Prototyping a demo | **Sport** | Move fast, iterate freely, quality comes later. |
-| Hackathon or new project | **Sport** | Get the foundation down without review gates. |
-| Fixing a bug in production code | **Professional** | Every change matters. Full review rigor. |
-| Adding a feature to an existing service | **Professional** | Team depends on this code. Slop-checked. |
-| Well-scoped task with a clear spec | **Auto** | Let the agent build, test, review end-to-end. |
-| Batch of small tasks | **Auto** | Agent handles repetitive work autonomously. |
-
-**Common progressions:**
-- Spike → Sport → Professional (understand, explore, harden)
-- Spike → Auto (research thoroughly, then let the agent execute)
-- Sport → Professional (prototype fast, switch to rigor when it matters)
-
-## What You Get
-
-| Category | Count | What |
-|----------|-------|------|
-| Agents | 10 | Subagent definitions for Claude Code, Cursor, and Codex |
-| Skills | 10 | Slash commands with dynamic context injection |
-| Hooks | 8 | Auto-lint, slop check, danger zones, session tracking, destructive blocks |
-| Guardrails | 6 | Anti-slop rules (comments, overengineering, tests, docs, architecture, errors) |
-| Personas | 4 | Spike, Sport, Professional, Auto |
-
-## Three Subsystems
-
-```
-UV Index          UV Acts           UV Guard
-Understand        Build             Review
-Learn             Deliver           Harden
-Remember          Present           Protect
+```mermaid
+flowchart TD
+  Q{What are you doing?}
+  Q -->|Joining a new codebase| Spike
+  Q -->|Architecture review or ADRs| Spike
+  Q -->|Prototyping or hackathon| Sport
+  Q -->|Fixing a prod bug| Pro[Professional]
+  Q -->|Adding a feature on shared code| Pro
+  Q -->|Well-scoped task with a spec| Auto
+  Q -->|Batch of small tasks| Auto
 ```
 
-**UV Index** maps codebases using [Graphify](https://github.com/safishamsi/graphify) knowledge graphs, captures context, builds persistent memory.
+**Common progressions:** Spike → Sport → Professional · Spike → Auto · Sport → Professional.
 
-**UV Acts** delivers software in sequential phases (Acts) with parallel tasks, human-in-the-loop cycle budgets, and spec-driven development.
+---
 
-**UV Guard** catches AI slop in real time, reviews code for security (OWASP, [Semgrep](https://github.com/semgrep/semgrep)), and enforces danger zones.
-
-## Skills
+## Skills (15 slash commands)
 
 | Command | What it does |
 |---------|-------------|
 | `/map-codebase [dir]` | Build a knowledge graph of the codebase |
 | `/map-stack [dir]` | Map multiple services and their connections |
-| `/spec [requirements]` | Write a technical specification |
+| `/spec [requirements]` | Convert requirements into a structured spec |
 | `/architect [spec]` | Design architecture, decompose into Acts |
-| `/review` | Code review: correctness, security, performance, slop |
 | `/write-tests [file]` | Generate tests matching project conventions |
-| `/write-evals [prompt]` | Write AI/LLM evaluation cases ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
-| `/slop-check` | Detect 6 categories of AI-generated slop |
+| `/write-evals [prompt]` | Write [DeepEval](https://github.com/confident-ai/deepeval)-compatible LLM evals |
 | `/prototype [concept]` | Build a static React prototype |
+| `/review` | Code review: correctness, security, performance, slop |
+| `/slop-check` | Detect 6 categories of AI-generated slop |
 | `/security-review` | OWASP audit, dependency scan, secret detection |
+| `/investigate [bug]` | Systematic root-cause debugging, escalates after 3 failed attempts |
+| `/commit [message\|pr]` | Review → test → slop-check → commit (and optionally open PR) |
+| `/checkpoint [label]` | Save session state — what was done, decisions, what's next |
+| `/restore [label\|branch\|date]` | Restore a previous checkpoint (per-branch by default) |
+| `/uv-help [topic]` | Discover skills, agents, hooks, guardrails, personas |
 
-## Hooks
+---
 
-Fire automatically. You never invoke these.
+## Hooks (fire automatically)
+
+You don't invoke these. They sit in the harness and react to events.
 
 | Hook | Fires on | What it does |
 |------|----------|-------------|
-| auto-lint | File write | Runs prettier, ruff, or gofmt |
-| Slop check | File write | Haiku scans for obvious slop patterns |
-| Danger zone | File edit | Warns if file is in DANGER-ZONES.md |
-| Destructive block | Bash command | Blocks rm -rf, force push, DROP TABLE |
-| Session start | Session start | Records start time for duration tracking |
-| Session timer | Every 20th tool call | Checkpoint reminders at 45/90/180 min |
-| Session end | Session stop | Shows duration, today's total, reflection prompt |
-| Status line | Continuous | Shows session time in Claude Code's status bar |
+| `auto-lint` | PostToolUse (Write\|Edit) | Runs prettier / ruff / gofmt on the touched file |
+| `slop-grep` | PostToolUse (Write\|Edit) | Greps for unambiguous slop patterns (no LLM, no false positives) |
+| `doc-slop-grep` | PostToolUse (Write) — Spike | Greps docs for vague adjectives ("robust", "scalable") |
+| `block-destructive` | PreToolUse (Bash) | Blocks `rm -rf`, force-push to main, `DROP TABLE` |
+| `danger-zone-check` | PreToolUse (Edit\|Write) | Warns when editing a file listed in `DANGER-ZONES.md` |
+| `session-start` | SessionStart | Records start time |
+| `session-timer` | PostToolUse (every Nth call) | Escalates at 45 / 90 / 180 min |
+| `session-end` | Stop | Shows duration, today's total, reflection prompt |
+| `session-review-reminder` | Stop | Reminds you to `/review` if there are uncommitted changes |
+| `status-line` | statusLine (continuous) | Shows session time + persona in the status bar |
+| `watchtower-send` | (called by other hooks) | POSTs events to Watchtower for the live dashboard |
 
-## Agents
+---
 
-10 agents, each in 4 formats (Claude Code, Cursor, Codex, Portable):
+## Watchtower — the live dashboard
+
+Zero-dep Node server (`watchtower/server.js`) + dashboard (`watchtower/dashboard.html`). Every hook event — file writes, slop catches, session boundaries, blocked bash — streams in over Server-Sent Events. You see what your agent is doing as it does it.
+
+```bash
+node watchtower/server.js          # http://localhost:4200
+```
+
+Filter by session, event type, or "needs human." Multiple sessions in different terminals show up side-by-side. If you start it twice on the same port it detects the running instance and exits cleanly instead of crashing.
+
+---
+
+## Guardrails (6 anti-slop rules)
+
+Loaded as context on every Professional/Auto turn. They describe the slop pattern, give before/after examples, and tell the agent how to fix it.
+
+| Guardrail | Catches |
+|-----------|---------|
+| `comment-slop` | Comments that restate what the code already says |
+| `overengineering-slop` | Single-impl interfaces, factories of one, premature abstraction |
+| `architecture-slop` | Microservices for 100 users, GraphQL for 5 fixed queries |
+| `test-slop` | `toBeTruthy()`, mocking the thing you're testing, snapshots on trivial UI |
+| `doc-slop` | "Robust", "scalable", "leverages industry-standard best practices" |
+| `error-handling-slop` | Try/catch around code that can't throw; catch-log-rethrow |
+
+---
+
+## Agents (10, each in 4 formats)
 
 | Agent | Subsystem | Model | Cycle Budget |
 |-------|-----------|-------|-------------|
@@ -143,16 +221,23 @@ Fire automatically. You never invoke these.
 | DevOps | UV Acts | Opus | 2 |
 | Security | UV Guard | Opus | 1 |
 
+Each agent ships in `agents/claude-code/`, `agents/cursor/`, `agents/codex/`, and `agents/portable/`. The installer picks the right format for your harness.
+
+---
+
 ## Artifacts
 
 Agents write persistent output to `uv-out/`. Each agent reads prior artifacts automatically.
 
-| Agent output | Read by |
-|-------------|---------|
-| `uv-out/map-codebase.md` | /architect, /review, /security-review |
-| `uv-out/specs/*.md` | /architect, /write-tests, /write-evals |
-| `uv-out/architecture/*.md` | /review, /write-tests, /slop-check |
-| `uv-out/review-*.md` | /slop-check, /security-review |
+| Output | Read by |
+|--------|---------|
+| `uv-out/map-codebase.md` | `/architect`, `/review`, `/security-review` |
+| `uv-out/specs/*.md` | `/architect`, `/write-tests`, `/write-evals` |
+| `uv-out/architecture/*.md` | `/review`, `/write-tests`, `/slop-check` |
+| `uv-out/review-*.md` | `/slop-check`, `/security-review` |
+| `uv-out/checkpoints/*.md` | `/restore` |
+
+---
 
 ## Integrations
 
@@ -165,14 +250,16 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 | [DeepEval](https://github.com/confident-ai/deepeval) | Eval Writer | Pytest-compatible LLM evaluation |
 | [Playwright](https://playwright.dev/docs/getting-started-mcp) | Prototype Builder, Test Writer | Browser automation and e2e testing |
 
-## Project Structure After Install
+---
+
+## Project structure after install
 
 ```
 .claude/
   settings.json        Permissions, hooks (from persona)
   agents/              10 agent definitions
-  skills/              10 slash commands
-  hooks/               7 hook scripts
+  skills/              15 slash commands
+  hooks/               11 hook scripts
   rules/               6 anti-slop guardrails
   personas/            4 persona configs
 .codex/agents/         10 Codex agent definitions
@@ -180,7 +267,10 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 AGENTS.md              Codex instruction file
 DANGER-ZONES.md        Risky areas (commit this)
 uv-out/                Agent output artifacts (gitignored)
+watchtower/            Optional live dashboard
 ```
+
+---
 
 ## Documentation
 
@@ -193,6 +283,12 @@ uv-out/                Agent output artifacts (gitignored)
 | [methodology/human-in-the-loop.md](methodology/human-in-the-loop.md) | Cycle budgets, intervention types, learning loops |
 | [collaboration/sharing-and-standards.md](collaboration/sharing-and-standards.md) | Danger zones, team standards, sharing levels |
 | [landscape.md](landscape.md) | Open source tools and references for each agent |
+
+---
+
+## Contributing
+
+PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## License
 

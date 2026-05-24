@@ -1,7 +1,7 @@
 {
   "name": "uv-suite",
   "version": "0.26.1",
-  "description": "Portable framework for AI-assisted software development. 10 agents, 9 skills, 5 hooks, 4 personas. Works with Claude Code, Cursor, and Codex.",
+  "description": "Anti-slop guardrails, specialized agents, and live observability for AI-assisted coding. 10 agents, 15 skills, 11 hooks, 6 guardrails, 4 personas. Works with Claude Code, Cursor, and Codex.",
   "author": "Utsav Anand",
   "license": "MIT",
   "repository": {
