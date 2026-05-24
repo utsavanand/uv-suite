@@ -33,9 +33,9 @@ $ARGUMENTS
 
 ### Spec (if written)
 
-!`ls uv-out/specs/*.md 2>/dev/null | head -5 || echo "No specs found"`
+!`ls -t uv-out/specs/*.md 2>/dev/null | head -5 || echo "No specs found"`
 
-!`cat $(ls -t uv-out/specs/*.md 2>/dev/null | head -1) 2>/dev/null | head -80 || echo ""`
+If any specs are listed above, Read the most recent one (the first in the list) before continuing.
 
 ### Session checkpoint
 

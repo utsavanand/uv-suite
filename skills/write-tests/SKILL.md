@@ -33,7 +33,7 @@ $ARGUMENTS
 
 !`find . -name "*.test.*" -o -name "*.spec.*" -o -name "test_*" 2>/dev/null | head -5`
 
-!`cat $(find . -name "*.test.*" -o -name "*.spec.*" 2>/dev/null | head -1) 2>/dev/null | head -40 || echo "No existing tests found"`
+If any test files are listed above, Read one of them to learn the project's test conventions (assertion library, naming, structure) before writing new tests.
 
 ## Project test command
 
@@ -43,7 +43,9 @@ $ARGUMENTS
 
 ### Spec (what to test against)
 
-!`cat $(ls -t uv-out/specs/*.md 2>/dev/null | head -1) 2>/dev/null | head -60 || echo "No spec found — test based on code behavior"`
+!`ls -t uv-out/specs/*.md 2>/dev/null | head -3 || echo "No spec found — test based on code behavior"`
+
+If any specs are listed, Read the most recent one (top of the list) — its acceptance criteria are what to test against.
 
 ### Acts plan (current task context)
 

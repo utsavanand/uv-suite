@@ -48,11 +48,15 @@ $ARGUMENTS
 
 ### Recent code review findings
 
-!`cat $(ls -t uv-out/review-*.md 2>/dev/null | head -1) 2>/dev/null | head -60 || echo "No prior review found"`
+!`ls -t uv-out/review-*.md 2>/dev/null | head -3 || echo "No prior review found"`
+
+If any reviews are listed, Read the most recent one (top of the list) for context.
 
 ### Recent slop check
 
-!`cat $(ls -t uv-out/slop-check-*.md 2>/dev/null | head -1) 2>/dev/null | head -40 || echo "No prior slop check found"`
+!`ls -t uv-out/slop-check-*.md 2>/dev/null | head -3 || echo "No prior slop check found"`
+
+If any slop checks are listed, Read the most recent one (top of the list) for context.
 
 ## Available security tools
 

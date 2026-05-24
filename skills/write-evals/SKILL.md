@@ -31,4 +31,6 @@ $ARGUMENTS
 
 ### Spec (requirements to evaluate against)
 
-!`cat $(ls -t uv-out/specs/*.md 2>/dev/null | head -1) 2>/dev/null | head -60 || echo "No spec found"`
+!`ls -t uv-out/specs/*.md 2>/dev/null | head -3 || echo "No spec found"`
+
+If any specs are listed, Read the most recent one (top of the list) — that's what to evaluate against.

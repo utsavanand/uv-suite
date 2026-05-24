@@ -37,4 +37,6 @@ $ARGUMENTS
 
 ### Recent review findings
 
-!`cat $(ls -t uv-out/review-*.md 2>/dev/null | head -1) 2>/dev/null | head -40 || echo "No prior review found"`
+!`ls -t uv-out/review-*.md 2>/dev/null | head -3 || echo "No prior review found"`
+
+If any reviews are listed, Read the most recent one (top of the list) for context.
