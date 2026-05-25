@@ -38,6 +38,17 @@
       "Bash(wc *)",
       "Bash(head *)",
       "Bash(tail *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(jq *)",
+      "Bash(sed -n *)",
+      "Bash(awk *)",
+      "Bash(tree *)",
+      "Bash(du *)",
+      "Bash(df *)",
+      "Bash(file *)",
+      "Bash(stat *)",
+      "Bash(diff *)",
       "Bash(curl *)"
     ],
     "deny": [

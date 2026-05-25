@@ -17,7 +17,25 @@
       "Bash(npm *)",
       "Bash(npx *)",
       "Bash(node *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(find *)",
+      "Bash(wc *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(jq *)",
+      "Bash(sed -n *)",
+      "Bash(awk *)",
+      "Bash(tree *)",
+      "Bash(du *)",
+      "Bash(df *)",
+      "Bash(file *)",
+      "Bash(stat *)",
+      "Bash(diff *)",
+      "Bash(mkdir *)"
     ]
   },
 
