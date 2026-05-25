@@ -17,7 +17,7 @@ UV Suite is the seatbelt:
 - **6 anti-slop guardrails** loaded as context on every turn — stop slop before it lands
 - **10 specialized agents** for Index → Acts → Guard (map, spec, build, review, secure)
 - **15 slash commands** to drive the workflow
-- **12 hooks** that lint, slop-check, block destructive commands, track sessions, inject lite mode
+- **11 hooks** that auto-lint on save, grep for slop patterns, block destructive bash, warn on danger zones, track session duration, inject lite mode
 - **Watchtower** — a zero-dep observability dashboard for everything your agent is doing
 - **4 personas** to match risk tolerance: Spike (research), Sport (build), Professional (ship), Auto (autonomous)
 
@@ -170,8 +170,7 @@ You don't invoke these. They sit in the harness and react to events.
 | `danger-zone-check` | PreToolUse (Edit\|Write) | Warns when editing a file listed in `DANGER-ZONES.md` |
 | `session-start` | SessionStart | Records start time |
 | `session-timer` | PostToolUse (every Nth call) | Escalates at 45 / 90 / 180 min |
-| `session-end` | Stop | Shows duration, today's total, reflection prompt |
-| `session-review-reminder` | Stop | Reminds you to `/review` if there are uncommitted changes |
+| `session-end` | Stop | Shows duration, today's total, reflection prompt, reminds about uncommitted changes |
 | `status-line` | statusLine (continuous) | Shows session time + persona in the status bar |
 | `watchtower-send` | (called by other hooks) | POSTs events to Watchtower for the live dashboard |
 | `lite-mode-inject` | UserPromptSubmit | Injects terseness rules when `/lite on` or `UVS_LITE=1` is set |
@@ -220,7 +219,7 @@ Loaded as context on every Professional/Auto turn. They describe the slop patter
 | DevOps | UV Acts | Opus | 2 |
 | Security | UV Guard | Opus | 1 |
 
-Each agent ships in `agents/claude-code/`, `agents/cursor/`, `agents/codex/`, and `agents/portable/`. The installer picks the right format for your harness.
+Each agent ships in `agents/claude-code/`, `agents/cursor/`, and `agents/codex/`. The installer picks the right format for your harness.
 
 ---
 
@@ -258,7 +257,7 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
   settings.json        Permissions, hooks (from persona)
   agents/              10 agent definitions
   skills/              16 slash commands
-  hooks/               12 hook scripts
+  hooks/               11 hook scripts
   rules/               6 anti-slop guardrails
   personas/            4 persona configs
 .codex/agents/         10 Codex agent definitions
