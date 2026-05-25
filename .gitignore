@@ -2,6 +2,7 @@ node_modules/
 dist/
 uv-out/
 .uv-suite-state/
+.claude/
 .env
 .env.local
 *.log
