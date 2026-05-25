@@ -17,7 +17,7 @@ UV Suite is the seatbelt:
 - **6 anti-slop guardrails** loaded as context on every turn — stop slop before it lands
 - **10 specialized agents** for Index → Acts → Guard (map, spec, build, review, secure)
 - **15 slash commands** to drive the workflow
-- **11 hooks** that lint, slop-check, block destructive commands, track sessions
+- **12 hooks** that lint, slop-check, block destructive commands, track sessions, inject lite mode
 - **Watchtower** — a zero-dep observability dashboard for everything your agent is doing
 - **4 personas** to match risk tolerance: Spike (research), Sport (build), Professional (ship), Auto (autonomous)
 
@@ -153,6 +153,7 @@ flowchart TD
 | `/checkpoint [label]` | Save session state — what was done, decisions, what's next |
 | `/restore [label\|branch\|date]` | Restore a previous checkpoint (per-branch by default) |
 | `/uv-help [topic]` | Discover skills, agents, hooks, guardrails, personas |
+| `/lite [on\|off]` | Toggle terse output when tokens are tight |
 
 ---
 
@@ -173,6 +174,7 @@ You don't invoke these. They sit in the harness and react to events.
 | `session-review-reminder` | Stop | Reminds you to `/review` if there are uncommitted changes |
 | `status-line` | statusLine (continuous) | Shows session time + persona in the status bar |
 | `watchtower-send` | (called by other hooks) | POSTs events to Watchtower for the live dashboard |
+| `lite-mode-inject` | UserPromptSubmit | Injects terseness rules when `/lite on` or `UVS_LITE=1` is set |
 
 ---
 
@@ -255,8 +257,8 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 .claude/
   settings.json        Permissions, hooks (from persona)
   agents/              10 agent definitions
-  skills/              15 slash commands
-  hooks/               11 hook scripts
+  skills/              16 slash commands
+  hooks/               12 hook scripts
   rules/               6 anti-slop guardrails
   personas/            4 persona configs
 .codex/agents/         10 Codex agent definitions
