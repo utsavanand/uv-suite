@@ -27,11 +27,9 @@ Portable: one `uv install` drops the right format into `.claude/`, `.cursor/`, a
 
 ## See it work
 
-![Watchtower dashboard](docs/img/watchtower-demo.gif)
-
-A 60-second tour: [concept video](https://example.com/concept) · [live demo](https://example.com/demo)
-
 > **Concrete example.** You ask Claude to "add a payment processor." It writes a `PaymentProcessor` interface, a `PaymentProcessorFactory`, and a single `StripePaymentProcessor` implementation. The `overengineering-slop` guardrail catches it on the next turn: *"Interface with one implementation. Delete the abstraction. Call `stripe.charges.create` directly."* The agent reverts and ships ~20 lines instead of 80. Watchtower logs the catch so you can see why.
+
+*Walkthrough video and Watchtower screenshots coming with the v1.0.0 release.*
 
 ---
 
@@ -48,7 +46,7 @@ Or run without installing:
 npx uv-suite install
 ```
 
-This drops 10 agents, 15 skills, 11 hooks, 6 guardrails, and 4 personas into your project, formatted for Claude Code, Cursor, and Codex simultaneously.
+Installs into your project, formatted for Claude Code, Cursor, and Codex simultaneously.
 
 ```bash
 uv install                    # Install UV Suite into current project
@@ -107,13 +105,12 @@ Purpose      Research       Build new    Ship to prod       Let it run
 Model        Opus           Sonnet       Inherit            Inherit
 Effort       max            high         high               max
 
-Writes       New files      Anything     Anything           Anything
-             only                        (reviewed)         (autonomous)
+Writes       Allowed        Allowed      Allowed            Allowed
+             (doc-focused)
 Edits        Blocked        Allowed      Allowed            Allowed
 
-Hooks        1              1            All                3
-             doc-slop       lint                            lint, block,
-                                                            timer
+Hooks        doc-slop       lint         All                All
+             watchtower     watchtower                      (autonomous)
 
 Guardrails   Doc slop       None         All 6              All 6
 
