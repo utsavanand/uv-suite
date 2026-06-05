@@ -1,0 +1,11 @@
+{
+  "name": "@pdf-qa/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript client for the PDF-QA BFF",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

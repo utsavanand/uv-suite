@@ -1,0 +1,9 @@
+node_modules/
+__pycache__/
+*.pyc
+dist/
+.venv/
+
+# local-only corporate CA bundle (machine-specific, never commit)
+corp-certs.pem
+docker-compose.override.yml

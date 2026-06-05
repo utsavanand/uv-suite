@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+
+  bff:
+    build: ./bff
+    ports:
+      - "8080:8080"
+    environment:
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      # Browser-facing: the BFF must be reachable from the host, not the docker network.
+      VITE_BFF_URL: http://localhost:8080
+    depends_on:
+      - bff
