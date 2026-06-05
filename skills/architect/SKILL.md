@@ -57,4 +57,4 @@ Write architecture artifacts under this directory (scoped to the current session
 
 ### Session checkpoint
 
-!`cat uv-out/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
+!`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`

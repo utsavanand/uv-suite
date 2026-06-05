@@ -102,9 +102,17 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 
 ## Artifacts
 
-All agent output goes to `uv-out/`. Agents read each other's prior output automatically.
+All agent output goes to `uv-out/sessions/<session-id>/`, so every artifact is attributable
+to the session that produced it; `uv-out/current` points at the active session. Skills read
+each other's prior output automatically (current session first, then prior sessions).
 
-!`ls uv-out/*.md uv-out/**/*.md 2>/dev/null | head -15 || echo "No artifacts yet — run a skill to generate some"`
+### This session's artifacts
+
+!`ls -R uv-out/current 2>/dev/null | head -20 || echo "No artifacts yet — run a skill to generate some"`
+
+### All sessions
+
+!`ls -1 uv-out/sessions 2>/dev/null | head -15 || echo "No sessions yet"`
 
 ## Tips
 

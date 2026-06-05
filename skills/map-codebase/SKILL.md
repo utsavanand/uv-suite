@@ -69,7 +69,9 @@ T="$ARGUMENTS"; D="$T"; [ -d "$D" ] || D="."; cat "$D/graphify-out/GRAPH_REPORT.
 
 ## Output
 
-Write the full map to `uv-out/map-codebase.md`. It should contain:
+Write the full map to `map-codebase.md` inside the session output directory shown above
+(e.g. `uv-out/sessions/<sid>/map-codebase.md`), stamped with provenance frontmatter
+(`session`, `skill: map-codebase`, `created`). It should contain:
 
 - **Architecture overview** — major modules and how they fit together
 - **Business domain map** — the real-world concepts the code models
@@ -81,4 +83,4 @@ If Graphify is available, run it first and fold its findings in.
 
 After writing the file, print only a one-line pointer to the terminal — do not repeat the map contents. For example:
 
-> Codebase map written to `uv-out/map-codebase.md` — go check it.
+> Codebase map written to `uv-out/sessions/<sid>/map-codebase.md` — go check it.

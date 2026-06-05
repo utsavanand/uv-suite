@@ -221,15 +221,23 @@ to the session that produced it. Each artifact is also stamped with provenance f
 (session, skill, created).
 
 Downstream skills prefer the current session's artifacts but can use a prior session's when
-the current one has none (they list current → prior → legacy and ask which to use):
-- /map-codebase writes uv-out/sessions/<sid>/map-codebase.md (read by /architect, /map-stack)
-- /spec writes uv-out/sessions/<sid>/specs/ (read by /architect, /write-tests, /write-evals)
-- /architect writes uv-out/sessions/<sid>/architecture/ (read by /review, /write-tests, /slop-check)
-- /review writes uv-out/review-*.md (read by /slop-check, /security-review)
+the current one has none (they list current → prior → legacy and ask which to use). All
+writers are session-scoped:
+- /map-codebase  → uv-out/sessions/<sid>/map-codebase.md
+- /map-stack     → uv-out/sessions/<sid>/map-stack.md
+- /spec          → uv-out/sessions/<sid>/specs/
+- /architect     → uv-out/sessions/<sid>/architecture/
+- /review        → uv-out/sessions/<sid>/review/state.md   (flat pointer: uv-out/review-state.md)
+- /slop-check    → uv-out/sessions/<sid>/slop-check/report.md
+- /security-review → uv-out/sessions/<sid>/security/report.md
+- /investigate   → uv-out/sessions/<sid>/investigate/report.md
+- /write-evals   → uv-out/sessions/<sid>/evals/
+- /qa            → uv-out/sessions/<sid>/qa/   (flat pointer: uv-out/qa-state.md)
+- /checkpoint    → uv-out/sessions/<sid>/checkpoints/
 
-The Stop hook uv-out-notify.sh prints the artifact path (and session id) to the terminal
-after each run. NOTE: /review, /write-tests, /write-evals, /slop-check, /security-review,
-and /checkpoint still write to flat uv-out/ paths — session-scoping for those is pending.
+Fixed-path consumers (/commit, /ship) read the flat pointer symlinks (uv-out/review-state.md,
+uv-out/qa-state.md), which resolve into the current session. The Stop hook uv-out-notify.sh
+prints the artifact path (and session id) to the terminal after each run.
 
 ### Hooks
 

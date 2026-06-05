@@ -108,7 +108,9 @@ This is the hard part. Look for:
 
 ### 4. Produce the stack map
 
-Write the full stack map to `uv-out/map-stack.md`. Everything below goes in that file, not the terminal.
+Write the full stack map to `map-stack.md` inside the session output directory shown
+above (e.g. `uv-out/sessions/<sid>/map-stack.md`), stamped with provenance frontmatter
+(`session`, `skill: map-stack`, `created`). Everything below goes in that file, not the terminal.
 
 Start with a **System Architecture Diagram** (Mermaid) showing:
 - Every service as a node
@@ -135,9 +137,9 @@ Then **Danger Zones** at the stack level:
 - Missing monitoring or health checks
 
 ### 5. If Graphify is available
-Run `graphify run [parent-dir] --directed` on the entire parent directory to get a unified knowledge graph across all services. The graph will show cross-service relationships that are hard to find manually. Fold its findings into `uv-out/map-stack.md`.
+Run `graphify run [parent-dir] --directed` on the entire parent directory to get a unified knowledge graph across all services. The graph will show cross-service relationships that are hard to find manually. Fold its findings into the session's `map-stack.md`.
 
 ### 6. Report back
 After writing the file, the only thing you print to the terminal is a one-line pointer — do not repeat the map contents. For example:
 
-> Stack map written to `uv-out/map-stack.md` — go check it.
+> Stack map written to `uv-out/sessions/<sid>/map-stack.md` — go check it.

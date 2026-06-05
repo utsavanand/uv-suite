@@ -41,7 +41,18 @@ $ARGUMENTS
 Parse `$ARGUMENTS`:
 - First positional token without `--` prefix → app URL (defaults to `http://localhost:3000` if not given).
 - `--tier quick|standard|exhaustive` → tier (defaults to `standard`).
-- `--baseline <path>` → path to a prior `uv-out/qa-state.md` for health-score delta (defaults to most recent under `uv-out/qa/` if any).
+- `--baseline <path>` → path to a prior `qa-state.md` for health-score delta (defaults to `uv-out/qa-state.md`, the flat pointer to the latest run, if present).
+
+## Session output directory
+
+Write QA artifacts under this directory (scoped to the current session). The
+`<session-output-dir>/qa/<ts>/` paths below all resolve under it:
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+
+Stable flat pointer maintained for `/commit` and `/ship`:
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-pointer.sh qa-state.md qa/state.md`
 
 ## Project context
 
@@ -69,12 +80,12 @@ Execute these steps in order.
 
 - Confirm Playwright MCP is reachable (`mcp__playwright__browser_*` tools available). If not, stop and tell user to enable the Playwright MCP server.
 - Verify the target URL is reachable: `curl -sf <url> > /dev/null`. If not, stop and ask user to start the dev server.
-- Create output directory: `mkdir -p uv-out/qa/<ISO-timestamp>/screenshots`.
+- Create output directory: `mkdir -p <session-output-dir>/qa/<ISO-timestamp>/screenshots` (the `<session-output-dir>` printed above).
 - If framework detected, note its config path; you'll write regression tests against it later.
 
 ### Step 2 — Orient
 
-- Navigate to the target URL. Take a full-page screenshot saved as `uv-out/qa/<ts>/screenshots/00-entry-desktop.png`.
+- Navigate to the target URL. Take a full-page screenshot saved as `<session-output-dir>/qa/<ts>/screenshots/00-entry-desktop.png`.
 - Take a DOM accessibility snapshot (`browser_snapshot`) and use it to enumerate navigable elements: nav links, buttons with handlers, forms.
 - Read browser console messages (`browser_console_messages`). Record any errors or warnings at this point as Tier-0 findings (page didn't even load cleanly).
 - Build a page map: list of URLs reachable from the entry page within one click, with rough page type (list, detail, form, dashboard, etc.).
@@ -157,7 +168,7 @@ Run the new tests once before declaring done. If they fail, the fix didn't actua
 After all fixes are committed and tests pass:
 
 - Re-navigate the full page map (per tier) one more time.
-- Take fresh screenshots into `uv-out/qa/<ts>/screenshots/final-*`.
+- Take fresh screenshots into `<session-output-dir>/qa/<ts>/screenshots/final-*`.
 - Capture final console state.
 - Compute health score (see scoring below).
 
@@ -178,7 +189,10 @@ If a baseline was provided or auto-detected, compute `delta = current - baseline
 
 ### Step 9 — Write state
 
-Write `uv-out/qa/<ts>/qa-state.md` AND update the symlink/copy at `uv-out/qa-state.md` to point at the latest run.
+Write the canonical state to `<session-output-dir>/qa/state.md` (overwritten each run), and
+keep this run's detailed copy at `<session-output-dir>/qa/<ts>/qa-state.md`. The flat pointer
+`uv-out/qa-state.md` already points at `qa/state.md`, so `/commit` and `/ship` read the latest
+run unchanged.
 
 State frontmatter schema:
 
@@ -213,7 +227,7 @@ health_score: <0-100>
 baseline_score: <0-100 | null>
 health_delta: <integer | null>
 artifacts:
-  screenshots_dir: uv-out/qa/<ts>/screenshots/
+  screenshots_dir: <session-output-dir>/qa/<ts>/screenshots/
   commits: [<sha>, ...]
 status: complete   # or: partial, failed
 ---
