@@ -77,7 +77,10 @@ If the user said "pr" in their arguments, or if on a feature branch:
 
 ### 7. Checkpoint
 
-After committing, write a checkpoint to `uv-out/checkpoints/latest.md` with what was committed.
+After committing, write a checkpoint to `latest.md` in this session's checkpoint
+directory (shown below) with what was committed:
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh dir`
 
 ## Danger zones
 

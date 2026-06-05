@@ -44,8 +44,9 @@ $ARGUMENTS
 3. **If `$ARGUMENTS` looks like a session id prefix** (8-char hex / UUID-ish)
    **or a session name**: match it against the list above. Read the
    matching session's `latest.md` from
-   `<project>/uv-out/checkpoints/<full-session-id>/latest.md` using the Read
-   tool, then summarize as in (1).
+   `<project>/uv-out/sessions/<full-session-id>/checkpoints/latest.md` using the
+   Read tool (fall back to the legacy `<project>/uv-out/checkpoints/<full-session-id>/latest.md`
+   if the new path is absent), then summarize as in (1).
 
 4. If no match is found, list the available sessions and ask the user to
    pick one.

@@ -3,7 +3,7 @@ name: checkpoint
 description: >
   Save a checkpoint of the current session — what was done, key decisions, current state,
   and what's next. Use before ending a session, before /compact, or at any natural breakpoint.
-  Checkpoints are stored per-session under uv-out/checkpoints/<session-id>/, so concurrent
+  Checkpoints are stored per-session under uv-out/sessions/<session-id>/checkpoints/, so concurrent
   terminals don't clobber each other. /restore picks up the latest for the current session.
 argument-hint: "[optional-label]"
 user-invocable: true

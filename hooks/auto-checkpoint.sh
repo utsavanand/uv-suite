@@ -5,7 +5,7 @@
 # Logs every tool call into a per-session activity log. When `interval_minutes`
 # have passed since the last mechanical checkpoint AND there has been activity
 # in the interval, writes a deterministic snapshot to
-# uv-out/checkpoints/<sid>/auto-<ts>-mechanical.md and forwards an
+# uv-out/sessions/<sid>/checkpoints/auto-<ts>-mechanical.md and forwards an
 # AutoCheckpoint event to the watchtower.
 #
 # Tier B (semantic, claude -p) runs separately from the watchtower's timer.
@@ -96,7 +96,7 @@ fi
 
 # Resolve checkpoint dir + metadata via the existing helper
 CP_DIR=$(CLAUDE_PROJECT_DIR="$PROJECT_DIR" "$PROJECT_DIR/.claude/hooks/checkpoint-helper.sh" dir 2>/dev/null)
-[ -z "$CP_DIR" ] && CP_DIR="$PROJECT_DIR/uv-out/checkpoints/$SID" && mkdir -p "$CP_DIR"
+[ -z "$CP_DIR" ] && CP_DIR="$PROJECT_DIR/uv-out/sessions/$SID/checkpoints" && mkdir -p "$CP_DIR"
 
 # Build the mechanical checkpoint body
 TS_FILE=$(date +%Y-%m-%d-%H%M)

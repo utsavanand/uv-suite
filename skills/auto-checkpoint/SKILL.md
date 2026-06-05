@@ -33,7 +33,7 @@ no restart needed.
 - **Tier A (mechanical):** the `auto-checkpoint.sh` hook runs after each tool
   call. When the interval has passed and there's been activity since the last
   checkpoint, it writes a deterministic snapshot — git state, recent tool calls,
-  files touched — to `uv-out/checkpoints/<sid>/auto-<ts>-mechanical.md`.
+  files touched — to `uv-out/sessions/<sid>/checkpoints/auto-<ts>-mechanical.md`.
 - **Tier B (semantic):** the Watchtower process (`uvs watch`) keeps a timer.
   Every N minutes, for each active session, it shells out to `claude -p --bare
   --model haiku` with a prompt assembled from the recent dashboard events and

@@ -16,11 +16,14 @@ resolve_paths() {
   if [ -z "$SID" ] && [ -f "$STATE_DIR/current-session.txt" ]; then
     SID=$(cat "$STATE_DIR/current-session.txt" 2>/dev/null)
   fi
-  CHECKPOINTS_ROOT="$PROJECT_DIR/uv-out/checkpoints"
-  SESSION_CP_DIR=""
-  [ -n "$SID" ] && SESSION_CP_DIR="$CHECKPOINTS_ROOT/$SID"
-  META_FILE=""
-  [ -n "$SID" ] && META_FILE="$STATE_DIR/sessions/$SID.json"
+  [ -z "$SID" ] && SID="no-session"
+  # Unified layout: everything a session produces lives under uv-out/sessions/<sid>/.
+  SESSIONS_ROOT="$PROJECT_DIR/uv-out/sessions"
+  SESSION_CP_DIR="$SESSIONS_ROOT/$SID/checkpoints"
+  # Legacy locations, read for backward compatibility (pre-unify checkpoints):
+  LEGACY_CP_ROOT="$PROJECT_DIR/uv-out/checkpoints"
+  LEGACY_SESSION_CP_DIR="$LEGACY_CP_ROOT/$SID"
+  META_FILE="$STATE_DIR/sessions/$SID.json"
 }
 
 print_meta_field() {
@@ -37,13 +40,8 @@ resolve_paths
 
 case "$1" in
   dir)
-    if [ -n "$SESSION_CP_DIR" ]; then
-      mkdir -p "$SESSION_CP_DIR"
-      echo "$SESSION_CP_DIR"
-    else
-      mkdir -p "$CHECKPOINTS_ROOT"
-      echo "$CHECKPOINTS_ROOT"
-    fi
+    mkdir -p "$SESSION_CP_DIR"
+    echo "$SESSION_CP_DIR"
     ;;
   meta)
     echo "uvs_session_id=${SID:-}"
@@ -73,25 +71,32 @@ checkpoint_at: ${NOW}
 EOF
     ;;
   latest)
-    if [ -n "$SESSION_CP_DIR" ] && [ -f "$SESSION_CP_DIR/latest.md" ]; then
+    if [ -f "$SESSION_CP_DIR/latest.md" ]; then
       cat "$SESSION_CP_DIR/latest.md"
-    elif [ -f "$CHECKPOINTS_ROOT/latest.md" ]; then
-      echo "(no per-session checkpoint for ${SID:-this session}; showing legacy global latest.md)"
+    elif [ -f "$LEGACY_SESSION_CP_DIR/latest.md" ]; then
+      echo "(no checkpoint at new path; showing legacy uv-out/checkpoints/${SID}/latest.md)"
       echo
-      cat "$CHECKPOINTS_ROOT/latest.md"
+      cat "$LEGACY_SESSION_CP_DIR/latest.md"
+    elif [ -f "$LEGACY_CP_ROOT/latest.md" ]; then
+      echo "(no per-session checkpoint for ${SID}; showing legacy global latest.md)"
+      echo
+      cat "$LEGACY_CP_ROOT/latest.md"
     else
-      echo "No checkpoint found at $CHECKPOINTS_ROOT. Run /checkpoint to create one."
+      echo "No checkpoint found for session ${SID}. Run /checkpoint to create one."
     fi
     ;;
   list)
-    [ ! -d "$CHECKPOINTS_ROOT" ] && { echo "No checkpoints directory at $CHECKPOINTS_ROOT"; exit 0; }
     found=0
-    for d in "$CHECKPOINTS_ROOT"/*/; do
-      [ -d "$d" ] || continue
-      cp_sid=$(basename "$d")
-      cp_meta="$STATE_DIR/sessions/$cp_sid.json"
-      cp_name=""
-      cp_priority=""
+    seen=" "
+    emit_cp_entry() { # $1 = cp_sid  $2 = checkpoint dir  $3 = origin tag
+      local cp_sid="$1" d="$2" origin="$3"
+      [ -d "$d" ] || return 0
+      case "$seen" in *" $cp_sid "*) return 0 ;; esac   # dedupe sid across new+legacy
+      local latest
+      latest=$(ls -t "$d"/*.md 2>/dev/null | head -1)
+      [ -z "$latest" ] && return 0
+      seen="$seen$cp_sid "
+      local cp_meta="$STATE_DIR/sessions/$cp_sid.json" cp_name="" cp_priority=""
       if [ -f "$cp_meta" ]; then
         if command -v jq >/dev/null 2>&1; then
           cp_name=$(jq -r '.name // ""' "$cp_meta" 2>/dev/null)
@@ -100,20 +105,20 @@ EOF
           cp_name=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' "$cp_meta" | head -1 | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
         fi
       fi
-      latest=$(ls -t "$d"*.md 2>/dev/null | head -1)
-      [ -z "$latest" ] && continue
+      local ts label mark
       ts=$(stat -f '%Sm' -t '%Y-%m-%d %H:%M' "$latest" 2>/dev/null || stat -c '%y' "$latest" 2>/dev/null | cut -c1-16)
       label="${cp_name:-(unlabeled)}"
       [ -n "$cp_priority" ] && label="$label [p:$cp_priority]"
-      mark=" "
-      [ "$cp_sid" = "$SID" ] && mark="*"
-      echo "$mark ${cp_sid:0:8}  $ts  $label"
+      mark=" "; [ "$cp_sid" = "$SID" ] && mark="*"
+      echo "$mark ${cp_sid:0:8}  $ts  $label${origin}"
       found=1
-    done
-    [ "$found" -eq 0 ] && echo "No per-session checkpoints yet (current session: ${SID:-none})"
-    # Note legacy global checkpoint if present
-    if [ -f "$CHECKPOINTS_ROOT/latest.md" ]; then
-      ts=$(stat -f '%Sm' -t '%Y-%m-%d %H:%M' "$CHECKPOINTS_ROOT/latest.md" 2>/dev/null || stat -c '%y' "$CHECKPOINTS_ROOT/latest.md" 2>/dev/null | cut -c1-16)
+    }
+    # New unified layout first, then legacy, deduped by sid.
+    for d in "$SESSIONS_ROOT"/*/checkpoints/; do emit_cp_entry "$(basename "$(dirname "$d")")" "$d" ""; done
+    for d in "$LEGACY_CP_ROOT"/*/; do emit_cp_entry "$(basename "$d")" "$d" "  (legacy path)"; done
+    [ "$found" -eq 0 ] && echo "No per-session checkpoints yet (current session: ${SID})"
+    if [ -f "$LEGACY_CP_ROOT/latest.md" ]; then
+      ts=$(stat -f '%Sm' -t '%Y-%m-%d %H:%M' "$LEGACY_CP_ROOT/latest.md" 2>/dev/null || stat -c '%y' "$LEGACY_CP_ROOT/latest.md" 2>/dev/null | cut -c1-16)
       echo "  legacy   $ts  (pre-metadata global latest.md)"
     fi
     ;;
