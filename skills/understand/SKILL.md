@@ -34,7 +34,7 @@ $ARGUMENTS
 
 ## Mode
 
-Two modes, chosen by flag or auto-detection:
+Two modes — the same cartographer, two ways of looking:
 
 - `--repo` — map one codebase (architecture, domains, entry points, danger zones).
 - `--stack` — map how multiple services connect (the system level).
@@ -53,7 +53,7 @@ case "$ARGUMENTS" in
 esac
 ```
 
-The `T`/`D` convention below: `T` is the target with flags stripped, `D` falls back to `.`.
+The `T`/`D` convention: `T` is the target with flags stripped, `D` falls back to `.`.
 
 ## Session output directory
 
@@ -79,80 +79,10 @@ graphify --version 2>/dev/null || echo "NOT_INSTALLED"
 
 !`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'map-stack.md' || echo "No prior stack map"`
 
----
+## Procedure
 
-# Repo mode
+Based on the `MODE` printed above, follow the matching mode file. It owns the process and
+the output for that mode:
 
-Run this section only when MODE=repo.
-
-## Existing knowledge graph (if previously generated)
-
-```!
-T="$ARGUMENTS"; T="${T//--repo/}"; T="${T//--stack/}"; T="$(echo $T|xargs)"; D="$T"; [ -d "$D" ] || D="."; cat "$D/graphify-out/GRAPH_REPORT.md" 2>/dev/null | head -80 || echo "No existing graph found"
-```
-
-## Repo output
-
-Write the full map to `map-codebase.md` inside the session output directory shown above
-(e.g. `uv-out/sessions/<sid>/map-codebase.md`), stamped with provenance frontmatter
-(`session`, `skill: understand`, `created`). It should contain:
-
-- **Architecture overview** — major modules and how they fit together
-- **Business domain map** — the real-world concepts the code models
-- **Sequence diagrams** (Mermaid) for the key flows
-- **Entry points** — main, routes, handlers, CLI commands
-- **Danger zones** — fragile areas, high-fan-in modules, missing tests
-
-If Graphify is available, run it first and fold its findings in.
-
----
-
-# Stack mode
-
-Run this section only when MODE=stack. You are mapping an entire tech stack —
-multiple services, how they connect, and the system-level architecture.
-
-## Discover services
-
-```!
-T="$ARGUMENTS"; T="${T//--repo/}"; T="${T//--stack/}"; T="$(echo $T|xargs)"; find ${T:-.} -maxdepth 3 \( -name "package.json" -o -name "pom.xml" -o -name "go.mod" -o -name "Cargo.toml" -o -name "requirements.txt" -o -name "setup.py" -o -name "pyproject.toml" \) -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | head -30
-```
-
-## Dockerfiles, compose, infra, contracts
-
-```!
-T="$ARGUMENTS"; T="${T//--repo/}"; T="${T//--stack/}"; T="$(echo $T|xargs)"; find ${T:-.} -maxdepth 4 \( -name "Dockerfile" -o -name "docker-compose*" -o -name "*.tf" -o -name "Chart.yaml" -o -name "values.yaml" -o -name "*.proto" -o -name "openapi*" -o -name "*.graphql" \) -not -path "*/node_modules/*" 2>/dev/null | head -30
-```
-
-## Stack process
-
-1. **Inventory every service** — name, language/framework, what it does, how it deploys.
-2. **Map connections BETWEEN services** — REST/HTTP base URLs and clients, gRPC/proto
-   stubs, message queues (Kafka/RabbitMQ/SQS topics), shared databases, shared internal
-   libraries, service URLs in env vars.
-3. **Trace the data flow** — where data enters, how it moves, where it ends up.
-
-## Stack output
-
-Write the full map to `map-stack.md` inside the session output directory shown above
-(e.g. `uv-out/sessions/<sid>/map-stack.md`), stamped with provenance frontmatter
-(`session`, `skill: understand`, `created`). Include:
-
-- A **System Architecture Diagram** (Mermaid): every service as a node, connections
-  labeled (REST, gRPC, Kafka, shared DB), external deps, data stores.
-- A **Stack Inventory Table**: Service | Language | Framework | Database | Deploys to | Depends on | Depended on by.
-- A **Connection Matrix**: which services talk to which, and how.
-- **Danger Zones**: single points of failure, high-inbound-dependency services, shared
-  databases, missing monitoring/health checks.
-
-If Graphify is available, run `graphify run [target] --directed` for a unified
-cross-service graph and fold its findings in.
-
----
-
-## Report back
-
-After writing the file, print only a one-line pointer to the terminal — do not repeat
-the map. For example:
-
-> Map written to `uv-out/sessions/<sid>/map-codebase.md` — go check it.   (or map-stack.md in stack mode)
+- **MODE=repo** → follow `skills/understand/modes/repo.md`
+- **MODE=stack** → follow `skills/understand/modes/stack.md`

@@ -27,9 +27,9 @@ The orchestrator picks one specialist per run. Default is `--unit`.
 
 ```!
 case "$ARGUMENTS" in
-  *--eval*)        echo "MODE=eval        → dispatch the eval-writer agent";;
-  *--integration*) echo "MODE=integration → dispatch the test-writer agent (cross-component focus)";;
-  *)               echo "MODE=unit        → dispatch the test-writer agent (isolated units)";;
+  *--eval*)        echo "MODE=eval        → specialists/eval.md        (eval-writer agent)";;
+  *--integration*) echo "MODE=integration → specialists/integration.md (test-writer agent)";;
+  *)               echo "MODE=unit        → specialists/unit.md        (test-writer agent)";;
 esac
 ```
 
@@ -73,16 +73,17 @@ Write eval artifacts under this directory (scoped to the current session):
 
 ## Dispatch
 
-Read the `MODE` line above, then dispatch the matching specialist via the Agent tool,
-passing the target, the gathered context, and the mode focus. Do not write the tests
-or evals yourself — the specialist does.
+Read the `MODE` line above. It names the specialist prompt file and the agent to use:
 
-- **unit / integration** → `Agent(test-writer)`. Task: write tests that verify behavior
-  with specific assertions (specific values, side effects, error conditions), matching
-  the existing test patterns and project test command shown above. For `--integration`,
-  focus on interactions across components and real dependencies rather than isolated units.
-- **eval** → `Agent(eval-writer)`. Task: write graded eval cases for the target prompt/
-  feature using the existing eval framework — criteria/rubric, representative + adversarial
-  cases, and pass/fail conditions. Write artifacts under the session output directory above.
+| MODE | Specialist prompt | Agent |
+|---|---|---|
+| unit | `skills/test/specialists/unit.md` | `test-writer` |
+| integration | `skills/test/specialists/integration.md` | `test-writer` |
+| eval | `skills/test/specialists/eval.md` | `eval-writer` |
 
-Relay the specialist's result. If `$ARGUMENTS` names no target, ask what to test.
+You (the orchestrator) read the matching specialist prompt at
+`.claude/skills/test/specialists/<mode>.md`, then dispatch the named agent via the Agent
+tool, passing the specialist prompt content + the target (`$ARGUMENTS`) + the gathered
+context above as the agent's task. Do not write the tests or evals yourself — the agent does.
+
+Relay the agent's result. If `$ARGUMENTS` names no target, ask what to test.
