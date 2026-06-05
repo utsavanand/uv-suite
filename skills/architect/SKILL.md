@@ -26,7 +26,7 @@ $ARGUMENTS
 
 Write architecture artifacts under this directory (scoped to the current session):
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
 ## Step 0 — Confirm the input spec (do this FIRST, before designing)
 
@@ -47,13 +47,13 @@ Write architecture artifacts under this directory (scoped to the current session
 
 ## Available specs (current session first, then prior, then legacy)
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'specs/*.md' || echo "No specs found"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-collect.sh 'specs/*.md' || echo "No specs found"`
 
 ## Prior analysis
 
 ### Codebase map (current session first)
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'map-codebase.md' || echo "No codebase map"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-collect.sh 'map-codebase.md' || echo "No codebase map"`
 
 ### Session checkpoint
 

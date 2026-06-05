@@ -80,7 +80,7 @@ If the user said "pr" in their arguments, or if on a feature branch:
 After committing, write a checkpoint to `latest.md` in this session's checkpoint
 directory (shown below) with what was committed:
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh dir`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/checkpoint-helper.sh dir`
 
 ## Danger zones
 

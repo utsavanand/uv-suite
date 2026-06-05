@@ -38,7 +38,7 @@ block below runs only the context-gathering for the chosen subcommand and prints
 
 ```!
 ARGS="$ARGUMENTS"; SUB=$(printf '%s' "$ARGS" | awk '{print $1}'); REST=$(printf '%s' "$ARGS" | sed 's/^[^ ]* *//'); [ "$REST" = "$SUB" ] && REST=""
-H="$CLAUDE_PROJECT_DIR/.claude/hooks"
+H="${CLAUDE_PROJECT_DIR:-.}/.claude/hooks"
 case "$SUB" in
   init)
     if [ -z "$REST" ] || [ "$REST" = show ]; then "$H/session-meta.sh" show

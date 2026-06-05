@@ -47,11 +47,11 @@ $ARGUMENTS
 
 Write the review report and state under this directory (scoped to the current session):
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
 Stable flat pointer maintained for `/commit` and `/ship`:
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-pointer.sh review-state.md review/state.md`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-pointer.sh review-state.md review/state.md`
 
 ## Project context
 
@@ -65,15 +65,15 @@ Stable flat pointer maintained for `/commit` and `/ship`:
 
 ### Architecture map
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh map-codebase.md 100 || echo "No codebase map — run /understand first for better review context"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-codebase.md 100 || echo "No codebase map — run /understand first for better review context"`
 
 ### Architecture decisions
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'architecture/decisions.md' 60 || echo "No architecture decisions found"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/decisions.md' 60 || echo "No architecture decisions found"`
 
 ### Acts plan
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 60 || echo "No acts plan found"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 60 || echo "No acts plan found"`
 
 ### Session checkpoint (what's in progress)
 

@@ -12,7 +12,7 @@ allowed-tools:
 
 ## Apply /confirm $ARGUMENTS
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/confirm-helper.sh $ARGUMENTS`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/confirm-helper.sh $ARGUMENTS`
 
 ## Instructions
 
@@ -29,4 +29,4 @@ next user prompt; no restart needed.
 - `status` (or no argument) — print the current mode and threshold.
 
 State lives in `.uv-suite-state/confirm-mode.txt` and `.uv-suite-state/confirm-threshold.txt`
-under `$CLAUDE_PROJECT_DIR`. Defaults if missing: mode `on`, threshold `50`.
+under `${CLAUDE_PROJECT_DIR:-.}`. Defaults if missing: mode `on`, threshold `50`.

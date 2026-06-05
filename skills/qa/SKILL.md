@@ -48,11 +48,11 @@ Parse `$ARGUMENTS`:
 Write QA artifacts under this directory (scoped to the current session). The
 `<session-output-dir>/qa/<ts>/` paths below all resolve under it:
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
 Stable flat pointer maintained for `/commit` and `/ship`:
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-pointer.sh qa-state.md qa/state.md`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-pointer.sh qa-state.md qa/state.md`
 
 ## Project context
 

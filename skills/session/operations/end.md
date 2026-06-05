@@ -29,7 +29,7 @@
    - Non-obvious facts, workarounds, "this looks wrong but it's intentional because…"
    ```
 
-2. Then run `"$CLAUDE_PROJECT_DIR"/.claude/hooks/session-end-helper.sh` (via
+2. Then run `"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/session-end-helper.sh` (via
    Bash) to mark the session terminated and flip the Watchtower badge to
    Terminated. Show the user the two-line output; don't add commentary. This does
    **not** close the terminal or exit Claude Code — the user does that.

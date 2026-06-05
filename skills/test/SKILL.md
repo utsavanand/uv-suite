@@ -55,17 +55,17 @@ esac
 
 Write eval artifacts under this directory (scoped to the current session):
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
 ## Shared prior analysis
 
 ### Spec (what to test / evaluate against)
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'specs/*.md' 60 || echo "No spec found — work from code/prompt behavior"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'specs/*.md' 60 || echo "No spec found — work from code/prompt behavior"`
 
 ### Acts plan (current task context)
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 40 || echo "No acts plan found"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 40 || echo "No acts plan found"`
 
 ### Session checkpoint
 

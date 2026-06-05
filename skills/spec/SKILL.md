@@ -26,7 +26,7 @@ $ARGUMENTS
 Write the spec under this directory (it is scoped to the current session, so artifacts
 are attributable to the session that produced them):
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
 ## Step 0 — Gather context (do this FIRST, before writing)
 

@@ -59,7 +59,7 @@ The `T`/`D` convention: `T` is the target with flags stripped, `D` falls back to
 
 Write the map under this directory (scoped to the current session):
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
 ## Shared context
 
@@ -75,9 +75,9 @@ graphify --version 2>/dev/null || echo "NOT_INSTALLED"
 
 ## Prior maps (current session first, then prior, then legacy)
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'map-codebase.md' || echo "No prior codebase map"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-collect.sh 'map-codebase.md' || echo "No prior codebase map"`
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'map-stack.md' || echo "No prior stack map"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-collect.sh 'map-stack.md' || echo "No prior stack map"`
 
 ## Discovery
 

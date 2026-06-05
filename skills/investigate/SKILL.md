@@ -42,11 +42,11 @@ $ARGUMENTS
 
 Write investigation findings under this directory (scoped to the current session):
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
 ## Codebase map
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh map-codebase.md 60 || echo "No codebase map"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-codebase.md 60 || echo "No codebase map"`
 
 ## Recent changes (potential cause)
 
