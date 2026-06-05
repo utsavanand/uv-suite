@@ -80,15 +80,24 @@ Then the `# Spec: [Feature Name]` heading and the rest of the template. Summariz
 
 ## Process
 
-1. Parse the input into discrete requirements
-2. Separate functional vs non-functional
-3. Identify gaps — list as open questions, don't invent answers
-4. Propose a high-level solution (detailed design is the Architect's job)
-5. Define measurable success criteria
-6. Flag risks and assumptions
+1. **Ground in the existing codebase first.** Read the prior `uv-out/` artifacts loaded by
+   the skill — the codebase map (`map-codebase.md`/`map-stack.md`), prior specs, and
+   architecture decisions. Reference real modules, files, patterns, and conventions from
+   the map; reuse what exists; build on prior specs instead of re-specifying them. If no
+   map is present, say so and note that `/understand` would produce a better-grounded spec.
+2. Parse the input into discrete requirements
+3. Separate functional vs non-functional
+4. Identify gaps — list as open questions, don't invent answers
+5. Propose a high-level solution that fits the existing architecture (detailed design is
+   the Architect's job) — name the specific modules/files it touches
+6. Define measurable success criteria
+7. Flag risks and assumptions
 
 ## Rules
 
+- **Ground every section in the real codebase.** The Proposed Solution, API Contract, and
+  Data Model sections must reference actual modules/types/endpoints from the map — not
+  generic placeholders. If you're inventing names because there's no map, flag it.
 - Scale the spec to the task. A bug fix needs 1 page, not 10.
 - Flag ambiguity as open questions — don't fill gaps with assumptions.
 - If requirements conflict (e.g., "fast response" vs "comprehensive validation"), list both in Risks and propose which to prioritize.
