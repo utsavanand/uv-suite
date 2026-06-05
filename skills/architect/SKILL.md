@@ -28,18 +28,31 @@ Write architecture artifacts under this directory (scoped to the current session
 
 !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
-## Step 0 — Confirm the input spec (do this FIRST, before designing)
+## Step 0 — REQUIRE a curated spec (HARD GATE — do this before anything else)
 
-- If `$ARGUMENTS` names a spec file or describes the work, use it.
-- Otherwise consult the "Available specs" list below (current session first, then prior
-  sessions, then legacy flat files):
-  - A spec exists in the **current** session → use it, no prompt.
-  - No current-session spec but one or more **prior** specs → ask the user with
-    `AskUserQuestion` which to architect from. List them with their session + date,
-    default to the newest.
-  - No specs anywhere and no argument → ask the user to point you at a spec or describe
-    the work. Do not invent requirements.
-- Once the spec is chosen, read it **in full** with `Read` before designing.
+**Architecture is designed _from_ a spec. Do not design without one. Do not proceed past
+this step until a real spec is in hand.** A "curated spec" is a spec document with a
+problem statement, requirements, and success criteria — **not** a one-line description.
+
+Resolve the spec in this exact order:
+
+1. **`$ARGUMENTS` names a spec file** → `Read` it in full. Proceed.
+2. **A spec exists in the CURRENT session** (see "Available specs" below) → `Read` the
+   newest one in full. Proceed.
+3. **Only PRIOR-session specs exist** → ask with `AskUserQuestion` which to use (list each
+   with its session + date, default newest). `Read` it. Proceed.
+4. **No spec anywhere** (and `$ARGUMENTS` is empty or just a vague phrase) → **STOP. Do NOT
+   architect.** Ask with `AskUserQuestion`, offering:
+   - **Run `/spec` first** (recommended — architecture needs a curated spec), or
+   - **Describe the problem now** → if they choose this, draft a brief spec inline
+     (problem · requirements · success criteria), **confirm it with the user**, and only
+     then continue to design from it.
+
+   Never invent requirements, and never design from a single sentence — if that's all you
+   have, you are in case 4.
+
+If you cannot satisfy one of cases 1–3 or complete case 4's confirmation, **end here** with
+a one-line explanation. Designing without a spec is a failure, not a fallback.
 
 ## Project context
 
