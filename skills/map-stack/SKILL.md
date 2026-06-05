@@ -12,6 +12,7 @@ model: claude-opus-4-6
 effort: max
 allowed-tools:
   - Read(*)
+  - Write(uv-out/*)
   - Grep(*)
   - Glob(*)
   - Bash(graphify *)
@@ -45,25 +46,25 @@ This is NOT a single-repo mapping. You are mapping an entire tech stack — mult
 ## Discover services
 
 ```!
-find . -maxdepth 3 \( -name "package.json" -o -name "pom.xml" -o -name "go.mod" -o -name "Cargo.toml" -o -name "requirements.txt" -o -name "setup.py" -o -name "pyproject.toml" \) -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | head -30
+T="$ARGUMENTS"; find ${T:-.} -maxdepth 3 \( -name "package.json" -o -name "pom.xml" -o -name "go.mod" -o -name "Cargo.toml" -o -name "requirements.txt" -o -name "setup.py" -o -name "pyproject.toml" \) -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | head -30
 ```
 
 ## Dockerfiles and compose
 
 ```!
-find . -maxdepth 3 \( -name "Dockerfile" -o -name "docker-compose*" \) -not -path "*/node_modules/*" 2>/dev/null | head -20
+T="$ARGUMENTS"; find ${T:-.} -maxdepth 3 \( -name "Dockerfile" -o -name "docker-compose*" \) -not -path "*/node_modules/*" 2>/dev/null | head -20
 ```
 
 ## Infrastructure (Helm, Terraform, K8s)
 
 ```!
-find . -maxdepth 4 \( -name "*.tf" -o -name "Chart.yaml" -o -name "values.yaml" -o -name "*.k8s.yaml" -o -name "kustomization.yaml" \) -not -path "*/node_modules/*" 2>/dev/null | head -20
+T="$ARGUMENTS"; find ${T:-.} -maxdepth 4 \( -name "*.tf" -o -name "Chart.yaml" -o -name "values.yaml" -o -name "*.k8s.yaml" -o -name "kustomization.yaml" \) -not -path "*/node_modules/*" 2>/dev/null | head -20
 ```
 
 ## API contracts (OpenAPI, gRPC, GraphQL)
 
 ```!
-find . -maxdepth 4 \( -name "*.proto" -o -name "openapi*" -o -name "swagger*" -o -name "*.graphql" -o -name "schema.graphql" \) -not -path "*/node_modules/*" 2>/dev/null | head -20
+T="$ARGUMENTS"; find ${T:-.} -maxdepth 4 \( -name "*.proto" -o -name "openapi*" -o -name "swagger*" -o -name "*.graphql" -o -name "schema.graphql" \) -not -path "*/node_modules/*" 2>/dev/null | head -20
 ```
 
 ## Process
@@ -93,7 +94,9 @@ This is the hard part. Look for:
 
 ### 4. Produce the stack map
 
-Output a **System Architecture Diagram** (Mermaid) showing:
+Write the full stack map to `uv-out/map-stack.md`. Everything below goes in that file, not the terminal.
+
+Start with a **System Architecture Diagram** (Mermaid) showing:
 - Every service as a node
 - Connections between them (labeled: REST, gRPC, Kafka, shared DB, etc.)
 - External dependencies (third-party APIs, managed services)
@@ -118,4 +121,9 @@ Then **Danger Zones** at the stack level:
 - Missing monitoring or health checks
 
 ### 5. If Graphify is available
-Run `graphify run [parent-dir] --directed` on the entire parent directory to get a unified knowledge graph across all services. The graph will show cross-service relationships that are hard to find manually.
+Run `graphify run [parent-dir] --directed` on the entire parent directory to get a unified knowledge graph across all services. The graph will show cross-service relationships that are hard to find manually. Fold its findings into `uv-out/map-stack.md`.
+
+### 6. Report back
+After writing the file, the only thing you print to the terminal is a one-line pointer — do not repeat the map contents. For example:
+
+> Stack map written to `uv-out/map-stack.md` — go check it.

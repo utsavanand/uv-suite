@@ -12,6 +12,7 @@ model: claude-opus-4-6
 effort: max
 allowed-tools:
   - Read(*)
+  - Write(uv-out/**)
   - Grep(*)
   - Glob(*)
   - Bash(git log *)
