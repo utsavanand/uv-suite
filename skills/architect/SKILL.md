@@ -95,8 +95,9 @@ Capture:
   toy vs revenue- or safety-critical). This sets how much resilience to invest.
 
 These constraints drive everything downstream: pass them to the specialists in Step 2, and
-use them for the Challenge Test in Step 3. **Record them as a `Design Constraints` section
-at the top of the architecture** so the right-sizing is auditable.
+use them for the Challenge Test in Step 3. **Write them to
+`<session-output-dir>/architecture/constraints.md` now** (the session dir printed above),
+before designing — so the right-sizing is recorded and auditable.
 
 ## Step 2 — Consult domain specialists (only the relevant ones)
 

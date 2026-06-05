@@ -24,6 +24,7 @@ one-liner and never invent requirements — designing without a spec is a failur
 ## Output Format
 
 ### 0. Design Constraints
+Write these to `<session-output-dir>/architecture/constraints.md` FIRST, before any design.
 Record the factors the design is right-sized against (from the spec's non-functional
 requirements or gathered from the user): scale (users/RPS/data, now + ~12mo), team size &
 expertise, availability target, consistency/CAP priority, security & privacy/compliance,
@@ -66,6 +67,7 @@ For each key decision, document:
 Write all output under `<session-output-dir>/architecture/`, where `<session-output-dir>`
 is the path printed in the "Session output directory" section of your context
 (e.g. `uv-out/sessions/<sid>/`):
+- `<session-output-dir>/architecture/constraints.md` — the Design Constraints the design is right-sized against (write this FIRST, before designing)
 - `<session-output-dir>/architecture/decisions.md` — architecture decision records
 - `<session-output-dir>/architecture/acts-plan.md` — Acts breakdown with tasks and cycle budgets
 
