@@ -3,7 +3,9 @@
 # run.sh sources this once, then sources contract.sh and behavioral/*.sh.
 
 SKILLTEST_LIB=1
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# Git toplevel is authoritative (works under bash or zsh); fall back to path-relative.
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+[ -n "$REPO_ROOT" ] || REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../.." && pwd)"
 : "${LLM_MODE:=0}"
 
 PASS=0
@@ -26,10 +28,17 @@ fmbody()  { awk 'BEGIN{n=0} /^---[[:space:]]*$/{n++;next} n>=2{print}' "$1"; }
 must_have() { grep -qiF -- "$2" "$1" && ok "$3" || bad "$3 — output missing '$2'"; }
 must_not()  { grep -qiF -- "$2" "$1" && bad "$3 — output wrongly contains '$2'" || ok "$3"; }
 
-# Run a skill headlessly, capturing combined output to $1. Skipped unless --llm.
+# Run a skill headlessly, capturing output to $1. Skipped unless --llm.
+# Grants only the tools the skills declare — no permission bypass. In -p mode the
+# skill prints its result to stdout (it does not write uv-out/), so we assert on $1.
 run_skill() {
   [ "$LLM_MODE" = 1 ] || return 1
-  claude -p "$2" >"$1" 2>/dev/null
+  # Run from REPO_ROOT so relative paths in the prompt (e.g. fixtures/...) resolve.
+  ( cd "$REPO_ROOT" && claude -p "$2" \
+    --allowedTools Read Grep Glob "Write(uv-out/**)" \
+      "Bash(find *)" "Bash(cat *)" "Bash(ls *)" "Bash(head *)" "Bash(wc *)" \
+      "Bash(git *)" "Bash(grep *)" "Bash(graphify *)" "Bash(semgrep *)" \
+    >"$1" 2>/dev/null </dev/null )
 }
 
 summary() {
