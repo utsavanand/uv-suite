@@ -13,13 +13,20 @@ allowed-tools:
   - Read(*)
   - Grep(*)
   - Glob(*)
-  - Write(uv-out/*)
+  - Write(uv-out/**)
   - AskUserQuestion
 ---
 
 ## Requirements
 
 $ARGUMENTS
+
+## Session output directory
+
+Write the spec under this directory (it is scoped to the current session, so artifacts
+are attributable to the session that produced them):
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
 
 ## Step 0 — Gather context (do this FIRST, before writing)
 

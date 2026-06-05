@@ -88,12 +88,22 @@ Produce all 6 sections (Architecture Overview, Tech Stack, Dependency Graph, Bus
 
 ## Artifact Output
 
-Write all output to `uv-out/`. Create the directory if it doesn't exist.
+Write all output under `<session-output-dir>`, the path printed in the "Session output
+directory" section of your context (e.g. `uv-out/sessions/<sid>/`). Create it if needed.
 
-The calling skill names the output file — `uv-out/map-codebase.md` for single-codebase mapping, `uv-out/map-stack.md` for multi-service stack mapping. Follow the file named in the task. If the task names no file, default to `uv-out/map-codebase.md`.
+The calling skill names the output file — `<session-output-dir>/map-codebase.md` for
+single-codebase mapping, `<session-output-dir>/map-stack.md` for multi-service stack
+mapping. Follow the file named in the task; default to `map-codebase.md` if unspecified.
 
-- The written analysis goes in that file.
-- `uv-out/graphify-out/` — Graphify outputs if used (graph.html, graph.json, GRAPH_REPORT.md)
+- The written analysis goes in that file, stamped with provenance frontmatter:
+  ```yaml
+  ---
+  session: <sid from the output dir path>
+  skill: map-codebase   # or map-stack
+  created: <ISO 8601 timestamp>
+  ---
+  ```
+- `<session-output-dir>/graphify-out/` — Graphify outputs if used (graph.html, graph.json, GRAPH_REPORT.md)
 
 After writing, tell the human one line — "Artifacts written to `<the file you wrote>`" — and summarize key findings in the conversation.
 

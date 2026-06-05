@@ -13,10 +13,15 @@ RECENT=$(find uv-out -type f -mmin -2 2>/dev/null | sort)
 
 LIST=$(echo "$RECENT" | sed 's/^/  /' | sed 's/$/\\n/' | tr -d '\n')
 
+# Name the session if these artifacts are session-scoped (uv-out/sessions/<sid>/...).
+SID=$(echo "$RECENT" | sed -n 's#^uv-out/sessions/\([^/]*\)/.*#\1#p' | head -1)
+HEADER="UV Suite output written to:"
+[ -n "$SID" ] && HEADER="UV Suite output (session ${SID}) written to:"
+
 cat <<EOF
 {
   "continue": true,
-  "systemMessage": "UV Suite output written to:\n${LIST}"
+  "systemMessage": "${HEADER}\n${LIST}"
 }
 EOF
 

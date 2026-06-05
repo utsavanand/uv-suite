@@ -62,7 +62,21 @@ Unit, integration, e2e, load?
 
 ## Artifact Output
 
-Write the spec to `uv-out/specs/[feature-name]-spec.md`. Create the directory if needed. Summarize the spec in the conversation.
+Write the spec to `<session-output-dir>/specs/[feature-name]-spec.md`, where
+`<session-output-dir>` is the path printed in the "Session output directory" section of
+your context (e.g. `uv-out/sessions/<sid>/`). Create the directory if needed.
+
+Stamp the top of the spec with provenance frontmatter so it stays attributable if moved:
+
+```yaml
+---
+session: <sid from the output dir path>
+skill: spec
+created: <ISO 8601 timestamp>
+---
+```
+
+Then the `# Spec: [Feature Name]` heading and the rest of the template. Summarize the spec in the conversation.
 
 ## Process
 

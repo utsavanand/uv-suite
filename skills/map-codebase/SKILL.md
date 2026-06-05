@@ -12,7 +12,7 @@ model: claude-opus-4-6
 effort: high
 allowed-tools:
   - Read(*)
-  - Write(uv-out/*)
+  - Write(uv-out/**)
   - AskUserQuestion
   - Grep(*)
   - Glob(*)
@@ -37,6 +37,12 @@ $ARGUMENTS
   Offer the current directory as the default option. Wait for the answer before scanning.
   If they give a path, run discovery against that path instead of the current directory.
 
+## Session output directory
+
+Write the map under this directory (scoped to the current session):
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+
 ## Graphify availability
 
 ```!
@@ -57,9 +63,9 @@ T="$ARGUMENTS"; D="$T"; [ -d "$D" ] || D="."; cat "$D/graphify-out/GRAPH_REPORT.
 
 !`T="$ARGUMENTS"; D="$T"; [ -d "$D" ] || D="."; cat "$D/DANGER-ZONES.md" 2>/dev/null || echo "No DANGER-ZONES.md found"`
 
-## Prior analysis (if re-mapping)
+## Prior analysis (current session first, then prior, then legacy)
 
-!`cat uv-out/map-codebase.md 2>/dev/null | head -30 || echo "No prior map — fresh scan"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'map-codebase.md' || echo "No prior map — fresh scan"`
 
 ## Output
 

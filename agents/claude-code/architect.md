@@ -51,11 +51,23 @@ For each key decision, document:
 
 ## Artifact Output
 
-Write all output to `uv-out/architecture/`:
-- `uv-out/architecture/decisions.md` — architecture decision records
-- `uv-out/architecture/acts-plan.md` — Acts breakdown with tasks and cycle budgets
+Write all output under `<session-output-dir>/architecture/`, where `<session-output-dir>`
+is the path printed in the "Session output directory" section of your context
+(e.g. `uv-out/sessions/<sid>/`):
+- `<session-output-dir>/architecture/decisions.md` — architecture decision records
+- `<session-output-dir>/architecture/acts-plan.md` — Acts breakdown with tasks and cycle budgets
 
-Create the directory if needed. Summarize the design in the conversation.
+Create the directory if needed. Stamp the top of each file with provenance frontmatter:
+
+```yaml
+---
+session: <sid from the output dir path>
+skill: architect
+created: <ISO 8601 timestamp>
+---
+```
+
+Summarize the design in the conversation.
 
 ### 4. Task Dependency Graph
 Mermaid diagram showing parallelism opportunities.

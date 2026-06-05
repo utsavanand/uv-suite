@@ -13,7 +13,7 @@ allowed-tools:
   - Read(*)
   - Grep(*)
   - Glob(*)
-  - Write(uv-out/*)
+  - Write(uv-out/**)
   - AskUserQuestion
   - Bash(git log *)
 ---
@@ -22,33 +22,38 @@ allowed-tools:
 
 $ARGUMENTS
 
+## Session output directory
+
+Write architecture artifacts under this directory (scoped to the current session):
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+
 ## Step 0 — Confirm the input spec (do this FIRST, before designing)
 
 - If `$ARGUMENTS` names a spec file or describes the work, use it.
-- Otherwise look in `uv-out/specs/`:
-  - Exactly one spec → use it, no prompt.
-  - More than one spec → ask the user with `AskUserQuestion` which spec to architect
-    from. List them, default to the most recently modified.
-  - No specs and no argument → ask the user to point you at a spec or describe the work.
-    Do not invent requirements.
-- Once the spec is chosen, read it **in full** with `Read` before designing — the preload
-  below is truncated.
+- Otherwise consult the "Available specs" list below (current session first, then prior
+  sessions, then legacy flat files):
+  - A spec exists in the **current** session → use it, no prompt.
+  - No current-session spec but one or more **prior** specs → ask the user with
+    `AskUserQuestion` which to architect from. List them with their session + date,
+    default to the newest.
+  - No specs anywhere and no argument → ask the user to point you at a spec or describe
+    the work. Do not invent requirements.
+- Once the spec is chosen, read it **in full** with `Read` before designing.
 
 ## Project context
 
 !`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
 
+## Available specs (current session first, then prior, then legacy)
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'specs/*.md' || echo "No specs found"`
+
 ## Prior analysis
 
-### Codebase map
+### Codebase map (current session first)
 
-!`cat uv-out/map-codebase.md 2>/dev/null | head -100 || echo "No codebase map — run /map-codebase first for better architecture context"`
-
-### Spec (if written)
-
-!`ls uv-out/specs/*.md 2>/dev/null | head -5 || echo "No specs found"`
-
-!`cat $(ls -t uv-out/specs/*.md 2>/dev/null | head -1) 2>/dev/null | head -80 || echo ""`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'map-codebase.md' || echo "No codebase map"`
 
 ### Session checkpoint
 

@@ -12,7 +12,7 @@ model: claude-opus-4-6
 effort: max
 allowed-tools:
   - Read(*)
-  - Write(uv-out/*)
+  - Write(uv-out/**)
   - AskUserQuestion
   - Grep(*)
   - Glob(*)
@@ -43,13 +43,19 @@ If no target is specified after asking, scan the current directory for subdirect
 
 This is NOT a single-repo mapping. You are mapping an entire tech stack — multiple services, how they connect, and the system-level architecture.
 
+## Session output directory
+
+Write the stack map under this directory (scoped to the current session):
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+
 ## Project context
 
 !`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
 
-## Prior codebase maps (from /map-codebase runs)
+## Prior codebase maps (current session first, then prior, then legacy)
 
-!`cat uv-out/map-codebase.md 2>/dev/null | head -80 || echo "No prior codebase map — will scan from scratch"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'map-codebase.md' || echo "No prior codebase map — will scan from scratch"`
 
 ## Discover services
 

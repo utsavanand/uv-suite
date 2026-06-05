@@ -214,11 +214,22 @@ This project uses [UV Suite](https://github.com/utsavanand/uv-suite) v${UV_VERSI
 
 ### Artifacts
 
-Agent output is written to uv-out/. Agents read prior artifacts automatically:
-- /map-codebase writes uv-out/map-codebase.md (read by /architect, /review, /security-review)
-- /spec writes uv-out/specs/ (read by /architect, /write-tests, /write-evals)
-- /architect writes uv-out/architecture/ (read by /review, /write-tests, /slop-check)
+Agent output is written to uv-out/, scoped by session: uv-out/sessions/<session-id>/.
+uv-out/current symlinks to the active session's directory. The session id comes from
+UVS_SESSION_ID (or .uv-suite-state/current-session.txt), so every artifact is attributable
+to the session that produced it. Each artifact is also stamped with provenance frontmatter
+(session, skill, created).
+
+Downstream skills prefer the current session's artifacts but can use a prior session's when
+the current one has none (they list current → prior → legacy and ask which to use):
+- /map-codebase writes uv-out/sessions/<sid>/map-codebase.md (read by /architect, /map-stack)
+- /spec writes uv-out/sessions/<sid>/specs/ (read by /architect, /write-tests, /write-evals)
+- /architect writes uv-out/sessions/<sid>/architecture/ (read by /review, /write-tests, /slop-check)
 - /review writes uv-out/review-*.md (read by /slop-check, /security-review)
+
+The Stop hook uv-out-notify.sh prints the artifact path (and session id) to the terminal
+after each run. NOTE: /review, /write-tests, /write-evals, /slop-check, /security-review,
+and /checkpoint still write to flat uv-out/ paths — session-scoping for those is pending.
 
 ### Hooks
 
