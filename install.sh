@@ -283,6 +283,11 @@ if command -v pip3 &>/dev/null; then PIP_CMD="pip3"
 elif command -v pip &>/dev/null; then PIP_CMD="pip"
 fi
 
+# `timeout` is absent on stock macOS (gtimeout via coreutils); fall back to no timeout.
+TO=""
+if command -v timeout &>/dev/null; then TO="timeout 60"
+elif command -v gtimeout &>/dev/null; then TO="gtimeout 60"; fi
+
 if [ -n "$PIP_CMD" ]; then
   for pkg_info in "graphifyy:graphify:Graphify (knowledge graphs for Cartographer)" \
                   "semgrep:semgrep:Semgrep (SAST for Security Agent)" \
@@ -294,7 +299,7 @@ if [ -n "$PIP_CMD" ]; then
       echo "  ✓ $label (already installed)"
     else
       echo "  Installing $label..."
-      timeout 60 $PIP_CMD install "$pkg" --quiet 2>/dev/null
+      $TO $PIP_CMD install "$pkg" --quiet 2>/dev/null || true
       if command -v "$cmd" &>/dev/null || $PIP_CMD show "$pkg" &>/dev/null; then
         echo "  ✓ $label installed"
       else
@@ -318,7 +323,7 @@ if command -v repomix &>/dev/null; then
   echo "  ✓ Repomix (already installed)"
 else
   echo "  Installing Repomix (codebase context packing)..."
-  npm install -g repomix --quiet 2>/dev/null
+  $TO npm install -g repomix --quiet 2>/dev/null || true
   if command -v repomix &>/dev/null; then
     echo "  ✓ Repomix installed"
   else
