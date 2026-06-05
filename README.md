@@ -234,6 +234,7 @@ uv-out/                  Agent output artifacts (gitignored)
 
 | Document | What it covers |
 |---|---|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Working on UV Suite — adding skills/agents/hooks, running the tests |
 | [usage-guide.md](usage-guide.md) | Full SDLC mapped to exact commands |
 | [personas.md](personas.md) | 4 personas, 7 knobs, when to use each |
 | [practices.md](practices.md) | Working principles (honesty, parallelism, scope, completion) |
