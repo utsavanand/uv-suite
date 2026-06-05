@@ -5,22 +5,8 @@ architecture.
 
 The orchestrator has already loaded for you: the target (`$ARGUMENTS`), the chosen
 `MODE`, the session output directory, the target's CLAUDE.md / DANGER-ZONES.md, Graphify
-availability, and any prior `map-stack.md` artifacts. Use them; don't re-fetch.
-
-The `T`/`D` convention from the orchestrator: `T` is the target with flags stripped, `D`
-falls back to `.` when `T` isn't a directory.
-
-## Discover services
-
-```!
-T="$ARGUMENTS"; T="${T//--repo/}"; T="${T//--stack/}"; T="$(echo $T|xargs)"; find ${T:-.} -maxdepth 3 \( -name "package.json" -o -name "pom.xml" -o -name "go.mod" -o -name "Cargo.toml" -o -name "requirements.txt" -o -name "setup.py" -o -name "pyproject.toml" \) -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | head -30
-```
-
-## Dockerfiles, compose, infra, contracts
-
-```!
-T="$ARGUMENTS"; T="${T//--repo/}"; T="${T//--stack/}"; T="$(echo $T|xargs)"; find ${T:-.} -maxdepth 4 \( -name "Dockerfile" -o -name "docker-compose*" -o -name "*.tf" -o -name "Chart.yaml" -o -name "values.yaml" -o -name "*.proto" -o -name "openapi*" -o -name "*.graphql" \) -not -path "*/node_modules/*" 2>/dev/null | head -30
-```
+availability, the **service discovery + Dockerfile/infra/contract listings**, and any
+prior `map-stack.md` artifacts. Use them; don't re-fetch.
 
 ## Process
 

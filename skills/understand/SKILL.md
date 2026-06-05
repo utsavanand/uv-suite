@@ -79,6 +79,29 @@ graphify --version 2>/dev/null || echo "NOT_INSTALLED"
 
 !`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-collect.sh 'map-stack.md' || echo "No prior stack map"`
 
+## Discovery
+
+Both sets run at load (cheap); the chosen mode uses what it needs. Flags are stripped
+from the target before `find`.
+
+### Services (stack mode)
+
+```!
+T="$ARGUMENTS"; T="${T//--repo/}"; T="${T//--stack/}"; T="$(echo $T|xargs)"; find ${T:-.} -maxdepth 3 \( -name "package.json" -o -name "pom.xml" -o -name "go.mod" -o -name "Cargo.toml" -o -name "requirements.txt" -o -name "setup.py" -o -name "pyproject.toml" \) -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | head -30
+```
+
+### Dockerfiles, compose, infra, contracts (stack mode)
+
+```!
+T="$ARGUMENTS"; T="${T//--repo/}"; T="${T//--stack/}"; T="$(echo $T|xargs)"; find ${T:-.} -maxdepth 4 \( -name "Dockerfile" -o -name "docker-compose*" -o -name "*.tf" -o -name "Chart.yaml" -o -name "values.yaml" -o -name "*.proto" -o -name "openapi*" -o -name "*.graphql" \) -not -path "*/node_modules/*" 2>/dev/null | head -30
+```
+
+### Existing knowledge graph (repo mode)
+
+```!
+T="$ARGUMENTS"; T="${T//--repo/}"; T="${T//--stack/}"; T="$(echo $T|xargs)"; D="$T"; [ -d "$D" ] || D="."; cat "$D/graphify-out/GRAPH_REPORT.md" 2>/dev/null | head -80 || echo "No existing graph found"
+```
+
 ## Procedure
 
 Based on the `MODE` printed above, follow the matching mode file. It owns the process and

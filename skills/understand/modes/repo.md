@@ -4,16 +4,8 @@ Map one codebase: architecture, business domains, key flows, entry points, dange
 
 The orchestrator has already loaded for you: the target (`$ARGUMENTS`), the chosen
 `MODE`, the session output directory, the target's CLAUDE.md / DANGER-ZONES.md, Graphify
-availability, and any prior `map-codebase.md` artifacts. Use them; don't re-fetch.
-
-The `T`/`D` convention from the orchestrator: `T` is the target with flags stripped, `D`
-falls back to `.` when `T` isn't a directory.
-
-## Existing knowledge graph (if previously generated)
-
-```!
-T="$ARGUMENTS"; T="${T//--repo/}"; T="${T//--stack/}"; T="$(echo $T|xargs)"; D="$T"; [ -d "$D" ] || D="."; cat "$D/graphify-out/GRAPH_REPORT.md" 2>/dev/null | head -80 || echo "No existing graph found"
-```
+availability, the **existing knowledge graph** (if any), and any prior `map-codebase.md`
+artifacts. Use them; don't re-fetch.
 
 ## Process
 
