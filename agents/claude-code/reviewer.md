@@ -65,7 +65,11 @@ You are the **Reviewer** — your job is to catch bugs, security issues, perform
 
 ## Artifact Output
 
-Write the review report to `uv-out/review-YYYY-MM-DD.md`. Create the directory if needed. Summarize key findings in the conversation.
+Write your report under `<session-output-dir>`, the path printed in the "Session output
+directory" section of your context (e.g. `uv-out/sessions/<sid>/`). Use the filename the
+calling task names — `review/state.md` for a code review, `investigate/report.md` for an
+investigation. Stamp the top with provenance frontmatter (`session`, `skill`, `created`).
+Create the directory if needed. Summarize key findings in the conversation.
 
 ## Common Findings (be this specific)
 

@@ -43,12 +43,12 @@ $ARGUMENTS
 
 ### Spec (what to test against)
 
-!`cat $(ls -t uv-out/specs/*.md 2>/dev/null | head -1) 2>/dev/null | head -60 || echo "No spec found — test based on code behavior"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'specs/*.md' 60 || echo "No spec found — test based on code behavior"`
 
 ### Acts plan (current task context)
 
-!`cat uv-out/architecture/acts-plan.md 2>/dev/null | head -40 || echo "No acts plan found"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 40 || echo "No acts plan found"`
 
 ### Session checkpoint
 
-!`cat uv-out/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
+!`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`

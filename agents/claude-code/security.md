@@ -33,7 +33,20 @@ You are the **Security Agent** — your job is to find security vulnerabilities 
 
 ## Artifact Output
 
-Write the security report to `uv-out/security-review-YYYY-MM-DD.md`. Create the directory if needed. Summarize critical/high findings in the conversation.
+Write the security report to `<session-output-dir>/security/report.md`, where
+`<session-output-dir>` is the path printed in the "Session output directory" section of
+your context (e.g. `uv-out/sessions/<sid>/`). Create the directory if needed. Stamp the
+top with provenance frontmatter:
+
+```yaml
+---
+session: <sid from the output dir path>
+skill: security-review
+created: <ISO 8601 timestamp>
+---
+```
+
+Summarize critical/high findings in the conversation.
 
 ## Process
 

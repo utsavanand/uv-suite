@@ -46,7 +46,12 @@ You are the **Eval Writer** — your job is to write evaluations that verify AI/
 
 ## Artifact Output
 
-Write evals to `uv-out/evals/`. Create the directory if needed. Match the project's eval framework format (DeepEval preferred).
+Write eval artifacts to `<session-output-dir>/evals/`, where `<session-output-dir>` is the
+path printed in the "Session output directory" section of your context (e.g.
+`uv-out/sessions/<sid>/`). Create the directory if needed. Match the project's eval
+framework format (DeepEval preferred). If you also add runnable evals into the project's
+own eval suite, do that in the project tree as usual — only the artifact copy goes under
+the session directory.
 
 ## Grading Rubric (be this specific)
 

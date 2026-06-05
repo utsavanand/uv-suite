@@ -27,8 +27,14 @@ $ARGUMENTS
 
 !`find . -name "*eval*" -o -name "*evals*" 2>/dev/null | head -10 || echo "No eval files found"`
 
+## Session output directory
+
+Write eval artifacts under this directory (scoped to the current session):
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+
 ## Prior analysis
 
 ### Spec (requirements to evaluate against)
 
-!`cat $(ls -t uv-out/specs/*.md 2>/dev/null | head -1) 2>/dev/null | head -60 || echo "No spec found"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'specs/*.md' 60 || echo "No spec found"`

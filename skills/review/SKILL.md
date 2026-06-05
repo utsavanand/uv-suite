@@ -35,6 +35,16 @@ allowed-tools:
 
 $ARGUMENTS
 
+## Session output directory
+
+Write the review report and state under this directory (scoped to the current session):
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+
+Stable flat pointer maintained for `/commit` and `/ship`:
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-pointer.sh review-state.md review/state.md`
+
 ## Project context
 
 !`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
@@ -47,19 +57,19 @@ $ARGUMENTS
 
 ### Architecture map
 
-!`cat uv-out/map-codebase.md 2>/dev/null | head -100 || echo "No codebase map — run /map-codebase first for better review context"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh map-codebase.md 100 || echo "No codebase map — run /map-codebase first for better review context"`
 
 ### Architecture decisions
 
-!`cat uv-out/architecture/decisions.md 2>/dev/null | head -60 || echo "No architecture decisions found"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'architecture/decisions.md' 60 || echo "No architecture decisions found"`
 
 ### Acts plan
 
-!`cat uv-out/architecture/acts-plan.md 2>/dev/null | head -60 || echo "No acts plan found"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 60 || echo "No acts plan found"`
 
 ### Session checkpoint (what's in progress)
 
-!`cat uv-out/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
+!`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
 
 ## Orchestration procedure
 
@@ -133,7 +143,10 @@ For each surfaced finding (tier Critical/High/Medium), assign `fix_class`:
 
 ### Step 6 — Write state
 
-Write `uv-out/review-state.md` with this exact frontmatter schema so `/commit` and `/ship` can parse it:
+Write the review state to `<session-output-dir>/review/state.md` (the
+`<session-output-dir>` printed above, e.g. `uv-out/sessions/<sid>/`). The flat pointer
+`uv-out/review-state.md` already points here, so `/commit` and `/ship` read it unchanged.
+Use this exact frontmatter schema so they can parse it:
 
 ```yaml
 ---

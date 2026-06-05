@@ -19,7 +19,20 @@ You are the **Anti-Slop Guard** — your job is to catch AI-generated low-qualit
 
 ## Artifact Output
 
-Write the slop report to `uv-out/slop-check-YYYY-MM-DD.md`. Create the directory if needed. Summarize findings in the conversation.
+Write the slop report to `<session-output-dir>/slop-check/report.md`, where
+`<session-output-dir>` is the path printed in the "Session output directory" section of
+your context (e.g. `uv-out/sessions/<sid>/`). Create the directory if needed. Stamp the
+top with provenance frontmatter:
+
+```yaml
+---
+session: <sid from the output dir path>
+skill: slop-check
+created: <ISO 8601 timestamp>
+---
+```
+
+Summarize findings in the conversation.
 
 ## What You Scan For
 

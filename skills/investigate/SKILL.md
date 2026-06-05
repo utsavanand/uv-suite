@@ -12,6 +12,7 @@ model: claude-opus-4-6
 effort: max
 allowed-tools:
   - Read(*)
+  - Write(uv-out/**)
   - Grep(*)
   - Glob(*)
   - Bash(git log *)
@@ -37,9 +38,15 @@ $ARGUMENTS
 
 !`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md"`
 
+## Session output directory
+
+Write investigation findings under this directory (scoped to the current session):
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
+
 ## Codebase map
 
-!`cat uv-out/map-codebase.md 2>/dev/null | head -60 || echo "No codebase map"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh map-codebase.md 60 || echo "No codebase map"`
 
 ## Recent changes (potential cause)
 
@@ -47,7 +54,7 @@ $ARGUMENTS
 
 ## Latest checkpoint
 
-!`cat uv-out/checkpoints/latest.md 2>/dev/null | head -30 || echo "No checkpoint"`
+!`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -30 || echo "No checkpoint"`
 
 ## Investigation methodology
 
@@ -107,4 +114,7 @@ What I need:
 
 ## Artifact output
 
-Write investigation findings to `uv-out/investigate-YYYY-MM-DD.md`. Include: bug description, hypotheses tested, root cause found (or not), fix applied (or escalation).
+Write investigation findings to `<session-output-dir>/investigate/report.md` (the
+`<session-output-dir>` printed above, e.g. `uv-out/sessions/<sid>/`), stamped with
+provenance frontmatter (`session`, `skill: investigate`, `created`). Include: bug
+description, hypotheses tested, root cause found (or not), fix applied (or escalation).

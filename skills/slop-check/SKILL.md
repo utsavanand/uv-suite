@@ -11,6 +11,7 @@ model: claude-opus-4-6
 effort: high
 allowed-tools:
   - Read(*)
+  - Write(uv-out/**)
   - Grep(*)
   - Glob(*)
   - Bash(git diff *)
@@ -20,6 +21,12 @@ allowed-tools:
 ## Target
 
 $ARGUMENTS
+
+## Session output directory
+
+Write the slop report under this directory (scoped to the current session):
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
 
 ## Changes to scan
 
@@ -33,8 +40,8 @@ $ARGUMENTS
 
 ### Architecture decisions (check code against stated rationale)
 
-!`cat uv-out/architecture/decisions.md 2>/dev/null | head -40 || echo "No architecture decisions found"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'architecture/decisions.md' 40 || echo "No architecture decisions found"`
 
 ### Recent review findings
 
-!`cat $(ls -t uv-out/review-*.md 2>/dev/null | head -1) 2>/dev/null | head -40 || echo "No prior review found"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'review/state.md' 40 || echo "No prior review found"`

@@ -12,6 +12,7 @@ model: claude-opus-4-6
 effort: high
 allowed-tools:
   - Read(*)
+  - Write(uv-out/**)
   - Grep(*)
   - Glob(*)
   - Bash(git diff *)
@@ -27,6 +28,12 @@ allowed-tools:
 ## Target
 
 $ARGUMENTS
+
+## Session output directory
+
+Write the security report under this directory (scoped to the current session):
+
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-session.sh`
 
 ## Changes to review
 
@@ -44,15 +51,15 @@ $ARGUMENTS
 
 ### Codebase map
 
-!`cat uv-out/map-codebase.md 2>/dev/null | head -80 || echo "No codebase map found"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh map-codebase.md 80 || echo "No codebase map found"`
 
 ### Recent code review findings
 
-!`cat $(ls -t uv-out/review-*.md 2>/dev/null | head -1) 2>/dev/null | head -60 || echo "No prior review found"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'review/state.md' 60 || echo "No prior review found"`
 
 ### Recent slop check
 
-!`cat $(ls -t uv-out/slop-check-*.md 2>/dev/null | head -1) 2>/dev/null | head -40 || echo "No prior slop check found"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh 'slop-check/report.md' 40 || echo "No prior slop check found"`
 
 ## Available security tools
 
