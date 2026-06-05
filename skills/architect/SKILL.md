@@ -15,6 +15,9 @@ allowed-tools:
   - Glob(*)
   - Write(uv-out/**)
   - AskUserQuestion
+  - Agent(*)
+  - WebSearch
+  - WebFetch
   - Bash(git log *)
 ---
 
@@ -71,3 +74,31 @@ a one-line explanation. Designing without a spec is a failure, not a fallback.
 ### Session checkpoint
 
 !`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
+
+## Step 1 — Consult domain specialists (only the relevant ones)
+
+With the spec in hand, identify which domains it actually touches and consult **only those**
+specialists — skip the rest and document which you skipped and why.
+
+| Specialist | Consult when the spec involves |
+|---|---|
+| `distributed-systems` | meaningful scale, multiple services, messaging/queues, consistency, caching, fault tolerance |
+| `llm-ai-engineering` | LLM/agent features — RAG, tools, prompts, evals, inference cost/latency |
+| `ml-systems` | model training/serving, data/feature pipelines, model lifecycle/monitoring |
+| `full-stack` | a web/product app — frontend/backend/API, state, auth, data layer |
+
+For each relevant specialist, read `.claude/skills/architect/specialists/<name>.md` and
+dispatch it via `Agent(general-purpose)`, passing the specialist prompt + the spec + the
+codebase map. They run in parallel and return scoped, slop-guarded recommendations (with
+sources where they researched).
+
+**Most systems need 0–2 specialists.** A simple CRUD app may need none — don't consult a
+specialist to look thorough. Consulting one is only worthwhile when a domain genuinely
+shapes the design.
+
+## Step 2 — Design and decompose into Acts
+
+Synthesize the spec + any specialist input into the architecture and the Acts breakdown
+(per your agent instructions). Apply `guardrails/architecture-slop.md` to the synthesis:
+**every component must trace to a requirement.** Fold in a specialist recommendation only
+where a requirement justifies it; call out what you deliberately kept simple.

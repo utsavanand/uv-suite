@@ -14,6 +14,7 @@ skills/<name>/SKILL.md   12 skills, one slash command each; SKILL.md is a thin
                          orchestrator (the prompt + its tool grants). Fan-out
                          skills carry a sub-folder the orchestrator routes into:
                            review/specialists/    one file per review specialist
+                           architect/specialists/ one file per domain expert (researches)
                            test/specialists/      one file per test specialist
                            understand/modes/      one file per understand mode
                            session/operations/    one file per session operation
