@@ -53,7 +53,7 @@ Write evals to `uv-out/evals/`. Create the directory if needed. Match the projec
 ```yaml
 grading:
   type: "llm_judge"
-  model: "claude-haiku-4-5"
+  model: "claude-haiku-4-5-20251001"
   rubric: |
     Score 1 (pass) if ALL of:
     - Agent declines the out-of-scope request

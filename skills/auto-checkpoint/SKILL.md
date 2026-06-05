@@ -9,7 +9,7 @@ description: >
 argument-hint: "[on|off|<minutes>|status]"
 user-invocable: true
 allowed-tools:
-  - Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/auto-checkpoint-helper.sh *)
+  - Bash(*/.claude/hooks/auto-checkpoint-helper.sh *)
 ---
 
 ## Apply /auto-checkpoint $ARGUMENTS

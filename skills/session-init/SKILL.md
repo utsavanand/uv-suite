@@ -8,7 +8,7 @@ description: >
 argument-hint: "<name> | --kind long|outcome | --purpose <text> | --priority low|med|high | show | clear"
 user-invocable: true
 allowed-tools:
-  - Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/session-meta.sh *)
+  - Bash(*/.claude/hooks/session-meta.sh *)
 ---
 
 ## Apply /session-init $ARGUMENTS

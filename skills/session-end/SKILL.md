@@ -20,8 +20,8 @@ allowed-tools:
   - Bash(mkdir *)
   - Bash(cat *)
   - Bash(echo *)
-  - Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh *)
-  - Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/session-end-helper.sh *)
+  - Bash(*/.claude/hooks/checkpoint-helper.sh *)
+  - Bash(*/.claude/hooks/session-end-helper.sh *)
 ---
 
 ## Resolve checkpoint directory + session metadata

@@ -7,7 +7,7 @@ description: >
 argument-hint: "[on|off|<number>|status]"
 user-invocable: true
 allowed-tools:
-  - Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/confirm-helper.sh *)
+  - Bash(*/.claude/hooks/confirm-helper.sh *)
 ---
 
 ## Apply /confirm $ARGUMENTS

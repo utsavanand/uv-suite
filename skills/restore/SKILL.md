@@ -14,7 +14,7 @@ allowed-tools:
   - Bash(grep *)
   - Bash(find *)
   - Bash(git rev-parse *)
-  - Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/checkpoint-helper.sh *)
+  - Bash(*/.claude/hooks/checkpoint-helper.sh *)
 ---
 
 ## Available sessions with checkpoints
