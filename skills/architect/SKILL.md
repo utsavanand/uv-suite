@@ -13,13 +13,26 @@ allowed-tools:
   - Read(*)
   - Grep(*)
   - Glob(*)
-  - Write(*)
+  - Write(uv-out/*)
+  - AskUserQuestion
   - Bash(git log *)
 ---
 
 ## Input
 
 $ARGUMENTS
+
+## Step 0 — Confirm the input spec (do this FIRST, before designing)
+
+- If `$ARGUMENTS` names a spec file or describes the work, use it.
+- Otherwise look in `uv-out/specs/`:
+  - Exactly one spec → use it, no prompt.
+  - More than one spec → ask the user with `AskUserQuestion` which spec to architect
+    from. List them, default to the most recently modified.
+  - No specs and no argument → ask the user to point you at a spec or describe the work.
+    Do not invent requirements.
+- Once the spec is chosen, read it **in full** with `Read` before designing — the preload
+  below is truncated.
 
 ## Project context
 
