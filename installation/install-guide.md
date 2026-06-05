@@ -58,7 +58,7 @@ cp ~/uv-suite/portable-standards/*.md .
 
 ## File-Per-Agent Architecture
 
-UV Suite uses **one file per agent** rather than a monolithic agents.md. This is intentional:
+UV Suite uses **one file per agent** rather than a monolithic file. This is intentional:
 
 ### Why one file per agent?
 

@@ -40,6 +40,30 @@ Label this session (Enter to skip — you'll be reminded):
 
 Skip any field with Enter. If you skip the name, `/session-init` will be suggested every few prompts until you label it. Set `UVS_NO_PROMPT=1` to suppress prompts entirely.
 
+## Start here
+
+After `uvs claude pro`, pick the path that matches what you're doing. Each path names the first skill to run and the canonical next steps.
+
+### Existing codebase (you didn't write this)
+1. `/map-codebase` — builds a knowledge graph + architecture overview in `uv-out/map-codebase.md`. Other skills (`/architect`, `/review`, `/security-review`) read it automatically.
+2. `/checkpoint` — captures your baseline understanding so `/restore` can bring it back next session.
+3. Then: `/review` on the current diff, or `/spec` for the next feature.
+
+### New project (you're starting from scratch)
+1. `/spec` — converts your idea into a structured spec in `uv-out/specs/`.
+2. `/architect` — breaks the spec into Acts with cycle budgets. Reads the spec automatically.
+3. Then: implement Act by Act. Use `/write-tests` and `/review` per Act.
+
+### Reviewing a PR
+1. `/review [branch-name]` — reads diff + `CLAUDE.md` + `DANGER-ZONES.md` + prior `uv-out/` artifacts.
+2. `/security-review` if the diff touches auth, payments, data access, or external inputs.
+
+### Shipping
+1. `/checkpoint` to capture state.
+2. `/commit` — runs slop-check, tests, commits, optionally opens a PR.
+
+Picking a persona (Spike / Sport / Professional / Auto) is a separate axis from picking a first skill — see [Personas](#personas) below for which mode fits which situation.
+
 ## Sessions and Watchtower
 
 Each `uvs` launch generates a `UVS_SESSION_ID` and writes metadata to `.uv-suite-state/sessions/<id>.json`. This unlocks:
@@ -217,6 +241,9 @@ uv-out/                  Agent output artifacts (gitignored)
 | [methodology/human-in-the-loop.md](methodology/human-in-the-loop.md) | Cycle budgets, intervention types, learning loops |
 | [collaboration/sharing-and-standards.md](collaboration/sharing-and-standards.md) | Danger zones, team standards, sharing levels |
 | [landscape.md](landscape.md) | Open source tools and references for each agent |
+| [comparison.md](comparison.md) | UV Suite vs gstack vs Claude Code built-in — feature comparison + prompt-depth deep dive |
+| [tool-comparison.md](tool-comparison.md) | Claude Code vs Cursor vs Codex — how UV Suite works across all three |
+| [best-practices.md](best-practices.md) | Subagent patterns, remote sessions, sharing with engineers, cost optimization |
 
 ## License
 

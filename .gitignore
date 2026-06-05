@@ -12,3 +12,11 @@ skills/persona/
 
 # Runtime watchtower data
 watchtower/events.json
+
+# Personal notes / research artifacts (not for public repo)
+website-concept.md
+
+# Superseded monolithic docs (replaced by file-per-agent / file-per-rule structure)
+agents.md
+anti-slop.md
+portable-standards.md

@@ -192,3 +192,62 @@ Detailed feature-by-feature comparison. Honest quality assessment.
 | Quality guardrails | None | Anti-slop rules, real-time hooks, danger zones |
 | Test generation | Manual via Bash | Dedicated agents with anti-slop, framework detection |
 | Customizable rigor | `/effort` only | Full persona system (model, hooks, permissions, guardrails) |
+
+## Prompt-Depth Deep Dive (added 2026-05-17)
+
+The feature tables above compare *capability surface*. This section compares *prompt depth* — what the skills actually instruct Claude to do. Source: read of gstack `main` branch and UV Suite at `strategy/uv-suite/`.
+
+### Word-count comparison: `/review`
+
+| | UV Suite | gstack |
+|---|---|---|
+| Main SKILL.md | 193 words | ~9,400 words |
+| Sub-prompts | 0 | 7 specialist files (api-contract, data-migration, maintainability, performance, red-team, security, testing) |
+| Auxiliary files | 0 | checklist.md, design-checklist.md, greptile-triage.md, TODOS-format.md |
+| Total review surface | 193 words / 1 file | ~9,400 words / 12 files |
+
+UV Suite's `/review` is essentially a context-loader: it `cat`s the diff, CLAUDE.md, DANGER-ZONES.md, and prior `uv-out/` artifacts, then hands off to a generic `reviewer` agent. gstack's `/review` is an 8-step procedure with explicit branching, parallel specialist dispatch, and an adversarial second pass via Codex.
+
+### Structural patterns gstack uses that UV Suite doesn't
+
+1. **Parallel specialist subagents per skill.** gstack's `/review` dispatches 7 specialists concurrently — each is its own prompt file with concern-specific detection rules. UV Suite's `/review` delegates to one `reviewer` agent that covers everything.
+
+2. **Confidence-scored output gating.** gstack scores each finding 1-10; 7-10 surface normally, 5-6 surface with caveats, 3-4 move to appendix, 1-2 are suppressed. UV Suite has no scoring layer.
+
+3. **Fix-First classification.** gstack tags each finding as AUTO-FIX (apply immediately) or ASK (user approval). UV Suite reports findings; the user manually decides what to fix.
+
+4. **Fingerprint-based suppression.** gstack persists which findings a user already skipped and omits them on re-runs if the file is unchanged. UV Suite re-flags everything on every run.
+
+5. **Cross-model adversarial review.** gstack invokes Codex as an independent second reviewer to catch blind spots in Claude's review. UV Suite has no cross-model pass.
+
+6. **Skill coupling via persisted state.** gstack's `/ship` knows whether `/review` completed by reading state. UV Suite skills are orthogonal — no skill knows what other skills ran.
+
+7. **Voice rules embedded per-skill.** gstack's `/review` bans "delve", "robust", "comprehensive" inside the skill prompt itself. UV Suite has the same rule globally in `rules/doc-slop.md` but doesn't reinforce per-skill.
+
+### What gstack does NOT have
+
+- No language-specific slop catalogs (no python-slop.md, java-slop.md). Their depth comes from procedural orchestration, not finer-grained pattern lists. Worth weighing if you were planning to add such files for parity reasons — that's not where their leverage is.
+- No persona / mode-switching. All 23 tools available all the time.
+- No formal codebase-mapping skill.
+- No multi-tool portability (Claude Code only; UV Suite ships for Cursor + Codex too).
+
+### Honest assessment vs the original audit question
+
+The earlier conversation framed the gap as "UV Suite's slop rules are language-agnostic; add python-slop.md and java-slop.md." After reading gstack, that framing looks wrong:
+
+- The slop rule files (`rules/*-slop.md`) are well-designed for their actual role — they're *guardrails* (reference docs Claude consults), not *skills* (executable procedures). Different mechanism, different evaluation criteria.
+- The bigger gap is in the *skills* (e.g., `/review`) being thin compared to gstack's. Adding more rule files won't close that gap.
+- The high-leverage rewrite, if taken, is restructuring `/review` (and probably `/security-review`) with specialist subagent dispatch + confidence scoring + adversarial pass. That's a significantly larger lift than adding rule files.
+
+Not a recommendation to do that — just naming the actual tradeoff so future-you can decide deliberately.
+
+### Upstream UV Suite bugs surfaced during this session (2026-05-17)
+
+Two latent bugs in `strategy/uv-suite/` discovered while answering questions about prompt quality:
+
+1. **Six skill files used `Bash("$CLAUDE_PROJECT_DIR"/.claude/hooks/*.sh *)` in `allowed-tools`.** Recent Claude Code tightening rejects shell-variable expansion inside permission patterns with `Contains simple_expansion`. Symptom: `/confirm off` (and 5 other skills) fails with `Shell command permission check failed`. Fix: replace with `Bash(*/.claude/hooks/*.sh *)` — the leading wildcard is portable across workspaces. Applied to all 6 skills in `strategy/uv-suite/skills/{confirm,checkpoint,restore,auto-checkpoint,session-init,session-end}/SKILL.md`. Also worth a GitHub issue at `utsavanand/uv-suite` so installs elsewhere don't regress.
+
+2. **The `eval-writer` agent template referenced `"claude-haiku-4-5"` (no date suffix).** Claude Code's hook evaluator rejects un-dated Haiku IDs. The current valid alias is `claude-haiku-4-5-20251001`. Also affected three live config files in `~/.claude/`: `personas/spike.json`, `personas/professional.json`, `agents/eval-writer.md` — these used the even more stale `"claude-haiku"`. Applied to `strategy/uv-suite/agents/claude-code/eval-writer.md` and the four user-config files.
+
+Both fixes are local-only; the upstream `utsavanand/uv-suite` repo still ships these bugs and should be patched there.
+

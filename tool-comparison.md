@@ -121,8 +121,6 @@ The tool-specific additions are thin:
 - **Cursor**: `alwaysApply`/`globs` frontmatter, description for intelligent matching
 - **Codex**: Override chain awareness, size constraints (32 KiB)
 
-See: [portable-standards.md](portable-standards.md)
-
 ---
 
 ## 2. Subagent Support
