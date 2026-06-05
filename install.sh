@@ -105,7 +105,9 @@ echo "Installing skills..."
 for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
   skill_name=$(basename "$skill_dir")
   mkdir -p "$TARGET_DIR/skills/$skill_name"
-  cp "$skill_dir/SKILL.md" "$TARGET_DIR/skills/$skill_name/"
+  # Copy the whole skill dir — SKILL.md plus any sub-folders the orchestrator
+  # routes into (specialists/, modes/, operations/).
+  cp -R "$skill_dir"* "$TARGET_DIR/skills/$skill_name/"
 done
 echo "  ✓ /understand (--repo/--stack), /spec, /architect, /test (--unit/--integration/--eval)"
 echo "  ✓ /review (--security/--slop), /prototype, /qa, /investigate"
