@@ -60,7 +60,7 @@ After `uvs claude pro`, pick the path that matches what you're doing. Each path 
 
 ### Shipping
 1. `/session checkpoint` to capture state.
-2. `/commit` — runs slop-check, tests, commits, optionally opens a PR.
+2. `/commit` — runs review, tests, commits, optionally opens a PR.
 
 Picking a persona (Spike / Sport / Professional / Auto) is a separate axis from picking a first skill — see [Personas](#personas) below for which mode fits which situation.
 
@@ -128,35 +128,32 @@ Human gates  After each     End only     Every Act          Final output
 
 ## Skills (slash commands)
 
+12 skills. Each `skills/<name>/SKILL.md` is a thin orchestrator that dispatches to agents.
+
 | Command | What it does |
 |---|---|
-| `/understand [dir]` | Build a knowledge graph of the codebase |
-| `/understand --stack [dir]` | Map multiple services and their connections |
+| `/understand [dir]` | Map a codebase or whole stack — auto-detects, or force with `--repo` / `--stack` |
 | `/spec [requirements]` | Write a technical specification |
 | `/architect [spec]` | Design architecture, decompose into Acts |
+| `/test [file]` | Write tests or evals: `--unit` / `--integration` / `--eval` ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
+| `/review` | Multi-specialist code review; add `--security` (OWASP via Semgrep/Gitleaks/Trivy) or `--slop` (anti-slop audit) |
 | `/prototype [concept]` | Build a static React prototype |
-| `/test [file]` | Generate tests matching project conventions |
-| `/test --eval [prompt]` | Write AI/LLM evaluation cases ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
-| `/review` | Code review: correctness, security, performance, slop |
-| `/review --slop` | Detect 6 categories of AI-generated slop |
-| `/review --security` | OWASP audit, dependency scan, secret detection |
+| `/qa` | Browser QA via Playwright MCP |
 | `/investigate` | Systematic root-cause debugging |
-| `/commit` | Review → test → slop-check → commit (and optionally PR) |
-| `/session checkpoint [label]` | Save session state to `uv-out/checkpoints/<sid>/` |
-| `/session restore [sid-prefix\|name]` | Load the latest checkpoint for the current (or named) session |
-| `/session init [name\|--kind\|--purpose\|--priority]` | Label or relabel the current session |
+| `/commit` | Review → test → commit (and optionally PR) |
+| `/session init\|checkpoint\|restore\|end\|auto` | Session lifecycle — label, checkpoint, restore, end, or auto-checkpoint |
 | `/confirm [on\|off\|<n>]` | Toggle reframe-and-confirm for prompts over `<n>` words |
 | `/uv-help` | List every skill, agent, hook, guardrail, and persona |
 
 ## Hooks (lifecycle automation)
 
-Fire automatically on Claude Code events. You never invoke these.
+Fire automatically on Claude Code events. You never invoke these. ~26 scripts live in `hooks/`.
 
 | Hook | Fires on | What it does |
 |---|---|---|
 | auto-lint | File write | Runs prettier, ruff, or gofmt |
-| slop-grep | File write | Greps for obvious slop patterns (over-commented code, vague docs) |
-| doc-slop-grep | File write | Catches vague adjectives in markdown |
+| slop-grep | File edit/write | Ambient slop detection on sport / professional / auto personas |
+| doc-slop-grep | File edit/write | Catches vague adjectives in markdown on the spike persona |
 | danger-zone-check | File edit | Warns if file is in DANGER-ZONES.md |
 | block-destructive | Bash command | Blocks `rm -rf /`, force push to main, `DROP TABLE` |
 | confirm-prompt | UserPromptSubmit | For prompts over the threshold, requires Claude to restate before any work starts |
@@ -167,11 +164,12 @@ Fire automatically on Claude Code events. You never invoke these.
 | session-timer | PostToolUse | Reminders at 45 / 90 / 180 minutes |
 | session-end | Stop | Shows duration, today's total, reflection prompt |
 | session-review-reminder | Stop | Nudges you to review uncommitted changes |
+| uv-out-* | Session events | Manage session-scoped artifacts under `uv-out/sessions/<sid>/` |
 | status-line | Continuous | Renders session label, persona, priority, and timer in the Claude Code status bar |
 
 ## Agents
 
-10 agents, each in 4 formats (Claude Code, Cursor, Codex, portable):
+8 agents. The canonical definitions are `agents/claude-code/*.md`. The Cursor (`.mdc`) and Codex (`.toml`) variants are generated from those by `agents/generate.py` at install — they're not hand-maintained.
 
 | Agent | Subsystem | Model | Cycle Budget |
 |---|---|---|---|
@@ -183,8 +181,6 @@ Fire automatically on Claude Code events. You never invoke these.
 | Eval Writer | Acts | Opus | 2 |
 | Anti-Slop Guard | Guard | Opus | 1 |
 | Prototype Builder | Acts | Sonnet | 3 |
-| DevOps | Acts | Opus | 2 |
-| Security | Guard | Opus | 1 |
 
 ## Artifacts
 
@@ -214,13 +210,13 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 ```
 .claude/
   settings.json          Permissions and hooks (seeded from your persona on first install)
-  agents/                10 agent definitions
-  skills/                17 slash commands
-  hooks/                 14 hook scripts + 2 helpers
+  agents/                8 agent definitions (canonical .md)
+  skills/                12 slash commands
+  hooks/                 ~26 hook scripts
   rules/                 6 anti-slop guardrails (Pro / Auto only)
   personas/              4 persona configs
-.codex/agents/           10 Codex agent definitions
-.cursor/rules/           10 Cursor rule definitions
+.codex/agents/           8 Codex agent definitions (generated from .claude/agents)
+.cursor/rules/           8 Cursor rule definitions (generated from .claude/agents)
 AGENTS.md                Codex instruction file
 DANGER-ZONES.md          Risky areas (commit this)
 .uv-suite-state/         Session metadata + counters (gitignored)

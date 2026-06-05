@@ -107,9 +107,9 @@ for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
   mkdir -p "$TARGET_DIR/skills/$skill_name"
   cp "$skill_dir/SKILL.md" "$TARGET_DIR/skills/$skill_name/"
 done
-echo "  ✓ /understand, /spec, /architect, /review, /test"
-echo "  ✓ /test --eval, /review --slop, /prototype, /review --security"
-echo "  ✓ /understand --stack, /session init"
+echo "  ✓ /understand (--repo/--stack), /spec, /architect, /test (--unit/--integration/--eval)"
+echo "  ✓ /review (--security/--slop), /prototype, /qa, /investigate"
+echo "  ✓ /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help"
 
 # --- Install hooks ---
 echo "Installing hook scripts..."
@@ -209,7 +209,7 @@ This project uses [UV Suite](https://github.com/utsavanand/uv-suite) v${UV_VERSI
 
 ### Skills
 
-/understand, /understand --stack, /spec, /architect, /review, /test, /test --eval, /review --slop, /prototype, /review --security, /checkpoint, /session restore
+/understand (--repo/--stack), /spec, /architect, /test (--unit/--integration/--eval), /review (--security/--slop), /prototype, /qa, /investigate, /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help
 
 ### Artifacts
 
@@ -385,24 +385,27 @@ echo "╚═══════════════════════�
 echo ""
 echo "What was installed:"
 echo ""
-echo "  Claude Code     .claude/agents/*.md + skills/ + hooks/ + rules/"
-echo "  Codex           .codex/agents/*.toml + AGENTS.md"
-echo "  Cursor          .cursor/rules/*.mdc"
+echo "  Claude Code     .claude/agents/*.md (8 canonical) + skills/ + hooks/ + rules/"
+echo "  Codex           .codex/agents/*.toml (generated from canonical) + AGENTS.md"
+echo "  Cursor          .cursor/rules/*.mdc (generated from canonical)"
 echo "  Personas (4)    .claude/personas/*.json"
 echo "  Launcher        ./uv.sh"
 echo ""
 
-echo "Available slash commands:"
+echo "Available slash commands (12 skills):"
 echo ""
-echo "  /understand [dir]     Map a codebase (Cartographer)"
-echo "  /spec [requirements]    Write a technical spec (Spec Writer)"
-echo "  /architect [spec]       Design architecture + Acts (Architect)"
-echo "  /review [file]          Code review (Reviewer)"
-echo "  /test [file]     Generate tests (Test Writer)"
-echo "  /test --eval [prompt]   Write AI evaluations (Eval Writer)"
-echo "  /review --slop [file]      Detect AI slop (Anti-Slop Guard)"
-echo "  /prototype [concept]    Build a prototype (Prototype Builder)"
-echo "  /review --security [file] Security audit (Security Agent)"
+echo "  /understand [--repo|--stack]  Map a codebase or full stack (Cartographer)"
+echo "  /spec [requirements]          Write a technical spec (Spec Writer)"
+echo "  /architect [spec]             Design architecture + Acts (Architect)"
+echo "  /test [--unit|--integration|--eval]  Generate tests/evals (Test Writer, Eval Writer)"
+echo "  /review [--security|--slop]   Code review, security audit, slop check (Reviewer, etc.)"
+echo "  /prototype [concept]          Build a prototype (Prototype Builder)"
+echo "  /qa [target]                  Browser-based QA (Playwright MCP)"
+echo "  /investigate [question]       Multi-step codebase investigation"
+echo "  /commit                       Stage and commit changes"
+echo "  /session <init|checkpoint|restore|end|auto>  Manage session lifecycle"
+echo "  /confirm                      Confirm a HITL gate"
+echo "  /uv-help                      Show UV Suite help"
 echo ""
 
 if [ "$PERSONA" = "sport" ]; then
