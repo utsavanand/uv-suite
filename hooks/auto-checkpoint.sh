@@ -160,7 +160,7 @@ GIT_LOG=$(cd "$PROJECT_DIR" && git log --oneline -5 2>/dev/null)
   fi
 } > "$CP_FILE"
 
-# Update latest.md so /restore picks it up
+# Update latest.md so /session restore picks it up
 cp "$CP_FILE" "$CP_DIR/latest.md" 2>/dev/null
 echo "$NOW" > "$LAST_CP_FILE"
 

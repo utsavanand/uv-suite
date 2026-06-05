@@ -28,15 +28,15 @@ These are what you type. Each skill spawns the right agent with the right contex
 
 | Command | Agent | Model | Does what |
 |---------|-------|-------|-----------|
-| `/map-codebase [dir]` | Cartographer | Opus | Produces architecture map, dependency graph, entry points |
+| `/understand [dir]` | Cartographer | Opus | Produces architecture map, dependency graph, entry points |
 | `/spec [requirements]` | Spec Writer | Opus | Converts requirements into structured technical spec |
 | `/architect [spec]` | Architect | Opus | Designs system, decomposes into Acts with cycle budgets |
 | `/review [file]` | Reviewer | Opus | Code review: correctness, security, performance, slop |
-| `/write-tests [file]` | Test Writer | Sonnet | Generates tests matching project conventions |
-| `/write-evals [prompt]` | Eval Writer | Opus | Writes evaluation cases for AI/LLM features |
-| `/slop-check [file]` | Anti-Slop Guard | Opus | Detects 6 categories of AI-generated slop |
+| `/test [file]` | Test Writer | Sonnet | Generates tests matching project conventions |
+| `/test --eval [prompt]` | Eval Writer | Opus | Writes evaluation cases for AI/LLM features |
+| `/review --slop [file]` | Anti-Slop Guard | Opus | Detects 6 categories of AI-generated slop |
 | `/prototype [concept]` | Prototype Builder | Sonnet | Builds static React prototype |
-| `/security-review [file]` | Security Agent | Opus | OWASP audit, dependency scan, secret detection |
+| `/review --security [file]` | Security Agent | Opus | OWASP audit, dependency scan, secret detection |
 
 **You always invoke via the skill.** You don't need to remember agent names or how to delegate.
 
@@ -71,13 +71,13 @@ Each agent is a Claude subagent with isolated context, specific permissions, and
 | `danger-zone-check.sh` | PreToolUse (Edit\|Write) | Any file modification | Warns Claude if file is in DANGER-ZONES.md |
 | `auto-lint.sh` | PostToolUse (Edit\|Write) | After any file write | Runs prettier/ruff/gofmt on the file |
 | **Real-time slop check** | PostToolUse (Edit\|Write) | After any file write | Haiku scans for obvious slop (restating comments, unnecessary try/catch, single-impl interfaces, toBeTruthy). Flags immediately if found. |
-| `session-review-reminder.sh` | Stop | Session ending | Checks for uncommitted changes, reminds to run `/review` and `/slop-check` |
+| `session-review-reminder.sh` | Stop | Session ending | Checks for uncommitted changes, reminds to run `/review` and `/review --slop` |
 
 Hooks fire automatically. You never invoke them. They're the invisible guardrails.
 
 **How the real-time slop check works:** After every file write, a fast Haiku model scans just the written code for the 4 most egregious slop patterns. If it finds one, it tells Claude to fix it immediately — before moving on. This catches slop at the source instead of after the fact. It's cheap (Haiku) and fast (15s timeout).
 
-**How the session review reminder works:** When you end a Claude Code session, the hook checks `git status`. If there are uncommitted changes, it reminds you to run `/review` and `/slop-check` before committing. No changes = no reminder.
+**How the session review reminder works:** When you end a Claude Code session, the hook checks `git status`. If there are uncommitted changes, it reminds you to run `/review` and `/review --slop` before committing. No changes = no reminder.
 
 ### Guardrails (Context Rules)
 
@@ -101,7 +101,7 @@ These aren't agents or skills — they're rules that Claude reads and follows wh
 ### Phase 1: Understand a New Codebase
 
 ```
-/map-codebase
+/understand
 ```
 
 **What happens:**
@@ -169,10 +169,10 @@ You: "Let's start Act 1. Task 1.1: Create the user database schema."
 
 | Situation | Command |
 |-----------|---------|
-| Wrote a feature, need tests | `/write-tests src/auth/login.ts` |
+| Wrote a feature, need tests | `/test src/auth/login.ts` |
 | Want to self-review before moving on | `/review` |
-| Suspect AI slop in what was just generated | `/slop-check src/auth/` |
-| Building an AI feature, need evals | `/write-evals src/prompts/system.md` |
+| Suspect AI slop in what was just generated | `/review --slop src/auth/` |
+| Building an AI feature, need evals | `/test --eval src/prompts/system.md` |
 | Need a demo for stakeholders | `/prototype "OAuth login flow demo"` |
 | Setting up CI/CD | Use the devops agent directly: "Use the devops agent to set up GitHub Actions" |
 
@@ -193,7 +193,7 @@ You: "Let's start Act 1. Task 1.1: Create the user database schema."
 **Run in parallel for maximum coverage:**
 
 ```
-You: "Run /review, /slop-check, and /security-review on my changes in parallel"
+You: "Run /review, /review --slop, and /review --security on my changes in parallel"
 ```
 
 Claude spawns 3 subagents simultaneously:
@@ -208,7 +208,7 @@ All 3 return findings. You address them, then move to the next Act.
 ### Phase 6: Security Review (Sensitive Code)
 
 ```
-/security-review src/auth/
+/review --security src/auth/
 ```
 
 **What happens:**
@@ -229,9 +229,9 @@ No UV Suite skill for this — you merge and deploy using your existing process.
 
 **Pre-ship checklist:**
 1. `/review` — final code review (all Acts)
-2. `/slop-check` — full anti-slop sweep
-3. `/security-review` — full security audit
-4. `/map-codebase` — verify the architecture matches what was built
+2. `/review --slop` — full anti-slop sweep
+3. `/review --security` — full security audit
+4. `/understand` — verify the architecture matches what was built
 5. Update DANGER-ZONES.md with any new risky areas discovered during development
 
 ---
@@ -291,15 +291,15 @@ You can customize by editing `.claude/settings.json`. Add commands to `allow` fo
 ## Quick Reference Card
 
 ```
-UNDERSTAND          /map-codebase [dir]          → Architecture map
+UNDERSTAND          /understand [dir]          → Architecture map
 SPECIFY             /spec [requirements]         → Technical spec
 DESIGN              /architect [spec-file]       → Architecture + Acts
 BUILD               (work with Claude directly)  → Code, guided by Acts plan
-TEST                /write-tests [file]          → Tests matching project style
+TEST                /test [file]          → Tests matching project style
 REVIEW              /review [file]               → Correctness + security + slop
-GUARD               /slop-check [file]           → AI quality check
-SECURE              /security-review [file]      → OWASP + dependency audit
-EVALUATE            /write-evals [prompt]        → AI feature evaluations
+GUARD               /review --slop [file]           → AI quality check
+SECURE              /review --security [file]      → OWASP + dependency audit
+EVALUATE            /test --eval [prompt]        → AI feature evaluations
 PROTOTYPE           /prototype [concept]         → Static React demo
 
 AUTOMATIC (hooks — you never invoke these):

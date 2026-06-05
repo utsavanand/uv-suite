@@ -6,7 +6,7 @@ file_exists "flawed fixture: processor.ts" "$FLAW/processor.ts"
 
 if [ "$LLM_MODE" = 1 ]; then
   OUT="$REPO_ROOT/uv-out/test-slop-check.out"
-  if run_skill "$OUT" "/slop-check tests/skills/fixtures/flawed/processor.ts"; then
+  if run_skill "$OUT" "/review --slop tests/skills/fixtures/flawed/processor.ts"; then
     must_have "$OUT" "processor.ts" "locates processor.ts"
     grep -qiE 'factory|single implementation|over-?engineer' "$OUT" \
       && ok "flags the single-impl factory" \

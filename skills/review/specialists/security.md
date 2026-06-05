@@ -17,6 +17,21 @@ You own these concern areas:
 
 Out of scope for you: code style, test coverage, perf, API ergonomics. Other specialists own those.
 
+## Deep scan mode (when dispatched via `/review --security` or against a directory)
+
+For a focused security review (not just a diff), also run the available tools over the
+target and fold their findings into your output. Each is best-effort — if a tool isn't
+installed, note it and fall back to manual analysis. Don't fail the review on a missing tool.
+
+- **SAST:** `semgrep --config auto --quiet <target>` — flag real findings, drop noise.
+- **Secrets:** `gitleaks detect --source <target> --no-git` — or grep for `password=`,
+  `api_key=`, `secret=`, `token=`, key prefixes (`sk-`, `ghp_`, `AKIA`) if gitleaks is absent.
+- **Dependencies:** `trivy fs --scanners vuln <target>` — or `npm audit` / `pip audit` by ecosystem.
+
+Cite the OWASP category when relevant (e.g., "A03:2021 Injection") — naming the specific
+rule, not "per OWASP best practices". Tool output is evidence; still apply the confidence
+rubric below — a Semgrep hit you can't confirm is not automatically critical.
+
 ## Detection rules — flag with confidence 9-10 (Critical)
 
 Direct evidence in the diff. Cite file:line.

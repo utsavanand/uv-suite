@@ -1,6 +1,6 @@
 #!/bin/bash
 # UV Suite helper: read or change auto-checkpoint settings.
-# Used by the /auto-checkpoint slash command.
+# Used by the /session auto slash command.
 #
 # Usage:
 #   auto-checkpoint-helper.sh status
@@ -66,7 +66,7 @@ case "$ARG" in
       set_field interval_minutes "$ARG"
       echo "Auto-checkpoint interval: $ARG min (mode: $(get_field mode))"
     else
-      echo "Usage: /auto-checkpoint [on | off | <minutes 1-1440> | status]"
+      echo "Usage: /session auto [on | off | <minutes 1-1440> | status]"
       exit 1
     fi
     ;;

@@ -1,7 +1,7 @@
 # PDF Q&A — multi-service fixture
 
-A small, runnable, polyglot app used as a test fixture for the `/map-stack` and
-`/map-codebase` skills. Upload a PDF, ask a question, get back the passage from
+A small, runnable, polyglot app used as a test fixture for the `/understand --stack` and
+`/understand` skills. Upload a PDF, ask a question, get back the passage from
 the document that best matches the question.
 
 The answer is **extractive, not generative** — there is no LLM. The backend
@@ -54,6 +54,6 @@ Then open http://localhost:5173, upload any text-based PDF, and ask a question.
 
 ## Why this exists
 
-`/map-stack` and `/map-codebase` had nothing realistic to map inside this repo.
+`/understand --stack` and `/understand` had nothing realistic to map inside this repo.
 This fixture gives them a genuine multi-language, multi-service topology with REST
 edges and a shared client library — the relationships those skills are built to surface.

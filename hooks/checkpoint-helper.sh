@@ -1,6 +1,6 @@
 #!/bin/bash
 # UV Suite helper: locate per-session checkpoint paths and print metadata.
-# Used by the /checkpoint and /restore slash commands.
+# Used by the /session checkpoint and /session restore slash commands.
 #
 # Usage:
 #   checkpoint-helper.sh dir       # ensure + print the dir for current session
@@ -82,7 +82,7 @@ EOF
       echo
       cat "$LEGACY_CP_ROOT/latest.md"
     else
-      echo "No checkpoint found for session ${SID}. Run /checkpoint to create one."
+      echo "No checkpoint found for session ${SID}. Run /session checkpoint to create one."
     fi
     ;;
   list)

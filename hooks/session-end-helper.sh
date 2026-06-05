@@ -1,6 +1,6 @@
 #!/bin/bash
 # UV Suite helper: explicit session termination.
-# Used by the /session-end slash command.
+# Used by the /session end slash command.
 #
 # Writes a "terminated_at" timestamp to the session metadata, fires a
 # SessionEnd event to the Watchtower so the dashboard updates the status
@@ -53,4 +53,4 @@ print(json.dumps({
 fi
 
 echo "Session ${SID:0:8} marked terminated at $NOW_ISO."
-echo "Run /checkpoint first if you want a final state snapshot, then exit the terminal."
+echo "Run /session checkpoint first if you want a final state snapshot, then exit the terminal."

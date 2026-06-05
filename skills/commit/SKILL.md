@@ -50,7 +50,7 @@ Scan changed files for the most obvious patterns:
 - `toBeTruthy()` / `toBeDefined()` in test files
 - Bare `except: pass` in Python
 
-Don't run the full /slop-check agent — just grep for mechanical patterns.
+Don't run the full /review --slop agent — just grep for mechanical patterns.
 
 ### 4. Review the diff
 

@@ -4,8 +4,11 @@ description: >
   Multi-specialist code review. Dispatches concern-specific subagents in parallel
   (security, performance, testing, maintainability, api-contract, data-migration),
   scores each finding 1-10 for confidence, gates output by tier, and persists state
-  to uv-out/review-state.md so /commit and /ship can detect completion.
-argument-hint: "[file-or-branch]"
+  to uv-out/review-state.md so /commit and /ship can detect completion. Pass --security
+  for a focused tool-backed (Semgrep/Gitleaks/Trivy) OWASP review, or --slop for a full
+  anti-slop audit (all six slop categories). Note: ambient slop detection also runs as a
+  PostToolUse hook on every write; --slop is the deep on-demand audit.
+argument-hint: "[file-or-branch] [--security|--slop]"
 user-invocable: true
 context: fork
 model: claude-opus-4-6
@@ -20,6 +23,11 @@ allowed-tools:
   - Bash(git show *)
   - Bash(git rev-parse *)
   - Bash(git merge-base *)
+  - Bash(semgrep *)
+  - Bash(gitleaks *)
+  - Bash(trivy *)
+  - Bash(npm audit *)
+  - Bash(pip audit *)
   - Agent(*)
 ---
 
@@ -57,7 +65,7 @@ Stable flat pointer maintained for `/commit` and `/ship`:
 
 ### Architecture map
 
-!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh map-codebase.md 100 || echo "No codebase map — run /map-codebase first for better review context"`
+!`"$CLAUDE_PROJECT_DIR"/.claude/hooks/uv-out-best.sh map-codebase.md 100 || echo "No codebase map — run /understand first for better review context"`
 
 ### Architecture decisions
 
@@ -75,9 +83,25 @@ Stable flat pointer maintained for `/commit` and `/ship`:
 
 Execute these steps in order. Do not skip steps.
 
+### Step 0 — Check for a focused mode
+
+`$ARGUMENTS` may request a single deep specialist instead of the full review. In a
+focused mode, a diff is **not** required (the target may be a directory or the whole
+project — skip Step 1's stop), run **only** that specialist, and skip all others.
+
+- **`--security`** (the former `/review --security`): dispatch the `security` specialist in
+  **deep-scan mode** — it runs the available SAST / secret / dependency tools (Semgrep,
+  Gitleaks, Trivy) over the target in addition to diff reasoning.
+- **`--slop`** (the former `/review --slop`): dispatch the **anti-slop-guard** agent over the
+  target — the full anti-slop audit across all six slop categories (over-engineering,
+  architecture, test, doc, error-handling, comment slop), not just the diff-level
+  `maintainability` subset that a normal review runs.
+
+Otherwise, proceed normally from Step 1.
+
 ### Step 1 — Validate diff exists
 
-If the diff loaded above is empty or "No diff available", stop and tell the user there's nothing to review. Suggest `$ARGUMENTS` should be a branch name (e.g., `/review feature/foo`) if they want to review a different target.
+If the diff loaded above is empty or "No diff available", stop and tell the user there's nothing to review. Suggest `$ARGUMENTS` should be a branch name (e.g., `/review feature/foo`) if they want to review a different target. (Does not apply in a focused `--security`/`--slop` mode.)
 
 ### Step 2 — Classify scope, pick specialists
 

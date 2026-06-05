@@ -38,8 +38,8 @@ Detailed feature-by-feature comparison. Honest quality assessment.
 | Feature | Claude Built-in | UV Suite | GStack | Notes |
 |---------|----------------|----------|--------|-------|
 | Code review | `/review` (local PR review) | `/review` (correctness, security, perf, slop, danger zones) | `/review` (production-bug focus, auto-fixes obvious issues) | UV Suite adds slop detection + danger zone awareness. GStack auto-fixes. |
-| Security review | `/security-review` | `/security-review` (OWASP, Semgrep, Gitleaks, Trivy) | `/cso` (OWASP + STRIDE threat modeling, exploit scenarios) | GStack has threat modeling UV Suite doesn't. UV Suite integrates more external tools. |
-| Slop detection | None | `/slop-check` (6 categories) + real-time grep hook | Part of `/plan-design-review` | UV Suite is the only one with dedicated anti-slop tooling. |
+| Security review | `/review --security` | `/review --security` (OWASP, Semgrep, Gitleaks, Trivy) | `/cso` (OWASP + STRIDE threat modeling, exploit scenarios) | GStack has threat modeling UV Suite doesn't. UV Suite integrates more external tools. |
+| Slop detection | None | `/review --slop` (6 categories) + real-time grep hook | Part of `/plan-design-review` | UV Suite is the only one with dedicated anti-slop tooling. |
 | Cross-model review | None | None | `/codex` (independent OpenAI review, overlapping findings) | **Gap in UV Suite.** No second-opinion from a different model. |
 | **Quality** | Basic | Good | Excellent | GStack's auto-fix + threat modeling + cross-model is ahead. UV Suite's slop detection is unique. |
 
@@ -47,7 +47,7 @@ Detailed feature-by-feature comparison. Honest quality assessment.
 
 | Feature | Claude Built-in | UV Suite | GStack | Notes |
 |---------|----------------|----------|--------|-------|
-| Test generation | Bash tool (manual) | `/write-tests` (framework detection, anti-slop rules) | Part of `/ship` pipeline | UV Suite has dedicated test agent with anti-slop rules. GStack bundles testing into ship. |
+| Test generation | Bash tool (manual) | `/test` (framework detection, anti-slop rules) | Part of `/ship` pipeline | UV Suite has dedicated test agent with anti-slop rules. GStack bundles testing into ship. |
 | Browser QA | None built-in | Playwright MCP (referenced in agents) | `/qa` (real Chromium, finds bugs, auto-fixes, regression tests) | **GStack is significantly ahead.** Full browser QA with bug detection + auto-fix. UV Suite references Playwright but doesn't have a QA skill. |
 | QA reporting | None | None | `/qa-only` (report without changes) | **Gap in UV Suite.** |
 | Benchmarking | None | None | `/benchmark` (page load, Core Web Vitals) | **Gap in UV Suite.** No performance benchmarking. |
@@ -61,15 +61,15 @@ Detailed feature-by-feature comparison. Honest quality assessment.
 | Ship pipeline | None | None | `/ship` (sync, test, audit coverage, open PR) | **Gap in UV Suite.** No compound ship skill. |
 | Deploy & verify | None | None | `/land-and-deploy` (merge, wait CI, verify production) | **Gap in UV Suite.** No deploy verification. |
 | Release docs | None | None | `/document-release` (auto-update all project docs) | **Gap in UV Suite.** No release doc automation. |
-| Retrospective | Session-end hook (reflection) | `/checkpoint` (structured session state) | `/retro` (weekly retro, per-person, shipping streaks) | GStack's retro is team-scale. UV Suite's checkpoint is session-scale. |
+| Retrospective | Session-end hook (reflection) | `/session checkpoint` (structured session state) | `/retro` (weekly retro, per-person, shipping streaks) | GStack's retro is team-scale. UV Suite's checkpoint is session-scale. |
 | **Quality** | None | Basic | Excellent | GStack owns the ship-to-prod pipeline. UV Suite has no shipping skills. |
 
 ### Codebase Understanding
 
 | Feature | Claude Built-in | UV Suite | GStack | Notes |
 |---------|----------------|----------|--------|-------|
-| Codebase mapping | Explore agent (read-only search) | `/map-codebase` (Graphify knowledge graph) | None | **UV Suite is ahead.** Knowledge graph output is unique. GStack has no mapping tool. |
-| Multi-service mapping | None | `/map-stack` (cross-service connections) | None | **UV Suite only.** |
+| Codebase mapping | Explore agent (read-only search) | `/understand` (Graphify knowledge graph) | None | **UV Suite is ahead.** Knowledge graph output is unique. GStack has no mapping tool. |
+| Multi-service mapping | None | `/understand --stack` (cross-service connections) | None | **UV Suite only.** |
 | Debugging methodology | None | None | `/investigate` (root-cause, 3-attempt limit) | **Gap in UV Suite.** No structured debugging skill. |
 | **Quality** | Basic | Excellent | None | UV Suite's Cartographer + Graphify is the strongest codebase understanding tool across all three. |
 
@@ -77,11 +77,11 @@ Detailed feature-by-feature comparison. Honest quality assessment.
 
 | Feature | Claude Built-in | UV Suite | GStack | Notes |
 |---------|----------------|----------|--------|-------|
-| Auto memory | Yes (heuristic, 25KB limit) | Yes (inherits Claude's) + `/checkpoint` + `/restore` | Continuous checkpoint (WIP commits with context body) | GStack's approach is cleverer — checkpoints are git commits, so they survive everything. UV Suite's are files. |
+| Auto memory | Yes (heuristic, 25KB limit) | Yes (inherits Claude's) + `/session checkpoint` + `/session restore` | Continuous checkpoint (WIP commits with context body) | GStack's approach is cleverer — checkpoints are git commits, so they survive everything. UV Suite's are files. |
 | CLAUDE.md injection | Yes (you write it) | Auto-generated on install (persona, skills, practices) | Auto-generated by setup script | Both UV Suite and GStack generate CLAUDE.md. UV Suite's is richer (practices, artifacts, hooks). |
 | Shared artifacts | None | `uv-out/` (agents read prior agent outputs) | Skill outputs feed into downstream skills | Similar concept, different implementation. |
 | Taste memory | None | None | `/design-shotgun` learns preferences over rounds | **Gap in UV Suite.** No preference learning. |
-| Session handoff | `claude --continue` / `--resume` | `/checkpoint` + `/restore` | WIP commits + `/context-restore` | All three solve this differently. GStack's git-based approach is most robust. |
+| Session handoff | `claude --continue` / `--resume` | `/session checkpoint` + `/session restore` | WIP commits + `/context-restore` | All three solve this differently. GStack's git-based approach is most robust. |
 | **Quality** | Basic | Good | Excellent | GStack's git-commit-based checkpointing and taste memory are ahead. UV Suite's checkpoint skill is simpler but explicit. |
 
 ### Modes & Personas
@@ -167,7 +167,7 @@ Detailed feature-by-feature comparison. Honest quality assessment.
 
 1. **Personas** — No mode switching in GStack. You get all 23 tools all the time. Different contexts need different rigor.
 
-2. **Codebase mapping** — GStack has no `/map-codebase` or Graphify integration. No way to understand a new codebase structurally.
+2. **Codebase mapping** — GStack has no `/understand` or Graphify integration. No way to understand a new codebase structurally.
 
 3. **Anti-slop guardrails** — GStack detects slop in design review but has no standalone guardrails or real-time hooks.
 
@@ -186,7 +186,7 @@ Detailed feature-by-feature comparison. Honest quality assessment.
 | Capability | Claude Built-in | UV Suite / GStack |
 |-----------|----------------|-------------------|
 | Structured code review with checklist | Basic `/review` | Detailed checklists, severity levels, auto-fixes |
-| Security review with external tools | Basic `/security-review` | Semgrep, Gitleaks, Trivy, OWASP + STRIDE |
+| Security review with external tools | Basic `/review --security` | Semgrep, Gitleaks, Trivy, OWASP + STRIDE |
 | Codebase understanding | Explore agent | Knowledge graphs, multi-service mapping |
 | Session continuity | `--continue` (raw history) | Structured checkpoints, handoff documents |
 | Quality guardrails | None | Anti-slop rules, real-time hooks, danger zones |
@@ -237,7 +237,7 @@ The earlier conversation framed the gap as "UV Suite's slop rules are language-a
 
 - The slop rule files (`rules/*-slop.md`) are well-designed for their actual role — they're *guardrails* (reference docs Claude consults), not *skills* (executable procedures). Different mechanism, different evaluation criteria.
 - The bigger gap is in the *skills* (e.g., `/review`) being thin compared to gstack's. Adding more rule files won't close that gap.
-- The high-leverage rewrite, if taken, is restructuring `/review` (and probably `/security-review`) with specialist subagent dispatch + confidence scoring + adversarial pass. That's a significantly larger lift than adding rule files.
+- The high-leverage rewrite, if taken, is restructuring `/review` (and probably `/review --security`) with specialist subagent dispatch + confidence scoring + adversarial pass. That's a significantly larger lift than adding rule files.
 
 Not a recommendation to do that — just naming the actual tradeoff so future-you can decide deliberately.
 

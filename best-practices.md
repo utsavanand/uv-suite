@@ -217,7 +217,7 @@ This skill:
 ```
 /review                          # Invokes reviewer via skill
 /spec "user authentication"      # Invokes spec-writer with argument
-/map-codebase src/api/           # Invokes cartographer on specific directory
+/understand src/api/           # Invokes cartographer on specific directory
 ```
 
 **Pattern 2: Explicit delegation**
@@ -350,7 +350,7 @@ git add .claude/agents/
 git commit -m "Add UV Suite agent definitions"
 ```
 
-Now every developer on the project has access to `/review`, `/spec`, `/map-codebase`, etc.
+Now every developer on the project has access to `/review`, `/spec`, `/understand`, etc.
 
 ### Level 3: Share as a personal toolkit
 
@@ -420,7 +420,7 @@ claude plugin install uv-suite
 
 ```
 Morning:
-1. /map-codebase [area I'm working on today]  — Quick refresher via Cartographer
+1. /understand [area I'm working on today]  — Quick refresher via Cartographer
 2. Review Acts plan for current project
 3. Pick next task from current Act
 
@@ -428,19 +428,19 @@ Building:
 4. Write code (general purpose Claude + your expertise)
 5. /review  — Self-review before moving on
 6. Fix any issues found
-7. /write-tests [file]  — Generate tests for new code
+7. /test [file]  — Generate tests for new code
 8. Run tests, fix failures
 
 End of Act:
-9. /slop-check  — Full anti-slop review
-10. /security-review  — If touching auth, payments, data
+9. /review --slop  — Full anti-slop review
+10. /review --security  — If touching auth, payments, data
 11. Mark Act complete, review exit criteria
 12. Move to next Act
 
 End of project:
-13. /map-codebase [full project]  — Final architecture verification
-14. Full /security-review
-15. Full /slop-check
+13. /understand [full project]  — Final architecture verification
+14. Full /review --security
+15. Full /review --slop
 16. Update documentation
 ```
 

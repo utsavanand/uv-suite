@@ -38,28 +38,28 @@ Label this session (Enter to skip — you'll be reminded):
   priority [low/med/high]:  high
 ```
 
-Skip any field with Enter. If you skip the name, `/session-init` will be suggested every few prompts until you label it. Set `UVS_NO_PROMPT=1` to suppress prompts entirely.
+Skip any field with Enter. If you skip the name, `/session init` will be suggested every few prompts until you label it. Set `UVS_NO_PROMPT=1` to suppress prompts entirely.
 
 ## Start here
 
 After `uvs claude pro`, pick the path that matches what you're doing. Each path names the first skill to run and the canonical next steps.
 
 ### Existing codebase (you didn't write this)
-1. `/map-codebase` — builds a knowledge graph + architecture overview in `uv-out/map-codebase.md`. Other skills (`/architect`, `/review`, `/security-review`) read it automatically.
-2. `/checkpoint` — captures your baseline understanding so `/restore` can bring it back next session.
+1. `/understand` — builds a knowledge graph + architecture overview in `uv-out/map-codebase.md`. Other skills (`/architect`, `/review`, `/review --security`) read it automatically.
+2. `/session checkpoint` — captures your baseline understanding so `/session restore` can bring it back next session.
 3. Then: `/review` on the current diff, or `/spec` for the next feature.
 
 ### New project (you're starting from scratch)
 1. `/spec` — converts your idea into a structured spec in `uv-out/specs/`.
 2. `/architect` — breaks the spec into Acts with cycle budgets. Reads the spec automatically.
-3. Then: implement Act by Act. Use `/write-tests` and `/review` per Act.
+3. Then: implement Act by Act. Use `/test` and `/review` per Act.
 
 ### Reviewing a PR
 1. `/review [branch-name]` — reads diff + `CLAUDE.md` + `DANGER-ZONES.md` + prior `uv-out/` artifacts.
-2. `/security-review` if the diff touches auth, payments, data access, or external inputs.
+2. `/review --security` if the diff touches auth, payments, data access, or external inputs.
 
 ### Shipping
-1. `/checkpoint` to capture state.
+1. `/session checkpoint` to capture state.
 2. `/commit` — runs slop-check, tests, commits, optionally opens a PR.
 
 Picking a persona (Spike / Sport / Professional / Auto) is a separate axis from picking a first skill — see [Personas](#personas) below for which mode fits which situation.
@@ -70,7 +70,7 @@ Each `uvs` launch generates a `UVS_SESSION_ID` and writes metadata to `.uv-suite
 
 - **Concurrent terminals don't collide.** Two `uvs` launches in the same repo run as distinct sessions with separate names, checkpoints, and dashboard rows.
 - **`uvs watch` shows them all.** The Watchtower dashboard at `localhost:4200` streams every tool call across every session in real time — labeled by your name, sorted by priority (high to top, low dimmed), color-coded by persona.
-- **Per-session checkpoints.** `/checkpoint` writes to `uv-out/checkpoints/<sid>/`, and `/restore` auto-picks the current session's latest. Pass a session id prefix or name to restore from a different one.
+- **Per-session checkpoints.** `/session checkpoint` writes to `uv-out/checkpoints/<sid>/`, and `/session restore` auto-picks the current session's latest. Pass a session id prefix or name to restore from a different one.
 - **Status line shows it all.** The Claude Code status bar shows session name, persona, priority, and elapsed time continuously.
 
 ### Watchtower at a glance
@@ -130,21 +130,21 @@ Human gates  After each     End only     Every Act          Final output
 
 | Command | What it does |
 |---|---|
-| `/map-codebase [dir]` | Build a knowledge graph of the codebase |
-| `/map-stack [dir]` | Map multiple services and their connections |
+| `/understand [dir]` | Build a knowledge graph of the codebase |
+| `/understand --stack [dir]` | Map multiple services and their connections |
 | `/spec [requirements]` | Write a technical specification |
 | `/architect [spec]` | Design architecture, decompose into Acts |
 | `/prototype [concept]` | Build a static React prototype |
-| `/write-tests [file]` | Generate tests matching project conventions |
-| `/write-evals [prompt]` | Write AI/LLM evaluation cases ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
+| `/test [file]` | Generate tests matching project conventions |
+| `/test --eval [prompt]` | Write AI/LLM evaluation cases ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
 | `/review` | Code review: correctness, security, performance, slop |
-| `/slop-check` | Detect 6 categories of AI-generated slop |
-| `/security-review` | OWASP audit, dependency scan, secret detection |
+| `/review --slop` | Detect 6 categories of AI-generated slop |
+| `/review --security` | OWASP audit, dependency scan, secret detection |
 | `/investigate` | Systematic root-cause debugging |
 | `/commit` | Review → test → slop-check → commit (and optionally PR) |
-| `/checkpoint [label]` | Save session state to `uv-out/checkpoints/<sid>/` |
-| `/restore [sid-prefix\|name]` | Load the latest checkpoint for the current (or named) session |
-| `/session-init [name\|--kind\|--purpose\|--priority]` | Label or relabel the current session |
+| `/session checkpoint [label]` | Save session state to `uv-out/checkpoints/<sid>/` |
+| `/session restore [sid-prefix\|name]` | Load the latest checkpoint for the current (or named) session |
+| `/session init [name\|--kind\|--purpose\|--priority]` | Label or relabel the current session |
 | `/confirm [on\|off\|<n>]` | Toggle reframe-and-confirm for prompts over `<n>` words |
 | `/uv-help` | List every skill, agent, hook, guardrail, and persona |
 
@@ -160,7 +160,7 @@ Fire automatically on Claude Code events. You never invoke these.
 | danger-zone-check | File edit | Warns if file is in DANGER-ZONES.md |
 | block-destructive | Bash command | Blocks `rm -rf /`, force push to main, `DROP TABLE` |
 | confirm-prompt | UserPromptSubmit | For prompts over the threshold, requires Claude to restate before any work starts |
-| session-label-nag | UserPromptSubmit | Reminds you to run `/session-init` every Nth prompt while the session has no name |
+| session-label-nag | UserPromptSubmit | Reminds you to run `/session init` every Nth prompt while the session has no name |
 | context-warning | PostToolUse | Warns when context usage crosses thresholds |
 | watchtower-send | All events | Forwards every event (with session metadata) to `localhost:4200` |
 | session-start | SessionStart | Records start time, fires bootstrap event with session metadata |
@@ -192,11 +192,11 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 
 | Output | Read by |
 |---|---|
-| `uv-out/map-codebase.md` | /architect, /review, /security-review |
-| `uv-out/specs/*.md` | /architect, /write-tests, /write-evals |
-| `uv-out/architecture/*.md` | /review, /write-tests, /slop-check |
-| `uv-out/review-*.md` | /slop-check, /security-review |
-| `uv-out/checkpoints/<sid>/*.md` | /restore |
+| `uv-out/map-codebase.md` | /architect, /review, /review --security |
+| `uv-out/specs/*.md` | /architect, /test, /test --eval |
+| `uv-out/architecture/*.md` | /review, /test, /review --slop |
+| `uv-out/review-*.md` | /review --slop, /review --security |
+| `uv-out/checkpoints/<sid>/*.md` | /session restore |
 
 ## Integrations
 

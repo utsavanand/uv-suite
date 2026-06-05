@@ -84,7 +84,7 @@ What already exists for each UV Suite agent. Tools to integrate, repos to learn 
 | [Trivy](https://github.com/aquasecurity/trivy) | 25k+ | Vulnerability scanner for containers, filesystems, git repos. Fast dependency scanning. | Better than `npm audit` for multi-language dependency scanning. The security-review skill should use Trivy if available. |
 | [Gitleaks](https://github.com/gitleaks/gitleaks) | 18k+ | Secret detection in git repos. Fast, accurate. | Better than the grep-based secret scan in the current skill. The skill should use Gitleaks if installed. |
 
-**Recommendation:** The `/security-review` skill should detect which tools are available (Semgrep, Trivy, Gitleaks) and use them, falling back to the grep-based approach only when nothing is installed.
+**Recommendation:** The `/review --security` skill should detect which tools are available (Semgrep, Trivy, Gitleaks) and use them, falling back to the grep-based approach only when nothing is installed.
 
 ---
 
@@ -135,8 +135,8 @@ Key takeaways from Karpathy's public notes on agentic engineering:
 | **High** | Graphify or similar knowledge graph for Cartographer output | Property graph > Markdown diagrams. Queryable, reusable, token-efficient. |
 | **High** | Semgrep for Security Agent | Deterministic SAST should run before AI analysis. 4000+ rules, OWASP mapped. |
 | **High** | DeepEval for Eval Writer output format | Pytest-compatible, runs in CI, 50+ metrics. The standard. |
-| **Medium** | Gitleaks for secret detection in /security-review | Better than grep. Fast, accurate, maintained. |
-| **Medium** | Trivy for dependency scanning in /security-review | Better than npm audit. Multi-language. |
+| **Medium** | Gitleaks for secret detection in /review --security | Better than grep. Fast, accurate, maintained. |
+| **Medium** | Trivy for dependency scanning in /review --security | Better than npm audit. Multi-language. |
 | **Medium** | ADR MADR 4.0 format for Architect output | Industry standard ADR format. |
 | **Low** | Repomix for large-codebase context packing | Useful pre-step before Cartographer on large repos. |
 | **Low** | SonarQube rules integration for Reviewer | Complement AI judgment with deterministic rules. |

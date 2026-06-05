@@ -79,7 +79,7 @@ Use plan mode for complex tasks.
 
 ## Deterministic for hot path, LLM for cold path
 
-Checks that run on every file write must be fast and deterministic (grep, lint, static analysis). Save LLM judgment for manual invocations (/review, /slop-check) where thoroughness matters more than speed.
+Checks that run on every file write must be fast and deterministic (grep, lint, static analysis). Save LLM judgment for manual invocations (/review, /review --slop) where thoroughness matters more than speed.
 
 ---
 

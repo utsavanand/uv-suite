@@ -378,7 +378,7 @@ For Cursor and Codex, achieve similar results through Git hooks and CI pipelines
 ├── spec/
 │   └── SKILL.md          # /spec — write a technical specification
 ├── map-codebase/
-│   └── SKILL.md          # /map-codebase — invoke the cartographer
+│   └── SKILL.md          # /understand — invoke the cartographer
 └── acts/
     └── SKILL.md          # /acts — plan acts for a feature
 ```
@@ -417,16 +417,16 @@ path = "~/.codex/skills/review/"
 
 | UV Suite Agent | Claude Code Skill | Cursor Rule | Codex Skill |
 |---------------|-------------------|-------------|-------------|
-| Cartographer | `/map-codebase` | `@cartographer` | `$cartographer` |
+| Cartographer | `/understand` | `@cartographer` | `$cartographer` |
 | Spec Writer | `/spec` | `@spec-writer` | `$spec` |
 | Architect | `/architect` | `@architect` | `$architect` |
 | Reviewer | `/review` | `@reviewer` | `$review` |
-| Test Writer | `/write-tests` | `@test-writer` | `$write-tests` |
-| Eval Writer | `/write-evals` | `@eval-writer` | `$write-evals` |
-| Anti-Slop Guard | `/slop-check` | `@anti-slop` | `$slop-check` |
+| Test Writer | `/test` | `@test-writer` | `$write-tests` |
+| Eval Writer | `/test --eval` | `@eval-writer` | `$write-evals` |
+| Anti-Slop Guard | `/review --slop` | `@anti-slop` | `$slop-check` |
 | Prototype Builder | `/prototype` | `@prototype` | `$prototype` |
 | DevOps | `/devops` | `@devops` | `$devops` |
-| Security | `/security-review` | `@security` | `$security` |
+| Security | `/review --security` | `@security` | `$security` |
 
 ---
 
@@ -488,7 +488,7 @@ path = "~/.codex/skills/review/"
 ### If you primarily use Claude Code (recommended for UV Suite):
 
 1. **Define all agents as subagents** in `.claude/agents/` — this gives you the richest control
-2. **Create skills** for each agent invocation — `/review`, `/spec`, `/map-codebase`, etc.
+2. **Create skills** for each agent invocation — `/review`, `/spec`, `/understand`, etc.
 3. **Use hooks** for automated quality gates — lint on write, anti-slop on session end
 4. **Use Remote Control** for working from any device
 5. **Use Agent SDK** for CI/CD automation and scripting

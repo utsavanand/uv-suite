@@ -28,8 +28,8 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/map-codebase [focus]` | Build a knowledge graph of the codebase | `/map-codebase focus on the auth flow and session management` |
-| `/map-stack [dir]` | Map multiple services and their connections | `/map-stack show how layer3-max calls layer2-pie` |
+| `/understand [focus]` | Build a knowledge graph of the codebase | `/understand focus on the auth flow and session management` |
+| `/understand --stack [dir]` | Map multiple services and their connections | `/understand --stack show how layer3-max calls layer2-pie` |
 
 ### Plan
 
@@ -42,8 +42,8 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/write-tests [target]` | Generate tests matching project conventions | `/write-tests src/auth/login.ts focus on error paths` |
-| `/write-evals [prompt]` | Write AI/LLM evaluation cases | `/write-evals test the search ranking prompt for adversarial inputs` |
+| `/test [target]` | Generate tests matching project conventions | `/test src/auth/login.ts focus on error paths` |
+| `/test --eval [prompt]` | Write AI/LLM evaluation cases | `/test --eval test the search ranking prompt for adversarial inputs` |
 | `/prototype [concept]` | Build a static React prototype | `/prototype event booking app with calendar and payment flow` |
 
 ### Review
@@ -51,8 +51,8 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 | Skill | What it does | Example |
 |-------|-------------|---------|
 | `/review [focus]` | Code review: correctness, security, perf, slop | `/review pay attention to the new database migration` |
-| `/slop-check [target]` | Detect 6 categories of AI-generated slop | `/slop-check src/components/ check for over-engineering` |
-| `/security-review [target]` | OWASP audit, dependency scan, secret detection | `/security-review src/payments/ focus on webhook signature validation` |
+| `/review --slop [target]` | Detect 6 categories of AI-generated slop | `/review --slop src/components/ check for over-engineering` |
+| `/review --security [target]` | OWASP audit, dependency scan, secret detection | `/review --security src/payments/ focus on webhook signature validation` |
 
 ### Ship
 
@@ -65,23 +65,21 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/checkpoint [label]` | Save session state for next time | `/checkpoint auth-refactor` |
-| `/restore` | Load latest checkpoint at session start | `/restore` |
+| `/session checkpoint [label]` | Save session state for next time | `/session checkpoint auth-refactor` |
+| `/session restore` | Load latest checkpoint at session start | `/session restore` |
 
 ## Agents (spawned by skills)
 
 | Agent | Model | Used by |
 |-------|-------|---------|
-| Cartographer | Opus | /map-codebase, /map-stack |
+| Cartographer | Opus | /understand, /understand --stack |
 | Spec Writer | Opus | /spec |
 | Architect | Opus | /architect |
 | Reviewer | Opus | /review, /investigate |
-| Test Writer | Sonnet | /write-tests |
-| Eval Writer | Opus | /write-evals |
-| Anti-Slop Guard | Opus | /slop-check |
+| Test Writer | Sonnet | /test |
+| Eval Writer | Opus | /test --eval |
+| Anti-Slop Guard | Opus | /review --slop |
 | Prototype Builder | Sonnet | /prototype |
-| DevOps | Opus | (direct invocation) |
-| Security | Opus | /security-review |
 
 ## Hooks (automatic, you don't invoke these)
 
@@ -117,6 +115,6 @@ each other's prior output automatically (current session first, then prior sessi
 ## Tips
 
 - **Direct the agent:** Every skill accepts arguments. "/review" does a generic review. "/review focus on the error handling in the retry logic" gives targeted results.
-- **Run in parallel:** "Run /review, /slop-check, and /security-review in parallel" — Claude spawns all three simultaneously.
-- **Checkpoint before stopping:** "/checkpoint" saves your session state. "/restore" loads it next time.
+- **Run in parallel:** "Run /review, /review --slop, and /review --security in parallel" — Claude spawns all three simultaneously.
+- **Checkpoint before stopping:** "/checkpoint" saves your session state. "/session restore" loads it next time.
 - **Use the right persona:** `uvs spike` for research, `uvs pro` for production code, `uvs auto` to let it run.

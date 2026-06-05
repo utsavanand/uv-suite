@@ -44,7 +44,7 @@ case "$1" in
     echo "  Session metadata:"
     echo "    On launch you'll be prompted for name, kind, purpose, and"
     echo "    priority. Press Enter to skip any field; you'll be reminded"
-    echo "    until the session is named. Use /session-init to relabel."
+    echo "    until the session is named. Use /session init to relabel."
     echo "    Set UVS_NO_PROMPT=1 to suppress prompts entirely."
     echo ""
     exit 0

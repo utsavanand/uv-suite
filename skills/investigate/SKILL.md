@@ -110,7 +110,7 @@ What I need:
 - State hypotheses explicitly before testing them.
 - Track what you've ruled out so you don't revisit.
 - 3 attempts max. Then escalate with structured findings.
-- If the bug is in code you don't understand, run /map-codebase on that area first.
+- If the bug is in code you don't understand, run /understand on that area first.
 
 ## Artifact output
 

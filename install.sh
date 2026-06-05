@@ -108,9 +108,9 @@ for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
   mkdir -p "$TARGET_DIR/skills/$skill_name"
   cp "$skill_dir/SKILL.md" "$TARGET_DIR/skills/$skill_name/"
 done
-echo "  ✓ /map-codebase, /spec, /architect, /review, /write-tests"
-echo "  ✓ /write-evals, /slop-check, /prototype, /security-review"
-echo "  ✓ /map-stack, /session-init"
+echo "  ✓ /understand, /spec, /architect, /review, /test"
+echo "  ✓ /test --eval, /review --slop, /prototype, /review --security"
+echo "  ✓ /understand --stack, /session init"
 
 # --- Install hooks ---
 echo "Installing hook scripts..."
@@ -122,8 +122,8 @@ echo "  ✓ block-destructive.sh (PreToolUse: block rm -rf, force push, etc.)"
 echo "  ✓ session-start.sh (SessionStart: track session start time)"
 echo "  ✓ session-timer.sh (PostToolUse: warn at 45/90/180 min)"
 echo "  ✓ session-end.sh (Stop: reflection + duration + review reminder)"
-echo "  ✓ session-label-nag.sh (UserPromptSubmit: nudge to /session-init)"
-echo "  ✓ session-meta.sh (helper used by /session-init)"
+echo "  ✓ session-label-nag.sh (UserPromptSubmit: nudge to /session init)"
+echo "  ✓ session-meta.sh (helper used by /session init)"
 echo "  ✓ status-line.sh (statusLine: show session label + time)"
 echo "  + Real-time slop check (Haiku prompt hook, wired in settings.json)"
 
@@ -210,7 +210,7 @@ This project uses [UV Suite](https://github.com/utsavanand/uv-suite) v${UV_VERSI
 
 ### Skills
 
-/map-codebase, /map-stack, /spec, /architect, /review, /write-tests, /write-evals, /slop-check, /prototype, /security-review, /checkpoint, /restore
+/understand, /understand --stack, /spec, /architect, /review, /test, /test --eval, /review --slop, /prototype, /review --security, /checkpoint, /session restore
 
 ### Artifacts
 
@@ -223,17 +223,17 @@ to the session that produced it. Each artifact is also stamped with provenance f
 Downstream skills prefer the current session's artifacts but can use a prior session's when
 the current one has none (they list current → prior → legacy and ask which to use). All
 writers are session-scoped:
-- /map-codebase  → uv-out/sessions/<sid>/map-codebase.md
-- /map-stack     → uv-out/sessions/<sid>/map-stack.md
+- /understand  → uv-out/sessions/<sid>/map-codebase.md
+- /understand --stack     → uv-out/sessions/<sid>/map-stack.md
 - /spec          → uv-out/sessions/<sid>/specs/
 - /architect     → uv-out/sessions/<sid>/architecture/
 - /review        → uv-out/sessions/<sid>/review/state.md   (flat pointer: uv-out/review-state.md)
-- /slop-check    → uv-out/sessions/<sid>/slop-check/report.md
-- /security-review → uv-out/sessions/<sid>/security/report.md
+- /review --slop    → uv-out/sessions/<sid>/review --slop/report.md
+- /review --security → uv-out/sessions/<sid>/security/report.md
 - /investigate   → uv-out/sessions/<sid>/investigate/report.md
-- /write-evals   → uv-out/sessions/<sid>/evals/
+- /test --eval   → uv-out/sessions/<sid>/evals/
 - /qa            → uv-out/sessions/<sid>/qa/   (flat pointer: uv-out/qa-state.md)
-- /checkpoint    → uv-out/sessions/<sid>/checkpoints/
+- /session checkpoint    → uv-out/sessions/<sid>/checkpoints/
 
 Fixed-path consumers (/commit, /ship) read the flat pointer symlinks (uv-out/review-state.md,
 uv-out/qa-state.md), which resolve into the current session. The Stop hook uv-out-notify.sh
@@ -263,7 +263,7 @@ ${HOOKS_TEXT}
 
 **Planning:** Use plan mode for complex tasks. Break work small enough to complete in under 50% context.
 
-**Session:** /compact at ~50% context. Past 90 min, take a break. Run /checkpoint before ending a session. Run /restore at the start of the next one.
+**Session:** /compact at ~50% context. Past 90 min, take a break. Run /session checkpoint before ending a session. Run /session restore at the start of the next one.
 
 ### Launching sessions
 
@@ -395,15 +395,15 @@ echo ""
 
 echo "Available slash commands:"
 echo ""
-echo "  /map-codebase [dir]     Map a codebase (Cartographer)"
+echo "  /understand [dir]     Map a codebase (Cartographer)"
 echo "  /spec [requirements]    Write a technical spec (Spec Writer)"
 echo "  /architect [spec]       Design architecture + Acts (Architect)"
 echo "  /review [file]          Code review (Reviewer)"
-echo "  /write-tests [file]     Generate tests (Test Writer)"
-echo "  /write-evals [prompt]   Write AI evaluations (Eval Writer)"
-echo "  /slop-check [file]      Detect AI slop (Anti-Slop Guard)"
+echo "  /test [file]     Generate tests (Test Writer)"
+echo "  /test --eval [prompt]   Write AI evaluations (Eval Writer)"
+echo "  /review --slop [file]      Detect AI slop (Anti-Slop Guard)"
 echo "  /prototype [concept]    Build a prototype (Prototype Builder)"
-echo "  /security-review [file] Security audit (Security Agent)"
+echo "  /review --security [file] Security audit (Security Agent)"
 echo ""
 
 if [ "$PERSONA" = "sport" ]; then

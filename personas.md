@@ -89,13 +89,13 @@ agents allowed        5              3              all 10           all 10
 
 **Typical workflow:**
 ```
-/map-codebase src/payments/        → Deep architecture map before touching anything
+/understand src/payments/        → Deep architecture map before touching anything
 /spec "add webhook retry logic"    → Full spec, human approves
 /architect "the spec above"        → Detailed Acts with cycle budgets, human approves
 (build Act by Act)                 → Sonnet for code, hooks catch slop in real-time
 /review                            → Opus review at end of each Act
-/security-review src/payments/     → Full OWASP audit before merge
-/slop-check                        → Final slop sweep
+/review --security src/payments/     → Full OWASP audit before merge
+/review --slop                        → Final slop sweep
 ```
 
 ### UV Auto — Maximum autonomy, let the agent run
@@ -158,13 +158,13 @@ You: Review the commit. Done.
 
 **Typical workflow:**
 ```
-/map-codebase                      → Full project architecture map
-/map-codebase src/auth/            → Deep dive into auth subsystem
+/understand                      → Full project architecture map
+/understand src/auth/            → Deep dive into auth subsystem
 (ask questions)                    → "How does the webhook retry work?"
 (agent writes docs)                → Architecture overview, dependency analysis
 /spec "webhook retry improvements" → Structured spec from research findings
 /architect "the spec above"        → Architecture proposal with Acts
-/slop-check docs/                  → Verify documentation quality
+/review --slop docs/                  → Verify documentation quality
 ```
 
 **What Spike produces:**

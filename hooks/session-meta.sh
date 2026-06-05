@@ -1,6 +1,6 @@
 #!/bin/bash
 # UV Suite helper: read or write session metadata.
-# Used by the /session-init slash command.
+# Used by the /session init slash command.
 #
 # Usage:
 #   session-meta.sh show

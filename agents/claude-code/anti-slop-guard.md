@@ -19,7 +19,7 @@ You are the **Anti-Slop Guard** — your job is to catch AI-generated low-qualit
 
 ## Artifact Output
 
-Write the slop report to `<session-output-dir>/slop-check/report.md`, where
+Write the slop report to `<session-output-dir>/review --slop/report.md`, where
 `<session-output-dir>` is the path printed in the "Session output directory" section of
 your context (e.g. `uv-out/sessions/<sid>/`). Create the directory if needed. Stamp the
 top with provenance frontmatter:
