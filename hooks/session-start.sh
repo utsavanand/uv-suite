@@ -28,6 +28,18 @@ PAYLOAD=""
 META_FILE=""
 [ -n "$SID" ] && META_FILE="$SESSIONS_DIR/$SID.json"
 
+# Refresh git worktree context into the session metadata at each launch (branch can
+# change between sessions), so the Watchtower sees which worktree this session runs in.
+GIT_JSON=$("${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/git-context.sh" "${CLAUDE_PROJECT_DIR:-.}" 2>/dev/null)
+if [ -n "$META_FILE" ] && [ -f "$META_FILE" ] && [ -n "$GIT_JSON" ] && [ "$GIT_JSON" != "{}" ] && command -v jq >/dev/null 2>&1; then
+  TMP=$(mktemp)
+  if jq -s '.[0] * .[1]' "$META_FILE" <(printf '%s' "$GIT_JSON") > "$TMP" 2>/dev/null; then
+    mv "$TMP" "$META_FILE"
+  else
+    rm -f "$TMP"
+  fi
+fi
+
 if [ -n "$META_FILE" ] && [ -f "$META_FILE" ] && command -v jq >/dev/null 2>&1; then
   PAYLOAD=$(echo "$INPUT" | jq -c --slurpfile m "$META_FILE" '
     . + {
@@ -37,6 +49,10 @@ if [ -n "$META_FILE" ] && [ -f "$META_FILE" ] && command -v jq >/dev/null 2>&1; 
       session_purpose:  ($m[0].purpose // ""),
       session_priority: ($m[0].priority // ""),
       persona:          ($m[0].persona // ""),
+      git_worktree:           ($m[0].git_worktree // ""),
+      git_branch:             ($m[0].git_branch // ""),
+      git_main_repo:          ($m[0].git_main_repo // ""),
+      git_is_linked_worktree: ($m[0].git_is_linked_worktree // false),
       cwd:              (.cwd // $m[0].cwd // "")
     }' 2>/dev/null)
 fi

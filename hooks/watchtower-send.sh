@@ -39,6 +39,10 @@ if command -v jq >/dev/null 2>&1; then
         session_purpose:  ($m[0].purpose // ""),
         session_priority: ($m[0].priority // ""),
         persona:          ($m[0].persona // ""),
+        git_worktree:           ($m[0].git_worktree // ""),
+        git_branch:             ($m[0].git_branch // ""),
+        git_main_repo:          ($m[0].git_main_repo // ""),
+        git_is_linked_worktree: ($m[0].git_is_linked_worktree // false),
         _hook_ts: now
       }' 2>/dev/null)
   else

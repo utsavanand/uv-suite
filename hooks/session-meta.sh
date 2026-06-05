@@ -40,6 +40,18 @@ print(json.dumps({
 ' > "$META"
 fi
 
+# Refresh git worktree context (worktree path, branch, main repo) so the Watchtower
+# can distinguish sessions running in different worktrees of the same repo.
+GIT_JSON=$("$(dirname "$0")/git-context.sh" "${CLAUDE_PROJECT_DIR:-$(pwd)}" 2>/dev/null)
+if [ -n "$GIT_JSON" ] && [ "$GIT_JSON" != "{}" ] && command -v jq >/dev/null 2>&1; then
+  TMP=$(mktemp)
+  if jq -s '.[0] * .[1]' "$META" <(printf '%s' "$GIT_JSON") > "$TMP" 2>/dev/null; then
+    mv "$TMP" "$META"
+  else
+    rm -f "$TMP"
+  fi
+fi
+
 ACTION="$1"
 shift || true
 
@@ -53,12 +65,17 @@ kind     = d.get("kind", "") or "(unset)"
 purpose  = d.get("purpose", "") or "(unset)"
 priority = d.get("priority", "") or "(unset)"
 persona  = d.get("persona", "") or "(unset)"
+branch   = d.get("git_branch", "") or "(unset)"
+worktree = d.get("git_worktree", "") or "(unset)"
+linked   = d.get("git_is_linked_worktree", False)
 print(f"session: {sid}")
 print(f"  name:     {name}")
 print(f"  kind:     {kind}")
 print(f"  purpose:  {purpose}")
 print(f"  priority: {priority}")
 print(f"  persona:  {persona}")
+print(f"  branch:   {branch}")
+print(f"  worktree: {worktree}" + ("  (linked)" if linked else ""))
 PY
 }
 
