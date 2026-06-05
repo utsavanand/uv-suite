@@ -132,7 +132,7 @@ Human gates  After each     End only     Every Act          Final output
 
 | Command | What it does |
 |---|---|
-| `/understand [dir]` | Map a codebase or whole stack — auto-detects, or force with `--repo` / `--stack` |
+| `/understand [dir]` | Map a codebase or whole stack — auto-detects repo vs stack |
 | `/spec [requirements]` | Write a technical specification |
 | `/architect [spec]` | Design architecture, decompose into Acts |
 | `/test [file]` | Write tests or evals: `--unit` / `--integration` / `--eval` ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |

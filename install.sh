@@ -109,7 +109,7 @@ for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
   # routes into (specialists/, modes/, operations/).
   cp -R "$skill_dir"* "$TARGET_DIR/skills/$skill_name/"
 done
-echo "  ✓ /understand (--repo/--stack), /spec, /architect, /test (--unit/--integration/--eval)"
+echo "  ✓ /understand (auto-detects repo vs stack), /spec, /architect, /test (--unit/--integration/--eval)"
 echo "  ✓ /review (--security/--slop), /prototype, /qa, /investigate"
 echo "  ✓ /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help"
 
@@ -211,7 +211,7 @@ This project uses [UV Suite](https://github.com/utsavanand/uv-suite) v${UV_VERSI
 
 ### Skills
 
-/understand (--repo/--stack), /spec, /architect, /test (--unit/--integration/--eval), /review (--security/--slop), /prototype, /qa, /investigate, /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help
+/understand (auto-detects repo vs stack), /spec, /architect, /test (--unit/--integration/--eval), /review (--security/--slop), /prototype, /qa, /investigate, /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help
 
 ### Artifacts
 
@@ -224,8 +224,7 @@ to the session that produced it. Each artifact is also stamped with provenance f
 Downstream skills prefer the current session's artifacts but can use a prior session's when
 the current one has none (they list current → prior → legacy and ask which to use). All
 writers are session-scoped:
-- /understand  → uv-out/sessions/<sid>/map-codebase.md
-- /understand --stack     → uv-out/sessions/<sid>/map-stack.md
+- /understand  → uv-out/sessions/<sid>/map-codebase.md (repo) or map-stack.md (stack)
 - /spec          → uv-out/sessions/<sid>/specs/
 - /architect     → uv-out/sessions/<sid>/architecture/
 - /review        → uv-out/sessions/<sid>/review/state.md   (flat pointer: uv-out/review-state.md)
@@ -401,7 +400,7 @@ echo ""
 
 echo "Available slash commands (12 skills):"
 echo ""
-echo "  /understand [--repo|--stack]  Map a codebase or full stack (Cartographer)"
+echo "  /understand                  Map a codebase or full stack (auto-detected) (Cartographer)"
 echo "  /spec [requirements]          Write a technical spec (Spec Writer)"
 echo "  /architect [spec]             Design architecture + Acts (Architect)"
 echo "  /test [--unit|--integration|--eval]  Generate tests/evals (Test Writer, Eval Writer)"

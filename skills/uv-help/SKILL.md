@@ -29,8 +29,6 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 | Skill | What it does | Example |
 |-------|-------------|---------|
 | `/understand [target]` | Map a codebase or stack (auto-detects scope) | `/understand focus on the auth flow and session management` |
-| `/understand --repo [focus]` | Build a knowledge graph of one codebase | `/understand --repo focus on the auth flow and session management` |
-| `/understand --stack [dir]` | Map multiple services and their connections | `/understand --stack show how layer3-max calls layer2-pie` |
 
 ### Plan
 
@@ -91,7 +89,7 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 
 | Agent | Model | Used by |
 |-------|-------|---------|
-| Cartographer | Opus | /understand, /understand --stack |
+| Cartographer | Opus | /understand |
 | Spec Writer | Opus | /spec |
 | Architect | Opus | /architect |
 | Reviewer | Opus | /review, /investigate |
