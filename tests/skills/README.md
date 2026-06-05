@@ -50,5 +50,23 @@ fixtures/flawed/          planted-issue files for the analysis skills
 ## Coverage
 
 - **Contract (fast):** all skills with frontmatter.
-- **Behavioral:** `map-stack`, `map-codebase` (vs `pdf-qa`); `review`,
-  `slop-check`, `security-review` (vs `fixtures/flawed`). Extend per the steps above.
+- **Behavioral:** `understand` (vs `pdf-qa`); `test` (vs `pdf-qa` backend);
+  `review`, `review --security`, `review --slop` (vs `fixtures/flawed`).
+  Extend per the steps above.
+
+## Limitation: headless `--llm` and file-writing / session skills
+
+The `--llm` tier shells out to `claude -p`. That works for skills whose result comes
+back on **stdout** (`review` and its `--security`/`--slop` modes — verified). It is
+**unreliable** for skills that write artifacts into the session-scoped uv-out dir
+(`understand`, `test`, `session`), for two reasons:
+
+1. Run from a bare cwd, the skill isn't installed/discoverable; run from a real install,
+   the project's own hooks (`auto-checkpoint` → nested `claude -p`, `watchtower-send`)
+   fire on every tool call and **hang or distort** the nested headless run.
+2. The session-scoped output + agent-dispatch behavior depends on a live session that
+   `-p` doesn't fully set up.
+
+So: rely on the **contract tier** (CI gate) for these, and verify `understand`/`test`/
+`session` **interactively** in a real `uv claude` session. Don't trust an empty `-p`
+result for them as a failure signal — it's the harness, not the skill.
