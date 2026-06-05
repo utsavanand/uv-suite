@@ -74,17 +74,23 @@ mkdir -p "$TARGET_DIR/skills"
 mkdir -p "$TARGET_DIR/hooks"
 mkdir -p "$TARGET_DIR/rules"
 
-# --- Install agents (Claude Code subagent definitions) ---
-echo "Installing 10 Claude Code agent definitions..."
+# --- Install agents (Claude Code subagent definitions are the canonical source) ---
+echo "Installing 8 Claude Code agent definitions..."
 cp "$UV_SUITE_DIR/agents/claude-code/"*.md "$TARGET_DIR/agents/"
 echo "  ✓ cartographer, spec-writer, architect, reviewer, test-writer"
-echo "  ✓ eval-writer, anti-slop-guard, prototype-builder, devops, security"
+echo "  ✓ eval-writer, anti-slop-guard, prototype-builder"
 
-# --- Install Codex agents (.codex/agents/*.toml + AGENTS.md) ---
+# Codex (.toml) and Cursor (.mdc) agents are GENERATED from the canonical .md files
+# so there is a single source of truth — edit agents/claude-code/<name>.md only.
 PROJECT_ROOT="$(dirname "$TARGET_DIR")"
-echo "Installing 10 Codex agent definitions..."
-mkdir -p "$PROJECT_ROOT/.codex/agents"
-cp "$UV_SUITE_DIR/agents/codex/"*.toml "$PROJECT_ROOT/.codex/agents/"
+if ! command -v python3 &>/dev/null; then
+  echo "  ⚠ python3 not found — skipping Codex/Cursor agent generation (Claude Code agents installed)"
+else
+  echo "Generating Codex agent definitions from canonical..."
+  python3 "$UV_SUITE_DIR/agents/generate.py" codex "$PROJECT_ROOT/.codex/agents"
+  echo "Generating Cursor rule definitions from canonical..."
+  python3 "$UV_SUITE_DIR/agents/generate.py" cursor "$PROJECT_ROOT/.cursor/rules"
+fi
 
 # Create AGENTS.md for Codex (it reads this instead of CLAUDE.md)
 if [ ! -f "$PROJECT_ROOT/AGENTS.md" ]; then
@@ -93,13 +99,6 @@ if [ ! -f "$PROJECT_ROOT/AGENTS.md" ]; then
 else
   echo "  ✓ AGENTS.md already exists"
 fi
-echo "  ✓ .codex/agents/*.toml installed"
-
-# --- Install Cursor rules (.cursor/rules/*.mdc) ---
-echo "Installing 10 Cursor rule definitions..."
-mkdir -p "$PROJECT_ROOT/.cursor/rules"
-cp "$UV_SUITE_DIR/agents/cursor/"*.mdc "$PROJECT_ROOT/.cursor/rules/"
-echo "  ✓ .cursor/rules/*.mdc installed"
 
 # --- Install skills (slash commands) ---
 echo "Installing skills..."

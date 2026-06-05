@@ -235,16 +235,15 @@ uv-out/                  Agent output artifacts (gitignored)
 | Document | What it covers |
 |---|---|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Working on UV Suite — adding skills/agents/hooks, running the tests |
-| [usage-guide.md](usage-guide.md) | Full SDLC mapped to exact commands |
 | [personas.md](personas.md) | 4 personas, 7 knobs, when to use each |
-| [practices.md](practices.md) | Working principles (honesty, parallelism, scope, completion) |
+| [knowledge/practices.md](knowledge/practices.md) | Working principles (honesty, parallelism, scope, completion) |
 | [acts-methodology.md](acts-methodology.md) | Acts delivery framework with worked examples |
 | [knowledge/human-in-the-loop.md](knowledge/human-in-the-loop.md) | Cycle budgets, intervention types, learning loops |
 | [knowledge/sharing-and-standards.md](knowledge/sharing-and-standards.md) | Danger zones, team standards, sharing levels |
-| [landscape.md](landscape.md) | Open source tools and references for each agent |
-| [comparison.md](comparison.md) | UV Suite vs gstack vs Claude Code built-in — feature comparison + prompt-depth deep dive |
-| [tool-comparison.md](tool-comparison.md) | Claude Code vs Cursor vs Codex — how UV Suite works across all three |
-| [best-practices.md](best-practices.md) | Subagent patterns, remote sessions, sharing with engineers, cost optimization |
+| [research/landscape.md](research/landscape.md) | Open source tools and references for each agent |
+| [research/comparison.md](research/comparison.md) | UV Suite vs gstack vs Claude Code built-in — feature comparison + prompt-depth deep dive |
+| [research/tool-comparison.md](research/tool-comparison.md) | Claude Code vs Cursor vs Codex — how UV Suite works across all three |
+| [research/best-practices.md](research/best-practices.md) | Subagent patterns, remote sessions, sharing with engineers, cost optimization |
 
 ## License
 

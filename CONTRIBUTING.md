@@ -11,11 +11,9 @@ installed project.
 
 ```
 skills/<name>/SKILL.md   one slash command each (the prompt + its tool grants)
-agents/                  subagent definitions, one per target toolchain:
-  claude-code/<name>.md     Claude Code (Markdown)
-  cursor/<name>.mdc         Cursor
-  portable/<name>.md        tool-agnostic
-  codex/<name>.toml         Codex
+agents/
+  claude-code/<name>.md     subagent definitions — the SINGLE SOURCE OF TRUTH
+  generate.py               generates Cursor (.mdc) + Codex (.toml) from the .md files
 hooks/*.sh               lifecycle automation (auto-lint, block-destructive, …)
 personas/                the 4 persona configs (spike/sport/pro/auto)
 guardrails/ , rules/     anti-slop guardrails
@@ -44,8 +42,9 @@ A `SKILL.md` has two parts:
 ## Adding a skill
 
 1. Create `skills/<name>/SKILL.md` with valid frontmatter (copy an existing skill).
-2. If it uses a subagent, ensure `agents/claude-code/<agent>.md` exists (add the
-   `cursor`/`portable`/`codex` variants too for cross-tool support).
+2. If it uses a subagent, ensure `agents/claude-code/<agent>.md` exists. The Cursor and
+   Codex variants are generated from it by `agents/generate.py` at install time — edit
+   only the canonical `.md`.
 3. Run `./tests/skills/run.sh` — the contract lint must pass.
 4. Add a behavioral test if the skill has checkable output (see below).
 
