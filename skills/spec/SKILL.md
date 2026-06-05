@@ -13,12 +13,20 @@ allowed-tools:
   - Read(*)
   - Grep(*)
   - Glob(*)
-  - Write(*)
+  - Write(uv-out/*)
+  - AskUserQuestion
 ---
 
 ## Requirements
 
 $ARGUMENTS
+
+## Step 0 — Gather context (do this FIRST, before writing)
+
+Ask the user with `AskUserQuestion` which existing files, modules, or docs the spec
+should account for — related code, prior specs, API contracts, data models. Read every
+file they name before drafting. If they say there are none (greenfield), proceed without.
+Do not guess at relevant files; ask.
 
 ## Project context
 

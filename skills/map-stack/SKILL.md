@@ -13,6 +13,7 @@ effort: max
 allowed-tools:
   - Read(*)
   - Write(uv-out/*)
+  - AskUserQuestion
   - Grep(*)
   - Glob(*)
   - Bash(graphify *)
@@ -29,7 +30,14 @@ allowed-tools:
 
 $ARGUMENTS
 
-If no target specified, scan the current directory for subdirectories that look like services (contain package.json, pom.xml, go.mod, Cargo.toml, requirements.txt, Dockerfile, etc.).
+## Step 0 — Confirm the target (do this FIRST, before any scanning)
+
+- If `$ARGUMENTS` already names a parent directory or service list, use it — do not ask, just proceed.
+- If `$ARGUMENTS` is empty, ask the user with `AskUserQuestion`:
+  "No target given. Scan the current directory for services, or point me at a different parent folder?"
+  Offer the current directory as the default option. Wait for the answer before scanning.
+
+If no target is specified after asking, scan the current directory for subdirectories that look like services (contain package.json, pom.xml, go.mod, Cargo.toml, requirements.txt, Dockerfile, etc.).
 
 ## Mode: Multi-Codebase Stack Mapping
 

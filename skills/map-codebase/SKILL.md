@@ -13,6 +13,7 @@ effort: high
 allowed-tools:
   - Read(*)
   - Write(uv-out/*)
+  - AskUserQuestion
   - Grep(*)
   - Glob(*)
   - Bash(graphify *)
@@ -28,7 +29,13 @@ allowed-tools:
 
 $ARGUMENTS
 
-If no target specified, map the current project root.
+## Step 0 — Confirm the target (do this FIRST, before any scanning)
+
+- If `$ARGUMENTS` already names a directory, use it — do not ask, just proceed.
+- If `$ARGUMENTS` is empty or is a question (not a path), ask the user with `AskUserQuestion`:
+  "No codebase specified. Map the current directory, or point me at a different folder?"
+  Offer the current directory as the default option. Wait for the answer before scanning.
+  If they give a path, run discovery against that path instead of the current directory.
 
 ## Graphify availability
 
