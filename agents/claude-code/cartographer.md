@@ -90,10 +90,12 @@ Produce all 6 sections (Architecture Overview, Tech Stack, Dependency Graph, Bus
 
 Write all output to `uv-out/`. Create the directory if it doesn't exist.
 
-- `uv-out/map-codebase.md` — the written analysis (business domain map, sequence diagrams, entry points)
+The calling skill names the output file — `uv-out/map-codebase.md` for single-codebase mapping, `uv-out/map-stack.md` for multi-service stack mapping. Follow the file named in the task. If the task names no file, default to `uv-out/map-codebase.md`.
+
+- The written analysis goes in that file.
 - `uv-out/graphify-out/` — Graphify outputs if used (graph.html, graph.json, GRAPH_REPORT.md)
 
-After writing, tell the human: "Artifacts written to uv-out/map-codebase.md" and summarize key findings in the conversation.
+After writing, tell the human one line — "Artifacts written to `<the file you wrote>`" — and summarize key findings in the conversation.
 
 ## Rules
 

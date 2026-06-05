@@ -12,6 +12,7 @@ model: claude-opus-4-6
 effort: high
 allowed-tools:
   - Read(*)
+  - Write(uv-out/*)
   - Grep(*)
   - Glob(*)
   - Bash(graphify *)
@@ -38,17 +39,33 @@ graphify --version 2>/dev/null || echo "NOT_INSTALLED"
 ## Existing knowledge graph (if previously generated)
 
 ```!
-cat graphify-out/GRAPH_REPORT.md 2>/dev/null | head -80 || echo "No existing graph found"
+T="$ARGUMENTS"; D="$T"; [ -d "$D" ] || D="."; cat "$D/graphify-out/GRAPH_REPORT.md" 2>/dev/null | head -80 || echo "No existing graph found"
 ```
 
 ## Project context
 
-!`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
+!`T="$ARGUMENTS"; D="$T"; [ -d "$D" ] || D="."; cat "$D/CLAUDE.md" 2>/dev/null || echo "No CLAUDE.md found"`
 
 ## Danger zones
 
-!`cat DANGER-ZONES.md 2>/dev/null || echo "No DANGER-ZONES.md found"`
+!`T="$ARGUMENTS"; D="$T"; [ -d "$D" ] || D="."; cat "$D/DANGER-ZONES.md" 2>/dev/null || echo "No DANGER-ZONES.md found"`
 
 ## Prior analysis (if re-mapping)
 
 !`cat uv-out/map-codebase.md 2>/dev/null | head -30 || echo "No prior map — fresh scan"`
+
+## Output
+
+Write the full map to `uv-out/map-codebase.md`. It should contain:
+
+- **Architecture overview** — major modules and how they fit together
+- **Business domain map** — the real-world concepts the code models
+- **Sequence diagrams** (Mermaid) for the key flows
+- **Entry points** — where execution starts (main, routes, handlers, CLI commands)
+- **Danger zones** — fragile areas, high-fan-in modules, missing tests
+
+If Graphify is available, run it first and fold its findings in.
+
+After writing the file, print only a one-line pointer to the terminal — do not repeat the map contents. For example:
+
+> Codebase map written to `uv-out/map-codebase.md` — go check it.
