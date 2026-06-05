@@ -16,6 +16,9 @@ watchtower/events.json
 # Personal notes / research artifacts (not for public repo)
 website-concept.md
 
+# Local-only working area — drafts, proposals, PR writeups (never committed)
+proposals/
+
 # Superseded monolithic docs (replaced by file-per-agent / file-per-rule structure)
 agents.md
 anti-slop.md
