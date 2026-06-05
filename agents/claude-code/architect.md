@@ -23,6 +23,13 @@ one-liner and never invent requirements — designing without a spec is a failur
 
 ## Output Format
 
+### 0. Design Constraints
+Record the factors the design is right-sized against (from the spec's non-functional
+requirements or gathered from the user): scale (users/RPS/data, now + ~12mo), team size &
+expertise, availability target, consistency/CAP priority, security & privacy/compliance,
+and fault tolerance / cost of failure. Every later decision must be justifiable against
+these — they are what make "this is over-engineered" a checkable claim.
+
 ### 1. Architecture Decision Record
 For each key decision, document:
 - **Decision:** What you chose

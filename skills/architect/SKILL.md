@@ -75,7 +75,30 @@ a one-line explanation. Designing without a spec is a failure, not a fallback.
 
 !`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
 
-## Step 1 — Consult domain specialists (only the relevant ones)
+## Step 1 — Establish design constraints (scaling & risk factors)
+
+Right-sizing requires knowing the constraints — without them you can't run the Challenge
+Test or judge what's over-engineering. Take each factor from the spec's non-functional
+requirements where stated; for anything missing, **ask the user with `AskUserQuestion`**
+(group related questions; don't re-ask what the spec already answers). For a trivial
+change, state your assumptions instead of asking.
+
+Capture:
+- **Scale** — customers/users today and the ~12-month expectation; requests/sec; data volume.
+- **Team** — size and what they're fluent in (languages, infra). Bias toward the team's
+  stack; don't design around tech they'd have to learn unless a requirement demands it.
+- **Availability** — target (best-effort / 99.9% / 99.99%) and maintenance-window tolerance.
+- **Consistency (CAP)** — under a network partition, prefer consistency or availability?
+  Where is strong consistency actually required vs eventual acceptable?
+- **Security & privacy** — sensitive data / PII? Compliance (GDPR, HIPAA, PCI, SOC 2)?
+- **Fault tolerance & cost of failure** — blast radius if it fails or is wrong (internal
+  toy vs revenue- or safety-critical). This sets how much resilience to invest.
+
+These constraints drive everything downstream: pass them to the specialists in Step 2, and
+use them for the Challenge Test in Step 3. **Record them as a `Design Constraints` section
+at the top of the architecture** so the right-sizing is auditable.
+
+## Step 2 — Consult domain specialists (only the relevant ones)
 
 With the spec in hand, identify which domains it actually touches and consult **only those**
 specialists — skip the rest and document which you skipped and why.
@@ -96,7 +119,7 @@ sources where they researched).
 specialist to look thorough. Consulting one is only worthwhile when a domain genuinely
 shapes the design.
 
-## Step 2 — Design and decompose into Acts
+## Step 3 — Design and decompose into Acts
 
 Synthesize the spec + any specialist input into the architecture and the Acts breakdown
 (per your agent instructions). Apply `guardrails/architecture-slop.md` to the synthesis:
