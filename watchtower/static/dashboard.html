@@ -305,6 +305,14 @@ function fmtDate(ts) {
   return new Date(t).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function fmtTokens(s) {
+  const t = (s.input_tokens || 0) + (s.output_tokens || 0);
+  if (!t) return "—";
+  if (t >= 1e6) return (t / 1e6).toFixed(1) + "M";
+  if (t >= 1e3) return (t / 1e3).toFixed(1) + "k";
+  return String(t);
+}
+
 function toast(msg, isErr) {
   const el = document.createElement("div");
   el.className = "toast" + (isErr ? " err" : "");
@@ -365,6 +373,7 @@ function cardHTML(s) {
       <span class="k">priority</span><span class="v">${esc(s.priority ?? "—")}</span>
       <span class="k">created</span><span class="v">${fmtDate(s.started_at)}</span>
       <span class="k">tool calls</span><span class="v">${esc(s.tool_calls ?? 0)}</span>
+      <span class="k">tokens</span><span class="v" title="input + output (incl. cache)">${fmtTokens(s)}</span>
       <span class="k">last</span><span class="v">${timeAgo(s.last_event_at)}</span>
       <span class="k">cwd</span><span class="v cwd">${esc(s.cwd || "—")}</span>
     </div>

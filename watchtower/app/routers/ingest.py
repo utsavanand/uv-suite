@@ -5,7 +5,7 @@ import json
 from fastapi import APIRouter, Request
 
 from app import db
-from app.models import ApprovalIn, SessionRegister, StateUpdate
+from app.models import ApprovalIn, SessionRegister, StateUpdate, TokensIn
 
 router = APIRouter()
 
@@ -88,6 +88,19 @@ async def create_approval(a: ApprovalIn) -> dict:
         "command": a.command,
     })
     return {"ok": True, "id": approval_id}
+
+
+@router.post("/sessions/{id}/tokens")
+async def update_tokens(id: str, t: TokensIn) -> dict:
+    await db.execute(
+        "UPDATE sessions SET input_tokens = ?, output_tokens = ? WHERE id = ?",
+        t.input_tokens, t.output_tokens, id,
+    )
+    db.notify({
+        "type": "session", "session_id": id,
+        "input_tokens": t.input_tokens, "output_tokens": t.output_tokens,
+    })
+    return {"ok": True}
 
 
 @router.post("/sessions/{id}/state")

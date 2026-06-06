@@ -50,6 +50,7 @@ _SCHEMA = [
         id text PRIMARY KEY, name text, kind text, purpose text, priority text,
         persona text, cwd text, worktree text, branch text, pid integer,
         tmux_target text, parent_id text, state text DEFAULT 'active',
+        input_tokens integer, output_tokens integer,
         started_at TEXT DEFAULT CURRENT_TIMESTAMP, ended_at text)""",
     """CREATE TABLE IF NOT EXISTS events (
         id INTEGER PRIMARY KEY AUTOINCREMENT, session_id text, event_type text,
@@ -71,11 +72,12 @@ async def init_db() -> None:
     _db.row_factory = aiosqlite.Row
     for stmt in _SCHEMA:
         await _db.execute(stmt)
-    # Migrate older dbs that predate the parent_id column.
-    try:
-        await _db.execute("ALTER TABLE sessions ADD COLUMN parent_id text")
-    except Exception:
-        pass  # column already exists
+    # Migrate older dbs that predate newer columns.
+    for col in ("parent_id text", "input_tokens integer", "output_tokens integer"):
+        try:
+            await _db.execute(f"ALTER TABLE sessions ADD COLUMN {col}")
+        except Exception:
+            pass  # column already exists
     await _db.commit()
 
 

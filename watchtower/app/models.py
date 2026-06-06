@@ -30,6 +30,11 @@ class StateUpdate(BaseModel):
     state: Literal["active", "idle", "awaiting_human", "terminated"]
 
 
+class TokensIn(BaseModel):
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+
 class ApprovalIn(BaseModel):
     session_id: str
     tool_name: str | None = None
