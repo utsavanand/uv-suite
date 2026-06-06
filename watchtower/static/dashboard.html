@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watchtower</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2430;
+    --border: #2a3240;
+    --text: #c9d1d9;
+    --muted: #7d8590;
+    --accent: #58a6ff;
+    --active: #3fb950;
+    --idle: #7d8590;
+    --awaiting: #d29922;
+    --terminated: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 13px/1.5 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: 1px; }
+  header h1 .eye { color: var(--accent); }
+  #conn {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #conn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--idle); }
+  #conn.up .dot { background: var(--active); }
+  #conn.down .dot { background: var(--terminated); }
+
+  #banner {
+    display: none;
+    background: #4a1414;
+    color: #ffb3ad;
+    border-bottom: 1px solid var(--terminated);
+    padding: 8px 20px;
+    font-size: 12px;
+  }
+  #banner.show { display: block; }
+
+  main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+  h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin: 24px 0 12px;
+    font-weight: 600;
+  }
+  h2:first-child { margin-top: 0; }
+  .count { color: var(--accent); }
+
+  /* Approvals */
+  #approvals { display: flex; flex-direction: column; gap: 10px; }
+  #approvals-empty { color: var(--muted); font-style: italic; }
+  .approval {
+    background: var(--panel-2);
+    border: 1px solid var(--awaiting);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .approval .info { flex: 1; min-width: 0; }
+  .approval .sess { color: var(--awaiting); font-weight: 600; }
+  .approval .cmd {
+    margin-top: 4px;
+    color: var(--text);
+    background: #0d1117;
+    border-radius: 4px;
+    padding: 5px 8px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .approval .tool { color: var(--muted); }
+
+  /* Session grid */
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--idle);
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card.s-active { border-left-color: var(--active); }
+  .card.s-idle { border-left-color: var(--idle); }
+  .card.s-awaiting_human { border-left-color: var(--awaiting); box-shadow: 0 0 0 1px var(--awaiting), 0 0 14px -4px var(--awaiting); }
+  .card.s-terminated { border-left-color: var(--terminated); opacity: 0.7; }
+
+  .card .top { display: flex; align-items: flex-start; gap: 8px; }
+  .card .name { font-weight: 600; font-size: 14px; flex: 1; word-break: break-word; }
+  .badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .badge.persona { background: var(--panel-2); color: var(--accent); border: 1px solid var(--border); }
+  .badge.state { color: #0d1117; font-weight: 700; }
+  .badge.state.active { background: var(--active); }
+  .badge.state.idle { background: var(--idle); }
+  .badge.state.awaiting_human { background: var(--awaiting); }
+  .badge.state.terminated { background: var(--terminated); }
+
+  .meta { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12px; }
+  .meta .k { color: var(--muted); }
+  .meta .v { color: var(--text); word-break: break-all; }
+  .meta .v.cwd { font-size: 11px; }
+
+  .actions { display: flex; gap: 8px; margin-top: 2px; }
+  button {
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    transition: background 0.12s, border-color 0.12s;
+  }
+  button:hover { background: #2a3240; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.primary { border-color: var(--active); color: var(--active); }
+  button.primary:hover { background: rgba(63,185,80,0.12); }
+  button.danger { border-color: var(--terminated); color: var(--terminated); }
+  button.danger:hover { background: rgba(248,81,73,0.12); }
+
+  /* Toasts */
+  #toasts {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 50;
+  }
+  .toast {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    max-width: 380px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    animation: slidein 0.15s ease-out;
+    word-break: break-all;
+  }
+  .toast.err { border-left-color: var(--terminated); }
+  @keyframes slidein { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="eye">◉</span> WATCHTOWER</h1>
+  <div id="conn"><span class="dot"></span><span id="conn-text">connecting…</span></div>
+</header>
+<div id="banner"></div>
+
+<main>
+  <h2>Needs human <span class="count" id="appr-count"></span></h2>
+  <div id="approvals"></div>
+  <div id="approvals-empty">No pending approvals.</div>
+
+  <h2>Sessions <span class="count" id="sess-count"></span></h2>
+  <div id="grid"></div>
+</main>
+
+<div id="toasts"></div>
+
+<script>
+const API = "http://localhost:4200";
+const WS_URL = "ws://localhost:4200/live";
+
+const sessions = new Map();   // id -> session object
+const approvals = new Map();  // approval id -> approval object
+
+const $grid = document.getElementById("grid");
+const $approvals = document.getElementById("approvals");
+const $apprEmpty = document.getElementById("approvals-empty");
+const $banner = document.getElementById("banner");
+const $conn = document.getElementById("conn");
+const $connText = document.getElementById("conn-text");
+
+// ---------- helpers ----------
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+function timeAgo(ts) {
+  if (!ts) return "—";
+  const t = typeof ts === "number" ? ts * (ts < 1e12 ? 1000 : 1) : Date.parse(ts);
+  if (isNaN(t)) return esc(ts);
+  const d = Math.floor((Date.now() - t) / 1000);
+  if (d < 5) return "just now";
+  if (d < 60) return d + "s ago";
+  if (d < 3600) return Math.floor(d / 60) + "m ago";
+  if (d < 86400) return Math.floor(d / 3600) + "h ago";
+  return Math.floor(d / 86400) + "d ago";
+}
+
+function toast(msg, isErr) {
+  const el = document.createElement("div");
+  el.className = "toast" + (isErr ? " err" : "");
+  el.textContent = msg;
+  document.getElementById("toasts").appendChild(el);
+  setTimeout(() => el.remove(), isErr ? 7000 : 5000);
+}
+
+function showBanner(msg) {
+  $banner.textContent = msg;
+  $banner.classList.add("show");
+}
+function hideBanner() { $banner.classList.remove("show"); }
+
+async function api(path, opts) {
+  const res = await fetch(API + path, opts);
+  if (!res.ok) throw new Error("HTTP " + res.status + " for " + path);
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function post(path, body) {
+  return api(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+// ---------- rendering ----------
+function renderSessions() {
+  const list = [...sessions.values()].sort((a, b) => {
+    const order = { awaiting_human: 0, active: 1, idle: 2, terminated: 3 };
+    const sa = order[a.state] ?? 9, sb = order[b.state] ?? 9;
+    if (sa !== sb) return sa - sb;
+    return (b.priority ?? 0) - (a.priority ?? 0);
+  });
+  document.getElementById("sess-count").textContent = list.length ? `(${list.length})` : "";
+  $grid.innerHTML = list.map(cardHTML).join("") || `<div style="color:var(--muted)">No sessions.</div>`;
+}
+
+function cardHTML(s) {
+  const title = esc(s.name || s.id);
+  const state = s.state || "idle";
+  return `
+  <div class="card s-${esc(state)}">
+    <div class="top">
+      <div class="name">${title}</div>
+      ${s.persona ? `<span class="badge persona">${esc(s.persona)}</span>` : ""}
+      <span class="badge state ${esc(state)}">${esc(state.replace("_", " "))}</span>
+    </div>
+    <div class="meta">
+      <span class="k">priority</span><span class="v">${esc(s.priority ?? "—")}</span>
+      <span class="k">tool calls</span><span class="v">${esc(s.tool_calls ?? 0)}</span>
+      <span class="k">last</span><span class="v">${timeAgo(s.last_event_at)}</span>
+      <span class="k">cwd</span><span class="v cwd">${esc(s.cwd || "—")}</span>
+    </div>
+    <div class="actions">
+      <button onclick="checkpoint('${esc(s.id)}')">Checkpoint</button>
+      <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>
+    </div>
+  </div>`;
+}
+
+function renderApprovals() {
+  const list = [...approvals.values()];
+  document.getElementById("appr-count").textContent = list.length ? `(${list.length})` : "";
+  $apprEmpty.style.display = list.length ? "none" : "block";
+  $approvals.innerHTML = list.map(a => {
+    const s = sessions.get(a.session_id);
+    const who = esc(s ? (s.name || s.id) : a.session_id);
+    return `
+    <div class="approval">
+      <div class="info">
+        <div><span class="sess">${who}</span> <span class="tool">wants to run ${esc(a.tool_name || "a tool")}</span></div>
+        ${a.command ? `<div class="cmd">${esc(a.command)}</div>` : ""}
+      </div>
+      <button class="primary" onclick="decide('${esc(a.session_id)}','${esc(a.id)}','approve')">Approve</button>
+      <button class="danger" onclick="decide('${esc(a.session_id)}','${esc(a.id)}','deny')">Deny</button>
+    </div>`;
+  }).join("");
+}
+
+// ---------- actions ----------
+async function checkpoint(id) {
+  try {
+    const r = await post(`/sessions/${id}/checkpoint`);
+    toast("Checkpoint saved: " + (r && (r.path || r.checkpoint || JSON.stringify(r)) || "ok"));
+  } catch (e) { toast("Checkpoint failed: " + e.message, true); }
+}
+
+async function closeSession(id) {
+  const s = sessions.get(id);
+  if (!confirm(`Close session "${s ? (s.name || s.id) : id}"?`)) return;
+  try {
+    await post(`/sessions/${id}/close`);
+    toast("Closed session " + id);
+  } catch (e) { toast("Close failed: " + e.message, true); }
+}
+
+async function decide(sessionId, approvalId, decision) {
+  try {
+    await post(`/sessions/${sessionId}/approve`, { decision });
+    approvals.delete(approvalId);
+    renderApprovals();
+    toast(`${decision === "approve" ? "Approved" : "Denied"} for ${sessionId}`);
+  } catch (e) { toast("Decision failed: " + e.message, true); }
+}
+
+// ---------- initial load ----------
+async function load() {
+  try {
+    const [sess, pend] = await Promise.all([
+      api("/sessions"),
+      api("/approvals?status=pending").catch(() => []),
+    ]);
+    sessions.clear();
+    (sess || []).forEach(s => sessions.set(s.id, s));
+    approvals.clear();
+    (pend || []).forEach(a => approvals.set(a.id, a));
+    hideBanner();
+    renderSessions();
+    renderApprovals();
+  } catch (e) {
+    showBanner("Cannot reach Watchtower at " + API + " — " + e.message);
+  }
+}
+
+// ---------- live updates ----------
+let ws = null, retry = 0;
+
+function connect() {
+  try { ws = new WebSocket(WS_URL); }
+  catch (e) { scheduleReconnect(); return; }
+
+  ws.onopen = () => { retry = 0; setConn(true); };
+
+  ws.onmessage = ev => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch { return; }
+    handleMessage(msg);
+  };
+
+  ws.onclose = () => { setConn(false); scheduleReconnect(); };
+  ws.onerror = () => { try { ws.close(); } catch {} };
+}
+
+function scheduleReconnect() {
+  retry = Math.min(retry + 1, 6);
+  const delay = Math.min(1000 * 2 ** retry, 15000);
+  setTimeout(connect, delay);
+}
+
+function setConn(up) {
+  $conn.className = up ? "up" : "down";
+  $connText.textContent = up ? "live" : "reconnecting…";
+}
+
+function handleMessage(msg) {
+  switch (msg.type) {
+    case "snapshot":
+      sessions.clear();
+      (msg.sessions || []).forEach(s => sessions.set(s.id, s));
+      hideBanner();
+      renderSessions();
+      break;
+
+    case "session": {
+      const s = msg.session || msg;
+      const id = s.id || msg.session_id;
+      if (!id) break;
+      const prev = sessions.get(id) || {};
+      sessions.set(id, { ...prev, ...s, id });
+      renderSessions();
+      break;
+    }
+
+    case "event": {
+      const id = msg.session_id;
+      const s = sessions.get(id);
+      if (s) {
+        s.tool_calls = (s.tool_calls ?? 0) + 1;
+        s.last_event_at = msg.created_at || Date.now();
+        sessions.set(id, s);
+        renderSessions();
+      }
+      break;
+    }
+
+    case "approval": {
+      const a = msg.approval || msg;
+      const id = a.id || `${msg.session_id}:${Date.now()}`;
+      if (a.status === "resolved" || a.resolved) {
+        approvals.delete(id);
+      } else {
+        approvals.set(id, { id, session_id: msg.session_id, ...a });
+      }
+      renderApprovals();
+      break;
+    }
+  }
+}
+
+// refresh relative timestamps
+setInterval(renderSessions, 15000);
+
+load();
+connect();
+</script>
+</body>
+</html>

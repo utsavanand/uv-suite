@@ -151,6 +151,39 @@ echo "$UVS_SESSION_ID" > "$STATE_DIR/current-session.txt"
 
 SETTINGS=".claude/personas/$PERSONA.json"
 
+# Launch the session, transparently wrapped in a tmux session so Watchtower
+# can attach to / observe the live session. Invisible to the user (status bar
+# off, lands them straight in the session). Falls back to a plain exec when
+# tmux is unavailable, UVS_NO_TMUX is set, or we're already inside the wrapper.
+launch_session() {
+  if command -v tmux >/dev/null 2>&1 && [ -z "$UVS_NO_TMUX" ] && [ -z "$UVS_IN_TMUX" ]; then
+    local socket="uvs"
+    local tname="uvs_$UVS_SESSION_ID"
+    local wt_url="${UVS_WATCHTOWER_URL:-http://localhost:4200}"
+
+    # Build the launch command, exporting the session id + re-entry guard and
+    # safely quoting every argument for the shell tmux spawns.
+    local launch_cmd
+    printf -v launch_cmd 'UVS_SESSION_ID=%q UVS_IN_TMUX=1 exec' "$UVS_SESSION_ID"
+    local arg
+    for arg in "$@"; do
+      printf -v launch_cmd '%s %q' "$launch_cmd" "$arg"
+    done
+
+    tmux -L "$socket" new-session -d -s "$tname" -c "$PWD" "$launch_cmd"
+    tmux -L "$socket" set -t "$tname" status off 2>/dev/null
+
+    curl -s "$wt_url/sessions/register" \
+      -H 'Content-Type: application/json' \
+      -d "{\"id\":\"$UVS_SESSION_ID\",\"tmux\":\"$tname\",\"pid\":$$,\"cwd\":\"$PWD\"}" \
+      >/dev/null 2>&1 || true
+
+    exec tmux -L "$socket" attach -t "$tname"
+  fi
+
+  exec "$@"
+}
+
 if [ "$TOOL" = "claude" ]; then
   # --- Claude Code ---
   if ! command -v claude &>/dev/null; then
@@ -167,7 +200,7 @@ if [ "$TOOL" = "claude" ]; then
   echo "UV Suite | Claude Code | $LABEL"
   echo "Session: ${UVS_SESSION_ID:0:8}${UVS_NAME:+ — $UVS_NAME}"
   echo ""
-  exec claude --settings "$SETTINGS" "$@"
+  launch_session claude --settings "$SETTINGS" "$@"
 
 elif [ "$TOOL" = "codex" ]; then
   # --- OpenAI Codex ---
@@ -188,5 +221,5 @@ elif [ "$TOOL" = "codex" ]; then
   echo "UV Suite | Codex | $LABEL"
   echo "Session: ${UVS_SESSION_ID:0:8}${UVS_NAME:+ — $UVS_NAME}"
   echo ""
-  exec codex $CODEX_ARGS "$@"
+  launch_session codex $CODEX_ARGS "$@"
 fi
