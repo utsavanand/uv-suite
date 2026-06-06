@@ -1,27 +1,34 @@
 #!/bin/bash
-# UV Suite Hook: Surface the uv-out/ artifact path after a skill run.
+# UV Suite Hook: surface real skill artifacts written to uv-out/ after a run.
 # Event: Stop
-# When a UV Suite skill writes artifacts to uv-out/, the writing happens inside a
-# forked sub-agent whose transcript the user never sees. This hook runs when control
-# returns to the main loop and prints the path so the user knows where output landed.
+# A skill (/spec, /review, /understand, …) writes artifacts inside a forked sub-agent
+# whose transcript the user never sees; this prints the path when control returns.
+#
+# Scoped to the CURRENT session and excludes checkpoints — checkpoints are background
+# state (surfaced by the dashboard and /session restore), and listing every session's
+# checkpoints here produced cross-session noise.
 
 [ -d uv-out ] || exit 0
 
-# Files written in the ~2 min covering the run that just finished.
-RECENT=$(find uv-out -type f -mmin -2 2>/dev/null | sort)
+SID="${UVS_SESSION_ID:-}"
+[ -z "$SID" ] && [ -f .uv-suite-state/current-session.txt ] && SID=$(cat .uv-suite-state/current-session.txt 2>/dev/null)
+
+# Recent files, minus checkpoints, minus other sessions (when we know our own).
+RECENT=$(find uv-out -type f -mmin -2 2>/dev/null \
+  | grep -v '/checkpoints/' \
+  | awk -v sid="$SID" '
+      /^uv-out\/sessions\// { if (sid == "" || index($0, "uv-out/sessions/" sid "/") == 1) print; next }
+      { print }
+    ' \
+  | sort)
 [ -z "$RECENT" ] && exit 0
 
 LIST=$(echo "$RECENT" | sed 's/^/  /' | sed 's/$/\\n/' | tr -d '\n')
 
-# Name the session if these artifacts are session-scoped (uv-out/sessions/<sid>/...).
-SID=$(echo "$RECENT" | sed -n 's#^uv-out/sessions/\([^/]*\)/.*#\1#p' | head -1)
-HEADER="UV Suite output written to:"
-[ -n "$SID" ] && HEADER="UV Suite output (session ${SID}) written to:"
-
 cat <<EOF
 {
   "continue": true,
-  "systemMessage": "${HEADER}\n${LIST}"
+  "systemMessage": "UV Suite output written to:\n${LIST}"
 }
 EOF
 
