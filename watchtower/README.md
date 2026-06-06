@@ -4,28 +4,20 @@ Observability **and control** for UV Suite sessions. Hooks push events; the dash
 observes *and* acts — checkpoint a session, close it, or approve one that's blocked waiting
 for a human — from the browser.
 
-FastAPI. **SQLite by default** (an embedded file — no server, no Docker); set
-`DATABASE_URL=postgres://…` to use Postgres instead (teams / multi-host). The live
-WebSocket stream is fed by an in-process broadcaster, so no `LISTEN/NOTIFY` is needed.
+FastAPI + embedded **SQLite** — no server, no Docker, no database to install. The live
+WebSocket stream is fed by an in-process broadcaster, so there is nothing external to run.
 
 ## Run
 
 ```bash
-uvs watch                 # default: Python + SQLite, opens http://localhost:4200
+uvs watch                 # opens http://localhost:4200
 ```
 
-That's the whole setup — no Docker, no database to install. `uvs watch` provisions the
-Python deps on first run (via `uv`, or a local `.venv`) and stores data in
-`watchtower/watchtower.db`.
+That's the whole setup. `uvs watch` provisions the Python deps on first run (via `uv`, or
+a local `.venv`) and stores data in `watchtower/watchtower.db` (override with `WATCHTOWER_DB`).
 
-Postgres / team mode:
-```bash
-uvs watch --docker        # Postgres + the service via docker compose
-# or point at your own Postgres:
-export DATABASE_URL=postgresql://watchtower:watchtower@localhost:5432/watchtower
-uv run --with-requirements requirements.txt uvicorn app.main:app --host 127.0.0.1 --port 4200
-```
-> Bind control to **127.0.0.1** — the control API can checkpoint/kill/approve sessions.
+> The service binds to **127.0.0.1** — the control API can checkpoint/kill/approve
+> sessions, so it must stay on localhost.
 
 ## How sessions become controllable
 
@@ -54,12 +46,12 @@ works via PID, approve is unavailable from the UI.
 ```
 app/
   main.py            app wiring + lifespan + dashboard serving
-  db.py              dual-backend shim (SQLite default / Postgres) + WS broadcaster
+  db.py              SQLite layer + in-process WebSocket broadcaster
   models.py          request models
   routers/           ingest.py · query.py · stream.py · control.py
   services/          checkpoint.py (out-of-band) · tmux.py (send-keys/kill/capture)
 static/dashboard.html
-Dockerfile · docker-compose.yml · requirements.txt
+requirements.txt
 ```
 
 ## Status / follow-ups
@@ -71,8 +63,7 @@ Dockerfile · docker-compose.yml · requirements.txt
 
 ## Legacy fallback (Node)
 
-The original Node Watchtower lives under `watchtower/legacy/` as a fallback that needs
-**no Docker/Postgres**:
+The original Node Watchtower lives under `watchtower/legacy/` — pure Node, no Python:
 
 ```bash
 uvs watch --legacy        # runs legacy/server.js on :4200 (flat events.json, SSE)

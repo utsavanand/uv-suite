@@ -34,8 +34,7 @@ function usage() {
   Monitoring:
     uvs watch               Start Watchtower dashboard (open browser)
     uvs watch --bg          Start Watchtower in background
-    uvs watch --docker      Start with Postgres via docker compose (teams)
-    uvs watch --legacy      Start the legacy Node Watchtower (no Docker/Postgres)
+    uvs watch --legacy      Start the legacy Node Watchtower
 
   Personas:
     spike        Research & docs (Opus, max effort)
@@ -360,49 +359,19 @@ function watch() {
   const opener =
     process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
 
-  // Default: Python + SQLite, run locally (no Docker, no Postgres).
-  if (!args.includes("--docker")) {
-    console.log("UV Suite Watchtower (Python + SQLite) starting...");
-    console.log("Dashboard: " + url);
-    console.log("");
-    const argv = [...ensurePyEnv(wtDir), "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", String(port)];
-    setTimeout(() => spawn(opener, [url], { stdio: "ignore" }), 1500);
-    const child = spawn(argv[0], argv.slice(1), { cwd: wtDir, stdio: bg ? "ignore" : "inherit", detached: bg });
-    if (bg) {
-      child.unref();
-      console.log(`Running in background (PID: ${child.pid}). Stop with: kill ${child.pid}`);
-    } else {
-      child.on("exit", (code) => process.exit(code || 0));
-    }
-    return;
-  }
-
-  // --docker: Python + Postgres via docker compose (teams / multi-host / shared).
-  if (!fs.existsSync(path.join(wtDir, "docker-compose.yml"))) {
-    console.error("Error: watchtower compose not found at", wtDir);
-    process.exit(1);
-  }
-  console.log("UV Suite Watchtower (Python + Postgres) starting via docker compose...");
+  // Python + SQLite, run locally (no Docker, no database to install).
+  console.log("UV Suite Watchtower starting...");
   console.log("Dashboard: " + url);
   console.log("");
-
-  // Bring the stack up (Postgres + FastAPI). Build is cached after first run.
-  const up = spawn("docker", ["compose", "up", "--build", "-d"], { cwd: wtDir, stdio: "inherit" });
-  up.on("exit", (code) => {
-    if (code) {
-      console.error("docker compose failed. Is Docker running? (the Python Watchtower needs it)");
-      process.exit(code);
-    }
-    setTimeout(() => spawn(opener, [url], { stdio: "ignore" }), 1500);
-    if (bg) {
-      console.log("Watchtower running in background.");
-      console.log("Stop with: (cd watchtower && docker compose down)");
-      process.exit(0);
-    }
-    // Foreground: follow logs until Ctrl-C.
-    const logs = spawn("docker", ["compose", "logs", "-f"], { cwd: wtDir, stdio: "inherit" });
-    logs.on("exit", (c) => process.exit(c || 0));
-  });
+  const argv = [...ensurePyEnv(wtDir), "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", String(port)];
+  setTimeout(() => spawn(opener, [url], { stdio: "ignore" }), 1500);
+  const child = spawn(argv[0], argv.slice(1), { cwd: wtDir, stdio: bg ? "ignore" : "inherit", detached: bg });
+  if (bg) {
+    child.unref();
+    console.log(`Running in background (PID: ${child.pid}). Stop with: kill ${child.pid}`);
+  } else {
+    child.on("exit", (code) => process.exit(code || 0));
+  }
 }
 
 // --- Parse and route ---

@@ -175,7 +175,7 @@ launch_session() {
 
     curl -s "$wt_url/sessions/register" \
       -H 'Content-Type: application/json' \
-      -d "{\"id\":\"$UVS_SESSION_ID\",\"tmux\":\"$tname\",\"pid\":$$,\"cwd\":\"$PWD\"}" \
+      -d "{\"id\":\"$UVS_SESSION_ID\",\"tmux_target\":\"$tname\",\"pid\":$$,\"cwd\":\"$PWD\"}" \
       >/dev/null 2>&1 || true
 
     exec tmux -L "$socket" attach -t "$tname"

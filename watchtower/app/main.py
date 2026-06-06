@@ -39,4 +39,4 @@ async def dashboard() -> FileResponse:
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok", "backend": db.backend()}
+    return {"status": "ok"}

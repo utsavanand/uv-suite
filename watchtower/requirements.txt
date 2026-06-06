@@ -1,5 +1,3 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 aiosqlite==0.20.0
-# Postgres backend (only needed when DATABASE_URL=postgres://…):
-asyncpg==0.30.0

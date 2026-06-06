@@ -293,10 +293,11 @@ function cardHTML(s) {
       <span class="k">last</span><span class="v">${timeAgo(s.last_event_at)}</span>
       <span class="k">cwd</span><span class="v cwd">${esc(s.cwd || "—")}</span>
     </div>
+    ${state === "terminated" ? "" : `
     <div class="actions">
       <button onclick="checkpoint('${esc(s.id)}')">Checkpoint</button>
       <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>
-    </div>
+    </div>`}
   </div>`;
 }
 
@@ -331,8 +332,10 @@ async function closeSession(id) {
   const s = sessions.get(id);
   if (!confirm(`Close session "${s ? (s.name || s.id) : id}"?`)) return;
   try {
-    await post(`/sessions/${id}/close`);
-    toast("Closed session " + id);
+    const r = await post(`/sessions/${id}/close`);
+    const via = r && r.terminated_via;
+    if (via === "tmux" || via === "pid") toast("Closed session — process terminated");
+    else toast("Marked terminated. No live process to kill (launch via `uvs <tool>` for full control).");
   } catch (e) { toast("Close failed: " + e.message, true); }
 }
 
