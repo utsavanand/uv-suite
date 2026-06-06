@@ -110,7 +110,7 @@ for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
   cp -R "$skill_dir"* "$TARGET_DIR/skills/$skill_name/"
 done
 echo "  ✓ /understand (auto-detects repo vs stack), /spec, /architect, /test (--unit/--integration/--eval)"
-echo "  ✓ /review (--security/--slop), /prototype, /qa, /investigate"
+echo "  ✓ /review (--security/--slop/--architecture), /prototype, /qa, /investigate"
 echo "  ✓ /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help"
 
 # --- Install hooks ---
@@ -211,7 +211,21 @@ This project uses [UV Suite](https://github.com/utsavanand/uv-suite) v${UV_VERSI
 
 ### Skills
 
-/understand (auto-detects repo vs stack), /spec, /architect, /test (--unit/--integration/--eval), /review (--security/--slop), /prototype, /qa, /investigate, /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help
+/understand (auto-detects repo vs stack), /spec, /architect, /test (--unit/--integration/--eval), /review (--security/--slop/--architecture), /prototype, /qa, /investigate, /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help
+
+### When to use which skill (reach for these proactively)
+
+Prefer the matching skill over doing the task ad hoc -- they carry the project's conventions,
+anti-slop guardrails, and session-scoped artifacts. Don't wait to be told:
+- Entering an unfamiliar codebase, or "how does this work" -> /understand
+- New feature or vague requirements -> /spec, then /architect (which gates on the spec)
+- After implementing, or coverage is low -> /test (--eval for LLM/AI features)
+- Before merging, or reviewing a diff -> /review (--security for auth/payments/data;
+  --architecture to audit a design against its recorded constraints)
+- A bug you can't explain -> /investigate
+- Shipping a change -> /commit
+- Session lifecycle -> /session init|checkpoint|restore|end
+If unsure which fits, ask the user rather than guessing.
 
 ### Artifacts
 
@@ -228,7 +242,7 @@ writers are session-scoped:
 - /spec          → uv-out/sessions/<sid>/specs/
 - /architect     → uv-out/sessions/<sid>/architecture/
 - /review        → uv-out/sessions/<sid>/review/state.md   (flat pointer: uv-out/review-state.md)
-- /review --slop    → uv-out/sessions/<sid>/review --slop/report.md
+- /review --slop    → uv-out/sessions/<sid>/slop/report.md
 - /review --security → uv-out/sessions/<sid>/security/report.md
 - /investigate   → uv-out/sessions/<sid>/investigate/report.md
 - /test --eval   → uv-out/sessions/<sid>/evals/
