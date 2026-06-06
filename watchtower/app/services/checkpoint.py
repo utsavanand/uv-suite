@@ -40,6 +40,18 @@ def _render(session: dict, events: list, git_state: str, created: str) -> str:
     sid = session["id"]
     name = session.get("name") or sid
 
+    meta_rows = [
+        ("Name", session.get("name")),
+        ("Kind", session.get("kind")),
+        ("Purpose", session.get("purpose")),
+        ("Priority", session.get("priority")),
+        ("Persona", session.get("persona")),
+        ("Parent", session.get("parent_id")),
+        ("Started", session.get("started_at")),
+        ("cwd", session.get("cwd")),
+    ]
+    meta = "\n".join(f"- **{k}:** {v}" for k, v in meta_rows if v)
+
     lines = []
     for e in events:
         raw_ts = e["created_at"]
@@ -54,17 +66,19 @@ def _render(session: dict, events: list, git_state: str, created: str) -> str:
 
     return f"""---
 session: {sid}
+name: {session.get("name") or ""}
+kind: {session.get("kind") or ""}
+priority: {session.get("priority") or ""}
+parent: {session.get("parent_id") or ""}
 created: {created}
 source: watchtower
 ---
 
 # Checkpoint: {name}
 
-## What's in progress
+## Session
 
-<!-- TODO: optional semantic summary via `claude -p --model haiku`.
-     v1 is mechanical (events + git). Do not depend on `claude` being present. -->
-_Mechanical checkpoint — see recent activity and git state below._
+{meta}
 
 ## Recent activity
 

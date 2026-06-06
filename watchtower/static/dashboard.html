@@ -140,7 +140,9 @@
   .meta .v { color: var(--text); word-break: break-all; }
   .meta .v.cwd { font-size: 11px; }
 
-  .actions { display: flex; gap: 8px; margin-top: 2px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .actions button { padding: 5px 9px; font-size: 11px; }
+  .lineage { font-size: 11px; color: var(--muted); margin: -2px 0 2px; }
   button {
     font: inherit;
     font-size: 12px;
@@ -325,6 +327,10 @@ function renderSessions() {
 function cardHTML(s) {
   const title = esc(s.name || s.id);
   const state = s.state || "idle";
+  const parent = s.parent_id ? sessions.get(s.parent_id) : null;
+  const lineage = s.parent_id
+    ? `<div class="lineage">↳ forked from ${esc(parent ? (parent.name || parent.id.slice(0, 8)) : s.parent_id.slice(0, 8))}</div>`
+    : "";
   return `
   <div class="card s-${esc(state)}">
     <div class="top">
@@ -332,6 +338,7 @@ function cardHTML(s) {
       ${s.persona ? `<span class="badge persona">${esc(s.persona)}</span>` : ""}
       <span class="badge state ${esc(state)}">${esc(state.replace("_", " "))}</span>
     </div>
+    ${lineage}
     <div class="meta">
       <span class="k">priority</span><span class="v">${esc(s.priority ?? "—")}</span>
       <span class="k">tool calls</span><span class="v">${esc(s.tool_calls ?? 0)}</span>
@@ -340,7 +347,10 @@ function cardHTML(s) {
     </div>
     ${state === "terminated" ? "" : `
     <div class="actions">
-      <button onclick="openCheckpoints('${esc(s.id)}')">Checkpoints</button>
+      <button onclick="createCheckpoint('${esc(s.id)}')">Checkpoint</button>
+      <button onclick="openCheckpoints('${esc(s.id)}')">History</button>
+      <button onclick="compact('${esc(s.id)}')">Compact</button>
+      <button onclick="fork('${esc(s.id)}')">Fork</button>
       <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>
     </div>`}
   </div>`;
@@ -423,14 +433,38 @@ async function newCheckpoint() {
   } catch (e) { toast("Checkpoint failed: " + e.message, true); }
 }
 
+// ---------- session actions ----------
+async function createCheckpoint(id) {
+  try {
+    const r = await post(`/sessions/${id}/checkpoint`);
+    toast("Checkpoint saved: " + (r && r.path ? r.path.split("/").pop() : "ok"));
+  } catch (e) { toast("Checkpoint failed: " + e.message, true); }
+}
+
+async function compact(id) {
+  try {
+    await post(`/sessions/${id}/compact`);
+    toast("Sent /compact to the session");
+  } catch (e) { toast("Compact failed: " + e.message, true); }
+}
+
+async function fork(id) {
+  try {
+    const r = await post(`/sessions/${id}/fork`);
+    toast("Forked → " + (r.name || r.id) +
+      (r.terminal_opened ? " (opened a terminal)" : " — attach: tmux -L uvs attach -t " + r.tmux_target));
+  } catch (e) { toast("Fork failed: " + e.message, true); }
+}
+
 async function closeSession(id) {
   const s = sessions.get(id);
   if (!confirm(`Close session "${s ? (s.name || s.id) : id}"?`)) return;
   try {
     const r = await post(`/sessions/${id}/close`);
     const via = r && r.terminated_via;
-    if (via === "tmux" || via === "pid") toast("Closed session — process terminated");
-    else toast("Marked terminated. No live process to kill (launch via `uvs <tool>` for full control).");
+    const ck = r && r.checkpoint ? " · checkpoint saved" : "";
+    if (via === "tmux" || via === "pid") toast("Closed — process terminated" + ck);
+    else toast("Marked terminated" + ck + ". No live process to kill (launch via `uvs <tool>` for full control).");
   } catch (e) { toast("Close failed: " + e.message, true); }
 }
 
