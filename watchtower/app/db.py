@@ -46,7 +46,12 @@ broadcaster = Broadcaster()
 
 async def init_pool() -> None:
     global pool
-    pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=10)
+    async def _init(con):
+        await con.set_type_codec(
+            "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+        )
+
+    pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=10, init=_init)
     with open(SCHEMA_PATH) as f:
         schema = f.read()
     async with pool.acquire() as con:
