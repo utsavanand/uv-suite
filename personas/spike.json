@@ -33,10 +33,18 @@
       "Bash(rm /tmp/*)",
       "Bash(cat *)",
       "Bash(ls *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(jq *)",
+      "Bash(less *)",
+      "Bash(sed -n *)",
+      "Bash(awk *)",
+      "Bash(file *)",
       "Bash(echo *)",
       "Bash(printf *)",
       "Bash(node --check *)",
-      "Bash(bash -n *)"
+      "Bash(bash -n *)",
+      "WebFetch(*)"
     ],
     "deny": [
       "Bash(rm -rf /)",
@@ -85,6 +93,11 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-label-nag.sh",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lite-mode-inject.sh",
+            "timeout": 2
           },
           {
             "type": "command",

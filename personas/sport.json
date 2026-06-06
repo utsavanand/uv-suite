@@ -22,6 +22,21 @@
       "Bash(rm /tmp/*)",
       "Bash(cat *)",
       "Bash(ls *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(find *)",
+      "Bash(wc *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(jq *)",
+      "Bash(sed -n *)",
+      "Bash(awk *)",
+      "Bash(tree *)",
+      "Bash(du *)",
+      "Bash(df *)",
+      "Bash(file *)",
+      "Bash(stat *)",
+      "Bash(diff *)",
       "Bash(echo *)",
       "Bash(printf *)",
       "Bash(node --check *)",
@@ -74,6 +89,11 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-label-nag.sh",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lite-mode-inject.sh",
+            "timeout": 2
           },
           {
             "type": "command",

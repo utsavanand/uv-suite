@@ -37,6 +37,17 @@
       "Bash(wc *)",
       "Bash(head *)",
       "Bash(tail *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(jq *)",
+      "Bash(sed -n *)",
+      "Bash(awk *)",
+      "Bash(tree *)",
+      "Bash(du *)",
+      "Bash(df *)",
+      "Bash(file *)",
+      "Bash(stat *)",
+      "Bash(diff *)",
       "Bash(curl *)",
       "Bash(chmod *)",
       "Bash(rm /tmp/*)",
@@ -92,6 +103,11 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-label-nag.sh",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lite-mode-inject.sh",
+            "timeout": 2
           },
           {
             "type": "command",
