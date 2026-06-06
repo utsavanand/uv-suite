@@ -23,3 +23,7 @@ proposals/
 agents.md
 anti-slop.md
 portable-standards.md
+
+# Python bytecode
+__pycache__/
+*.pyc
