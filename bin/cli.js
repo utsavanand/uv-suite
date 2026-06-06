@@ -254,6 +254,47 @@ function ensureInstalled(persona) {
   syncPackageFiles(persona);
 }
 
+// Launch `tool` so Watchtower can control it: wrap it in a transparent tmux session
+// (dedicated socket `uvs`) and register the handle, so the dashboard can checkpoint /
+// close / approve it. Falls back to a direct spawn when tmux is unavailable, UVS_NO_TMUX
+// is set, or we're already inside the wrapper.
+function launchWrapped(tool, toolArgs, sid) {
+  const { spawnSync } = require("child_process");
+  const env = { ...process.env, UVS_SESSION_ID: sid };
+  const canTmux =
+    !process.env.UVS_NO_TMUX &&
+    !process.env.UVS_IN_TMUX &&
+    spawnSync("tmux", ["-V"], { stdio: "ignore" }).status === 0;
+
+  if (canTmux) {
+    const tname = "uvs_" + sid;
+    const wtUrl = process.env.UVS_WATCHTOWER_URL || "http://localhost:4200";
+    const shq = (s) => "'" + String(s).replace(/'/g, "'\\''") + "'";
+    const inner =
+      "UVS_SESSION_ID=" + shq(sid) + " UVS_IN_TMUX=1 exec " + [tool, ...toolArgs].map(shq).join(" ");
+    const mk = spawnSync(
+      "tmux", ["-L", "uvs", "new-session", "-d", "-s", tname, "-c", process.cwd(), inner],
+      { stdio: "ignore" },
+    );
+    if (mk.status === 0) {
+      spawnSync("tmux", ["-L", "uvs", "set", "-t", tname, "status", "off"], { stdio: "ignore" });
+      spawnSync(
+        "curl", ["-s", "-m", "2", wtUrl + "/sessions/register",
+          "-H", "Content-Type: application/json",
+          "-d", JSON.stringify({ id: sid, tmux_target: tname, pid: process.pid, cwd: process.cwd() })],
+        { stdio: "ignore" },
+      );
+      const att = spawn("tmux", ["-L", "uvs", "attach", "-t", tname], { stdio: "inherit" });
+      att.on("exit", (code) => process.exit(code || 0));
+      return;
+    }
+    // tmux new-session failed — fall through to a direct spawn.
+  }
+
+  const child = spawn(tool, toolArgs, { stdio: "inherit", env });
+  child.on("exit", (code) => process.exit(code || 0));
+}
+
 async function launchClaude(persona, extra) {
   syncPackageFiles(persona);
   const settings = path.resolve(".claude/personas", `${persona}.json`);
@@ -268,11 +309,7 @@ async function launchClaude(persona, extra) {
   console.log(`UV Suite | Claude Code | ${personaLabel(persona)}`);
   console.log(`Session: ${sid.slice(0, 8)}${name ? " — " + name : ""}`);
   console.log("");
-  const child = spawn("claude", ["--settings", settings, ...extra], {
-    stdio: "inherit",
-    env: { ...process.env, UVS_SESSION_ID: sid },
-  });
-  child.on("exit", (code) => process.exit(code || 0));
+  launchWrapped("claude", ["--settings", settings, ...extra], sid);
 }
 
 async function launchCodex(persona, extra) {
@@ -288,11 +325,7 @@ async function launchCodex(persona, extra) {
   console.log(`UV Suite | Codex | ${personaLabel(persona)}`);
   console.log(`Session: ${sid.slice(0, 8)}${name ? " — " + name : ""}`);
   console.log("");
-  const child = spawn("codex", [...codexArgs, ...extra], {
-    stdio: "inherit",
-    env: { ...process.env, UVS_SESSION_ID: sid },
-  });
-  child.on("exit", (code) => process.exit(code || 0));
+  launchWrapped("codex", [...codexArgs, ...extra], sid);
 }
 
 // Resolve how to run the Python app, provisioning deps on first run.
