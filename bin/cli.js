@@ -357,6 +357,23 @@ function ensurePyEnv(wtDir) {
   return [py, "-m"];
 }
 
+// If a Watchtower is already running on this port, stop it so we start fresh —
+// uvicorn doesn't hot-reload, so a long-running process serves stale routes while
+// the (disk-served) dashboard updates. Only kills a process that answers /health
+// like a Watchtower, so we never kill an unrelated app on the port.
+function restartIfRunning(port) {
+  const { spawnSync } = require("child_process");
+  if (process.platform === "win32") return;
+  const health = spawnSync("curl", ["-s", "-m", "1", `http://localhost:${port}/health`], { encoding: "utf8" });
+  if (!(health.stdout || "").includes("status")) return;
+  const pids = (spawnSync("lsof", ["-ti", `tcp:${port}`], { encoding: "utf8" }).stdout || "")
+    .trim().split(/\s+/).filter(Boolean);
+  if (!pids.length) return;
+  spawnSync("kill", pids);
+  console.log(`Restarting Watchtower (stopped existing PID ${pids.join(", ")})`);
+  spawnSync("sleep", ["1"]);  // let the port free up before rebinding
+}
+
 function watch() {
   const wtDir = path.join(UV_SUITE_DIR, "watchtower");
 
@@ -391,6 +408,7 @@ function watch() {
     process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
 
   // Python + SQLite, run locally (no Docker, no database to install).
+  restartIfRunning(port);
   console.log("UV Suite Watchtower starting...");
   console.log("Dashboard: " + url);
   console.log("");
