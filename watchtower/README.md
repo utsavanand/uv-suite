@@ -4,19 +4,24 @@ Observability **and control** for UV Suite sessions. Hooks push events; the dash
 observes *and* acts — checkpoint a session, close it, or approve one that's blocked waiting
 for a human — from the browser.
 
-FastAPI + Postgres. A hook insert fires `pg_notify`; a listener forwards it to connected
-dashboards over WebSocket (no polling).
+FastAPI. **SQLite by default** (an embedded file — no server, no Docker); set
+`DATABASE_URL=postgres://…` to use Postgres instead (teams / multi-host). The live
+WebSocket stream is fed by an in-process broadcaster, so no `LISTEN/NOTIFY` is needed.
 
 ## Run
 
 ```bash
-cd watchtower
-docker compose up --build      # Postgres + the service on :4200
-# open http://localhost:4200
+uvs watch                 # default: Python + SQLite, opens http://localhost:4200
 ```
 
-Local (without Docker), against your own Postgres:
+That's the whole setup — no Docker, no database to install. `uvs watch` provisions the
+Python deps on first run (via `uv`, or a local `.venv`) and stores data in
+`watchtower/watchtower.db`.
+
+Postgres / team mode:
 ```bash
+uvs watch --docker        # Postgres + the service via docker compose
+# or point at your own Postgres:
 export DATABASE_URL=postgresql://watchtower:watchtower@localhost:5432/watchtower
 uv run --with-requirements requirements.txt uvicorn app.main:app --host 127.0.0.1 --port 4200
 ```
@@ -49,21 +54,20 @@ works via PID, approve is unavailable from the UI.
 ```
 app/
   main.py            app wiring + lifespan + dashboard serving
-  db.py              asyncpg pool + NOTIFY → WebSocket broadcaster
+  db.py              dual-backend shim (SQLite default / Postgres) + WS broadcaster
   models.py          request models
   routers/           ingest.py · query.py · stream.py · control.py
   services/          checkpoint.py (out-of-band) · tmux.py (send-keys/kill/capture)
 static/dashboard.html
-schema.sql · Dockerfile · docker-compose.yml · requirements.txt
+Dockerfile · docker-compose.yml · requirements.txt
 ```
 
 ## Status / follow-ups
 - The `Notification` hook (`hooks/watchtower-notify.sh`) still needs wiring into
   `personas/*.json` (a `Notification` event entry) for approve to fire.
-- The approve keystroke map (`y`/`n`) is a placeholder — Claude Code's permission UI may
-  use arrow-select + Enter. Validate against the installed version (`capture_pane` shows it).
+- Approve sends `1`+Enter (select "Yes") / Esc (cancel) — matched to Claude Code's
+  numbered arrow-select permission widget. Revisit if that TUI changes.
 - The semantic (haiku) checkpoint summary is a TODO; v1 checkpoints are mechanical.
-- Supersedes the old Node `server.js`/`dashboard.html`/`*-runner.js` (kept for now).
 
 ## Legacy fallback (Node)
 
