@@ -295,59 +295,36 @@ async function launchCodex(persona, extra) {
 }
 
 function watch() {
-  const serverScript = path.join(UV_SUITE_DIR, "watchtower", "server.js");
-  if (!fs.existsSync(serverScript)) {
-    console.error("Error: watchtower server not found at", serverScript);
+  const wtDir = path.join(UV_SUITE_DIR, "watchtower");
+  if (!fs.existsSync(path.join(wtDir, "docker-compose.yml"))) {
+    console.error("Error: watchtower compose not found at", wtDir);
     process.exit(1);
   }
-
   const bg = args.includes("--bg") || args.includes("--background");
-  console.log("UV Suite Watchtower starting...");
-  console.log(
-    "Dashboard: http://localhost:" + (process.env.UVS_WATCHTOWER_PORT || 4200),
-  );
+  const url = "http://localhost:" + (process.env.UVS_WATCHTOWER_PORT || 4200);
+  const opener =
+    process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
+  console.log("UV Suite Watchtower (Python + Postgres) starting via docker compose...");
+  console.log("Dashboard: " + url);
   console.log("");
 
-  if (bg) {
-    const child = spawn("node", [serverScript], {
-      stdio: "ignore",
-      detached: true,
-    });
-    child.unref();
-    console.log(`Running in background (PID: ${child.pid})`);
-    console.log("Stop with: kill " + child.pid);
-
-    // Open browser
-    const opener =
-      process.platform === "darwin"
-        ? "open"
-        : process.platform === "win32"
-          ? "start"
-          : "xdg-open";
-    spawn(
-      opener,
-      ["http://localhost:" + (process.env.UVS_WATCHTOWER_PORT || 4200)],
-      { stdio: "ignore" },
-    );
-  } else {
-    // Foreground — open browser after a short delay
-    setTimeout(() => {
-      const opener =
-        process.platform === "darwin"
-          ? "open"
-          : process.platform === "win32"
-            ? "start"
-            : "xdg-open";
-      spawn(
-        opener,
-        ["http://localhost:" + (process.env.UVS_WATCHTOWER_PORT || 4200)],
-        { stdio: "ignore" },
-      );
-    }, 1000);
-
-    const child = spawn("node", [serverScript], { stdio: "inherit" });
-    child.on("exit", (code) => process.exit(code || 0));
-  }
+  // Bring the stack up (Postgres + FastAPI). Build is cached after first run.
+  const up = spawn("docker", ["compose", "up", "--build", "-d"], { cwd: wtDir, stdio: "inherit" });
+  up.on("exit", (code) => {
+    if (code) {
+      console.error("docker compose failed. Is Docker running? (the Python Watchtower needs it)");
+      process.exit(code);
+    }
+    setTimeout(() => spawn(opener, [url], { stdio: "ignore" }), 1500);
+    if (bg) {
+      console.log("Watchtower running in background.");
+      console.log("Stop with: (cd watchtower && docker compose down)");
+      process.exit(0);
+    }
+    // Foreground: follow logs until Ctrl-C.
+    const logs = spawn("docker", ["compose", "logs", "-f"], { cwd: wtDir, stdio: "inherit" });
+    logs.on("exit", (c) => process.exit(c || 0));
+  });
 }
 
 // --- Parse and route ---
