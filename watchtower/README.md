@@ -64,3 +64,15 @@ schema.sql · Dockerfile · docker-compose.yml · requirements.txt
   use arrow-select + Enter. Validate against the installed version (`capture_pane` shows it).
 - The semantic (haiku) checkpoint summary is a TODO; v1 checkpoints are mechanical.
 - Supersedes the old Node `server.js`/`dashboard.html`/`*-runner.js` (kept for now).
+
+## Legacy fallback (Node)
+
+The original Node Watchtower lives under `watchtower/legacy/` as a fallback that needs
+**no Docker/Postgres**:
+
+```bash
+uvs watch --legacy        # runs legacy/server.js on :4200 (flat events.json, SSE)
+```
+
+`uvs watch` (no flag) runs the Python service. The legacy one is observe-only (no control
+plane) and is kept while the Python service is validated in real use.

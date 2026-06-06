@@ -296,6 +296,31 @@ async function launchCodex(persona, extra) {
 
 function watch() {
   const wtDir = path.join(UV_SUITE_DIR, "watchtower");
+
+  // Legacy fallback: the original Node Watchtower (no Postgres/Docker). `uvs watch --legacy`.
+  if (args.includes("--legacy")) {
+    const serverScript = path.join(wtDir, "legacy", "server.js");
+    if (!fs.existsSync(serverScript)) {
+      console.error("Error: legacy watchtower not found at", serverScript);
+      process.exit(1);
+    }
+    const lbg = args.includes("--bg") || args.includes("--background");
+    const lurl = "http://localhost:" + (process.env.UVS_WATCHTOWER_PORT || 4200);
+    const lopener =
+      process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
+    console.log("UV Suite Watchtower (legacy Node) starting...");
+    console.log("Dashboard: " + lurl);
+    console.log("");
+    setTimeout(() => spawn(lopener, [lurl], { stdio: "ignore" }), 1000);
+    const lchild = spawn("node", [serverScript], { stdio: lbg ? "ignore" : "inherit", detached: lbg });
+    if (lbg) {
+      lchild.unref();
+      console.log(`Running in background (PID: ${lchild.pid}). Stop with: kill ${lchild.pid}`);
+    } else {
+      lchild.on("exit", (code) => process.exit(code || 0));
+    }
+    return;
+  }
   if (!fs.existsSync(path.join(wtDir, "docker-compose.yml"))) {
     console.error("Error: watchtower compose not found at", wtDir);
     process.exit(1);

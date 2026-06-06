@@ -28,3 +28,4 @@ portable-standards.md
 # Python bytecode
 __pycache__/
 *.pyc
+watchtower/legacy/events.json
