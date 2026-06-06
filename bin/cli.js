@@ -183,19 +183,19 @@ function prompt(rl, question) {
   return new Promise((resolve) => rl.question(question, resolve));
 }
 
-function normalizeKind(s) {
-  const v = (s || "").toLowerCase().trim();
-  if (["l", "long", "long-running"].includes(v)) return "long-running";
-  if (["o", "outcome"].includes(v)) return "outcome";
-  return "";
-}
-
-function normalizePriority(s) {
-  const v = (s || "").toLowerCase().trim();
-  if (["l", "low"].includes(v)) return "low";
-  if (["m", "med", "medium"].includes(v)) return "med";
-  if (["h", "high"].includes(v)) return "high";
-  return "";
+// Prompt for one of a fixed set of values (enum). Accepts the number, the full
+// value, or a unique prefix; Enter skips (returns ""). Re-prompts on invalid input.
+async function promptChoice(rl, label, options) {
+  const menu = options.map((o, i) => `${i + 1}=${o}`).join("  ");
+  for (;;) {
+    const raw = (await prompt(rl, `${label} (${menu}, Enter to skip): `)).trim().toLowerCase();
+    if (!raw) return "";
+    const n = parseInt(raw, 10);
+    if (n >= 1 && n <= options.length) return options[n - 1];
+    const matches = options.filter((o) => o === raw || o.startsWith(raw));
+    if (matches.length === 1) return matches[0];
+    console.log(`  ? pick one of: ${options.join(", ")} (or its number)`);
+  }
 }
 
 // Generate a UVS_SESSION_ID, prompt for metadata (name/kind/purpose/priority),
@@ -221,13 +221,11 @@ async function setupSession(persona) {
     });
     console.log("");
     console.log("Label this session (Enter to skip — you'll be reminded):");
-    name = (await prompt(rl, "  name:                     ")).trim();
-    const kindRaw = await prompt(rl, "  kind [long/outcome]:      ");
-    purpose = (await prompt(rl, "  purpose:                  ")).trim();
-    const priorityRaw = await prompt(rl, "  priority [low/med/high]:  ");
+    name = (await prompt(rl, "  name:     ")).trim();
+    kind = await promptChoice(rl, "  kind", ["long-running", "outcome"]);
+    purpose = (await prompt(rl, "  purpose:  ")).trim();
+    priority = await promptChoice(rl, "  priority", ["low", "med", "high"]);
     rl.close();
-    kind = normalizeKind(kindRaw);
-    priority = normalizePriority(priorityRaw);
   }
 
   const meta = {

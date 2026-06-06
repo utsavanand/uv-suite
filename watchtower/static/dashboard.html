@@ -183,6 +183,37 @@
   }
   .toast.err { border-left-color: var(--terminated); }
   @keyframes slidein { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* Checkpoint modal */
+  #modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; align-items: center; justify-content: center; z-index: 60;
+  }
+  #modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    width: min(860px, 92vw); height: min(640px, 86vh);
+    display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  }
+  .modal > header {
+    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal .title { font-weight: 600; flex: 1; }
+  .modal .body { display: flex; min-height: 0; flex: 1; }
+  .modal .cklist { width: 250px; border-right: 1px solid var(--border); overflow-y: auto; padding: 8px; }
+  .modal .ckitem {
+    padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    border: 1px solid transparent;
+  }
+  .modal .ckitem:hover { background: var(--panel-2); }
+  .modal .ckitem.sel { background: var(--panel-2); border-color: var(--border); }
+  .modal .ckitem .when { color: var(--muted); font-size: 11px; }
+  .modal pre {
+    flex: 1; margin: 0; padding: 16px; overflow: auto; white-space: pre-wrap;
+    word-break: break-word; font-size: 12px; line-height: 1.5;
+  }
+  .modal .empty { color: var(--muted); padding: 16px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -202,6 +233,20 @@
 </main>
 
 <div id="toasts"></div>
+
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <header>
+      <span class="title" id="modal-title">Checkpoints</span>
+      <button class="primary" onclick="newCheckpoint()">＋ New checkpoint</button>
+      <button onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="cklist" id="modal-list"></div>
+      <pre id="modal-content"></pre>
+    </div>
+  </div>
+</div>
 
 <script>
 const API = "http://localhost:4200";
@@ -295,7 +340,7 @@ function cardHTML(s) {
     </div>
     ${state === "terminated" ? "" : `
     <div class="actions">
-      <button onclick="checkpoint('${esc(s.id)}')">Checkpoint</button>
+      <button onclick="openCheckpoints('${esc(s.id)}')">Checkpoints</button>
       <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>
     </div>`}
   </div>`;
@@ -320,11 +365,61 @@ function renderApprovals() {
   }).join("");
 }
 
-// ---------- actions ----------
-async function checkpoint(id) {
+// ---------- checkpoints modal ----------
+let modalSessionId = null;
+
+async function getText(path) {
+  const res = await fetch(API + path);
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.text();
+}
+
+async function openCheckpoints(id) {
+  modalSessionId = id;
+  const s = sessions.get(id);
+  document.getElementById("modal-title").textContent = "Checkpoints — " + (s ? (s.name || s.id) : id);
+  document.getElementById("modal-content").textContent = "";
+  document.getElementById("modal-overlay").classList.add("show");
+  await refreshCheckpointList();
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("show");
+  modalSessionId = null;
+}
+
+async function refreshCheckpointList(selectName) {
+  const list = document.getElementById("modal-list");
+  let cps;
+  try { cps = await api(`/sessions/${modalSessionId}/checkpoints`); }
+  catch (e) { list.innerHTML = `<div class="empty">Failed: ${esc(e.message)}</div>`; return; }
+  if (!cps || !cps.length) {
+    list.innerHTML = `<div class="empty">No checkpoints yet. Click “＋ New checkpoint”.</div>`;
+    document.getElementById("modal-content").textContent = "";
+    return;
+  }
+  list.innerHTML = cps.map(c => `
+    <div class="ckitem" data-name="${esc(c.name)}" onclick="loadCheckpoint('${esc(c.name)}')">
+      <div>${esc(c.name)}</div><div class="when">${timeAgo(c.modified)}</div>
+    </div>`).join("");
+  loadCheckpoint(selectName && cps.some(c => c.name === selectName) ? selectName : cps[0].name);
+}
+
+async function loadCheckpoint(name) {
+  document.querySelectorAll("#modal-list .ckitem").forEach(el =>
+    el.classList.toggle("sel", el.dataset.name === name));
+  const pane = document.getElementById("modal-content");
+  try { pane.textContent = await getText(`/sessions/${modalSessionId}/checkpoints/${encodeURIComponent(name)}`); }
+  catch (e) { pane.textContent = "Failed to load: " + e.message; }
+}
+
+async function newCheckpoint() {
+  if (!modalSessionId) return;
   try {
-    const r = await post(`/sessions/${id}/checkpoint`);
-    toast("Checkpoint saved: " + (r && (r.path || r.checkpoint || JSON.stringify(r)) || "ok"));
+    const r = await post(`/sessions/${modalSessionId}/checkpoint`);
+    const name = r && r.path ? r.path.split("/").pop() : null;
+    toast("Checkpoint saved");
+    await refreshCheckpointList(name);
   } catch (e) { toast("Checkpoint failed: " + e.message, true); }
 }
 

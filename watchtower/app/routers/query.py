@@ -1,8 +1,10 @@
 """Query router: read-only endpoints the dashboard loads."""
 import json
 import os
+import re
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import PlainTextResponse
 
 from app import db
 
@@ -84,3 +86,36 @@ async def list_approvals(status: str = "pending") -> list[dict]:
         "SELECT * FROM approvals WHERE status = ? ORDER BY created_at DESC", status
     )
     return _decode(rows, "request")
+
+
+async def _checkpoints_dir(id: str) -> str:
+    row = await db.fetchrow("SELECT cwd FROM sessions WHERE id = ?", id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return os.path.join(row["cwd"] or "", "uv-out", "sessions", id, "checkpoints")
+
+
+@router.get("/sessions/{id}/checkpoints")
+async def list_checkpoints(id: str) -> list[dict]:
+    d = await _checkpoints_dir(id)
+    if not os.path.isdir(d):
+        return []
+    out = [
+        {"name": fn, "size": os.path.getsize(os.path.join(d, fn)),
+         "modified": os.path.getmtime(os.path.join(d, fn))}
+        for fn in os.listdir(d)
+        if os.path.isfile(os.path.join(d, fn))
+    ]
+    out.sort(key=lambda c: c["modified"], reverse=True)
+    return out
+
+
+@router.get("/sessions/{id}/checkpoints/{name}", response_class=PlainTextResponse)
+async def read_checkpoint(id: str, name: str) -> str:
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", name) or ".." in name:
+        raise HTTPException(status_code=400, detail="invalid checkpoint name")
+    full = os.path.join(await _checkpoints_dir(id), name)
+    if not os.path.isfile(full):
+        raise HTTPException(status_code=404, detail="checkpoint not found")
+    with open(full) as f:
+        return f.read()
