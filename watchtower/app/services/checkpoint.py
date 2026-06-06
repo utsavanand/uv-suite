@@ -1,7 +1,7 @@
 """Out-of-band session checkpoints.
 
 Writes a markdown checkpoint from the session's recent events + git state.
-No live session is required — everything is read from Postgres and the cwd's
+No live session is required — everything is read from the database and the cwd's
 git repo, so we can checkpoint a session we don't own (e.g. before closing it).
 """
 import os
@@ -42,7 +42,8 @@ def _render(session: dict, events: list, git_state: str, created: str) -> str:
 
     lines = []
     for e in events:
-        ts = e["created_at"].isoformat() if e["created_at"] else ""
+        raw_ts = e["created_at"]
+        ts = raw_ts.isoformat() if hasattr(raw_ts, "isoformat") else (raw_ts or "")
         bits = [e["event_type"] or "Event"]
         if e["tool_name"]:
             bits.append(e["tool_name"])
@@ -79,15 +80,14 @@ async def write_checkpoint(session: dict) -> str:
     sid = session["id"]
     cwd = session.get("cwd") or os.getcwd()
 
-    rows = await db.pool.fetch(
+    events = await db.fetch(
         """SELECT event_type, tool_name, command, created_at
              FROM events
-            WHERE session_id = $1
+            WHERE session_id = ?
          ORDER BY created_at DESC
             LIMIT 50""",
         sid,
     )
-    events = [dict(r) for r in rows]
 
     now = datetime.now(timezone.utc)
     created = now.isoformat()

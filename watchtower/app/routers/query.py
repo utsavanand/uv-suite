@@ -1,17 +1,29 @@
-"""Query router: read-only endpoints the dashboard polls/loads."""
+"""Query router: read-only endpoints the dashboard loads."""
+import json
 import os
 
-import asyncpg
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 
 from app import db
+
+
+def _decode(rows: list[dict], col: str) -> list[dict]:
+    """JSON columns are stored as TEXT; decode them back to objects for the API."""
+    for r in rows:
+        if isinstance(r.get(col), str):
+            try:
+                r[col] = json.loads(r[col])
+            except (ValueError, TypeError):
+                pass
+    return rows
+
 
 router = APIRouter()
 
 
 @router.get("/sessions")
-async def list_sessions(con: asyncpg.Connection = Depends(db.db)) -> list[dict]:
-    rows = await con.fetch(
+async def list_sessions() -> list[dict]:
+    return await db.fetch(
         """SELECT s.*,
                   (SELECT count(*) FROM events e
                      WHERE e.session_id = s.id AND e.tool_name IS NOT NULL) AS tool_calls,
@@ -22,36 +34,28 @@ async def list_sessions(con: asyncpg.Connection = Depends(db.db)) -> list[dict]:
               (SELECT max(e.created_at) FROM events e WHERE e.session_id = s.id),
               s.started_at) DESC"""
     )
-    return [dict(r) for r in rows]
 
 
 @router.get("/sessions/{id}")
-async def get_session(id: str, con: asyncpg.Connection = Depends(db.db)) -> dict:
-    row = await con.fetchrow("SELECT * FROM sessions WHERE id = $1", id)
+async def get_session(id: str) -> dict:
+    row = await db.fetchrow("SELECT * FROM sessions WHERE id = ?", id)
     if row is None:
         raise HTTPException(status_code=404, detail="session not found")
-    return dict(row)
+    return row
 
 
 @router.get("/sessions/{id}/events")
-async def get_session_events(
-    id: str, limit: int = 100, con: asyncpg.Connection = Depends(db.db)
-) -> list[dict]:
-    rows = await con.fetch(
-        """SELECT * FROM events
-            WHERE session_id = $1
-            ORDER BY created_at DESC
-            LIMIT $2""",
+async def get_session_events(id: str, limit: int = 100) -> list[dict]:
+    rows = await db.fetch(
+        "SELECT * FROM events WHERE session_id = ? ORDER BY created_at DESC LIMIT ?",
         id, limit,
     )
-    return [dict(r) for r in rows]
+    return _decode(rows, "payload")
 
 
 @router.get("/sessions/{id}/artifacts")
-async def get_session_artifacts(
-    id: str, con: asyncpg.Connection = Depends(db.db)
-) -> list[dict]:
-    row = await con.fetchrow("SELECT cwd FROM sessions WHERE id = $1", id)
+async def get_session_artifacts(id: str) -> list[dict]:
+    row = await db.fetchrow("SELECT cwd FROM sessions WHERE id = ?", id)
     if row is None:
         raise HTTPException(status_code=404, detail="session not found")
 
@@ -75,10 +79,8 @@ async def get_session_artifacts(
 
 
 @router.get("/approvals")
-async def list_approvals(
-    status: str = "pending", con: asyncpg.Connection = Depends(db.db)
-) -> list[dict]:
-    rows = await con.fetch(
-        "SELECT * FROM approvals WHERE status = $1 ORDER BY created_at DESC", status
+async def list_approvals(status: str = "pending") -> list[dict]:
+    rows = await db.fetch(
+        "SELECT * FROM approvals WHERE status = ? ORDER BY created_at DESC", status
     )
-    return [dict(r) for r in rows]
+    return _decode(rows, "request")

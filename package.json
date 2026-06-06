@@ -1,6 +1,6 @@
 {
   "name": "uv-suite",
-  "version": "0.30.0",
+  "version": "0.31.0",
   "description": "Anti-slop guardrails, specialized agents, and a live observability + control plane for AI-assisted coding. 8 agents, 12 skills, 27 hooks, 6 guardrails, 4 personas; Watchtower (Python/Postgres) for monitoring + checkpoint/close/approve from the browser. Works with Claude Code, Cursor, and Codex.",
   "author": "Utsav Anand",
   "license": "MIT",

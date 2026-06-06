@@ -10,8 +10,7 @@ import shutil
 import signal
 import uuid
 
-import asyncpg
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 
 from app import db
 from app.models import ApprovalDecision, SpawnRequest
@@ -25,24 +24,24 @@ router = APIRouter()
 # deny = Esc. This is the one part coupled to the tool's TUI; revisit if the widget changes.
 
 
-async def _load_session(id: str, con: asyncpg.Connection) -> dict:
-    row = await con.fetchrow("SELECT * FROM sessions WHERE id = $1", id)
+async def _load_session(id: str) -> dict:
+    row = await db.fetchrow("SELECT * FROM sessions WHERE id = ?", id)
     if row is None:
         raise HTTPException(status_code=404, detail=f"session {id} not found")
-    return dict(row)
+    return row
 
 
 @router.post("/sessions/{id}/checkpoint")
-async def checkpoint_session(id: str, con: asyncpg.Connection = Depends(db.db)) -> dict:
-    session = await _load_session(id, con)
+async def checkpoint_session(id: str) -> dict:
+    session = await _load_session(id)
     path = await checkpoint.write_checkpoint(session)
-    await db.notify(con, {"type": "checkpoint", "session_id": id, "path": path})
+    db.notify({"type": "checkpoint", "session_id": id, "path": path})
     return {"path": path}
 
 
 @router.post("/sessions/{id}/close")
-async def close_session(id: str, con: asyncpg.Connection = Depends(db.db)) -> dict:
-    session = await _load_session(id, con)
+async def close_session(id: str) -> dict:
+    session = await _load_session(id)
 
     path = await checkpoint.write_checkpoint(session)
 
@@ -57,18 +56,17 @@ async def close_session(id: str, con: asyncpg.Connection = Depends(db.db)) -> di
         except ProcessLookupError:
             terminated_via = "pid_gone"
 
-    await con.execute(
-        "UPDATE sessions SET state = 'terminated', ended_at = now() WHERE id = $1", id
+    await db.execute(
+        "UPDATE sessions SET state = 'terminated', ended_at = CURRENT_TIMESTAMP WHERE id = ?",
+        id,
     )
-    await db.notify(con, {"type": "session", "session_id": id, "state": "terminated"})
+    db.notify({"type": "session", "session_id": id, "state": "terminated"})
     return {"ok": True, "checkpoint": path, "terminated_via": terminated_via}
 
 
 @router.post("/sessions/{id}/approve")
-async def approve_session(
-    id: str, decision: ApprovalDecision, con: asyncpg.Connection = Depends(db.db)
-) -> dict:
-    session = await _load_session(id, con)
+async def approve_session(id: str, decision: ApprovalDecision) -> dict:
+    session = await _load_session(id)
 
     if not session.get("tmux_target"):
         raise HTTPException(
@@ -76,9 +74,9 @@ async def approve_session(
             detail="session not owned by Watchtower; approve in the terminal",
         )
 
-    approval = await con.fetchrow(
+    approval = await db.fetchrow(
         """SELECT id FROM approvals
-            WHERE session_id = $1 AND status = 'pending'
+            WHERE session_id = ? AND status = 'pending'
          ORDER BY created_at DESC
             LIMIT 1""",
         id,
@@ -95,23 +93,17 @@ async def approve_session(
         await asyncio.to_thread(tmux.send_keys, target, "Escape", False)  # Esc cancels → reject
 
     new_status = "approved" if decision.decision == "approve" else "denied"
-    await con.execute(
-        """UPDATE approvals
-              SET status = $2, decided_by = $3, decided_at = now()
-            WHERE id = $1""",
-        approval["id"], new_status, decision.decided_by,
+    await db.execute(
+        "UPDATE approvals SET status = ?, decided_by = ?, decided_at = CURRENT_TIMESTAMP WHERE id = ?",
+        new_status, decision.decided_by, approval["id"],
     )
-    await con.execute("UPDATE sessions SET state = 'active' WHERE id = $1", id)
-    await db.notify(con, {
-        "type": "approval",
-        "session_id": id,
-        "status": new_status,
-    })
+    await db.execute("UPDATE sessions SET state = 'active' WHERE id = ?", id)
+    db.notify({"type": "approval", "session_id": id, "status": new_status})
     return {"ok": True, "status": new_status, "prompt": prompt[-500:]}
 
 
 @router.post("/sessions/spawn")
-async def spawn_session(req: SpawnRequest, con: asyncpg.Connection = Depends(db.db)) -> dict:
+async def spawn_session(req: SpawnRequest) -> dict:
     if not tmux.has_tmux():
         raise HTTPException(status_code=400, detail="tmux not available; cannot spawn")
 
@@ -119,10 +111,7 @@ async def spawn_session(req: SpawnRequest, con: asyncpg.Connection = Depends(db.
     cwd = req.cwd or os.getcwd()
 
     # Prefer the real `uvs <tool> <persona>` launcher; fall back to the bare tool.
-    if shutil.which("uvs"):
-        launch = f"uvs {req.tool} {req.persona}"
-    else:
-        launch = req.tool
+    launch = f"uvs {req.tool} {req.persona}" if shutil.which("uvs") else req.tool
     cmd = f"UVS_SESSION_ID={id} {launch}"
 
     try:
@@ -130,15 +119,15 @@ async def spawn_session(req: SpawnRequest, con: asyncpg.Connection = Depends(db.
     except RuntimeError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    await con.execute(
+    await db.execute(
         """INSERT INTO sessions (id, persona, cwd, tmux_target, state)
-           VALUES ($1, $2, $3, $4, 'active')
+           VALUES (?, ?, ?, ?, 'active')
            ON CONFLICT (id) DO UPDATE SET
-             persona     = COALESCE($2, sessions.persona),
-             cwd         = COALESCE($3, sessions.cwd),
-             tmux_target = $4,
+             persona     = COALESCE(excluded.persona, sessions.persona),
+             cwd         = COALESCE(excluded.cwd, sessions.cwd),
+             tmux_target = excluded.tmux_target,
              state       = 'active'""",
         id, req.persona, cwd, target,
     )
-    await db.notify(con, {"type": "session", "session_id": id, "state": "active"})
+    db.notify({"type": "session", "session_id": id, "state": "active"})
     return {"id": id, "tmux_target": target}

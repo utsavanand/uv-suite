@@ -34,6 +34,7 @@ function usage() {
   Monitoring:
     uvs watch               Start Watchtower dashboard (open browser)
     uvs watch --bg          Start Watchtower in background
+    uvs watch --docker      Start with Postgres via docker compose (teams)
     uvs watch --legacy      Start the legacy Node Watchtower (no Docker/Postgres)
 
   Personas:
@@ -295,6 +296,37 @@ async function launchCodex(persona, extra) {
   child.on("exit", (code) => process.exit(code || 0));
 }
 
+// Resolve how to run the Python app, provisioning deps on first run.
+// Prefers `uv` (astral) if present; otherwise a venv at watchtower/.venv.
+// Returns the argv prefix to which we append `uvicorn` args.
+function ensurePyEnv(wtDir) {
+  const { spawnSync } = require("child_process");
+  const hasUv = spawnSync("uv", ["--version"], { stdio: "ignore" }).status === 0;
+  if (hasUv) {
+    // --native-tls: use the OS cert store so corporate SSL-inspection proxies don't break pypi.
+    return ["uv", "run", "--native-tls", "--python", "3.12", "--no-project", "--with-requirements", "requirements.txt", "--", "python", "-m"];
+  }
+  const venv = path.join(wtDir, ".venv");
+  const py =
+    process.platform === "win32"
+      ? path.join(venv, "Scripts", "python.exe")
+      : path.join(venv, "bin", "python");
+  if (!fs.existsSync(py)) {
+    const python3 = spawnSync("python3", ["--version"], { stdio: "ignore" }).status === 0 ? "python3" : "python";
+    console.log("First run: creating Python env in watchtower/.venv (one-time)...");
+    if (spawnSync(python3, ["-m", "venv", ".venv"], { cwd: wtDir, stdio: "inherit" }).status !== 0) {
+      console.error("Failed to create venv. Install Python 3 (python3) and retry.");
+      process.exit(1);
+    }
+    console.log("Installing dependencies (fastapi, uvicorn, aiosqlite)...");
+    if (spawnSync(py, ["-m", "pip", "install", "-q", "-r", "requirements.txt"], { cwd: wtDir, stdio: "inherit" }).status !== 0) {
+      console.error("pip install failed (see output above).");
+      process.exit(1);
+    }
+  }
+  return [py, "-m"];
+}
+
 function watch() {
   const wtDir = path.join(UV_SUITE_DIR, "watchtower");
 
@@ -322,14 +354,34 @@ function watch() {
     }
     return;
   }
+  const bg = args.includes("--bg") || args.includes("--background");
+  const port = process.env.UVS_WATCHTOWER_PORT || 4200;
+  const url = "http://localhost:" + port;
+  const opener =
+    process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
+
+  // Default: Python + SQLite, run locally (no Docker, no Postgres).
+  if (!args.includes("--docker")) {
+    console.log("UV Suite Watchtower (Python + SQLite) starting...");
+    console.log("Dashboard: " + url);
+    console.log("");
+    const argv = [...ensurePyEnv(wtDir), "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", String(port)];
+    setTimeout(() => spawn(opener, [url], { stdio: "ignore" }), 1500);
+    const child = spawn(argv[0], argv.slice(1), { cwd: wtDir, stdio: bg ? "ignore" : "inherit", detached: bg });
+    if (bg) {
+      child.unref();
+      console.log(`Running in background (PID: ${child.pid}). Stop with: kill ${child.pid}`);
+    } else {
+      child.on("exit", (code) => process.exit(code || 0));
+    }
+    return;
+  }
+
+  // --docker: Python + Postgres via docker compose (teams / multi-host / shared).
   if (!fs.existsSync(path.join(wtDir, "docker-compose.yml"))) {
     console.error("Error: watchtower compose not found at", wtDir);
     process.exit(1);
   }
-  const bg = args.includes("--bg") || args.includes("--background");
-  const url = "http://localhost:" + (process.env.UVS_WATCHTOWER_PORT || 4200);
-  const opener =
-    process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
   console.log("UV Suite Watchtower (Python + Postgres) starting via docker compose...");
   console.log("Dashboard: " + url);
   console.log("");

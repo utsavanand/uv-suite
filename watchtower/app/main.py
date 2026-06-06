@@ -1,5 +1,4 @@
 """Watchtower service entrypoint. Wires the routers built independently in app/routers/."""
-import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -15,13 +14,11 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "static")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await db.init_pool()
-    listener = asyncio.create_task(db.listen_notify())
+    await db.init_db()
     try:
         yield
     finally:
-        listener.cancel()
-        await db.close_pool()
+        await db.close()
 
 
 app = FastAPI(title="Watchtower", version="1.0.0", lifespan=lifespan)
@@ -42,4 +39,4 @@ async def dashboard() -> FileResponse:
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok"}
+    return {"status": "ok", "backend": db.backend()}

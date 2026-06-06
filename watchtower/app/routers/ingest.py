@@ -1,7 +1,8 @@
 """Ingest router: hooks and `uvs` POST here. Writes events/sessions/approvals
-and emits a NOTIFY so connected dashboards update without polling."""
-import asyncpg
-from fastapi import APIRouter, Depends, Request
+and broadcasts to connected dashboards (in-process, no polling)."""
+import json
+
+from fastapi import APIRouter, Request
 
 from app import db
 from app.models import ApprovalIn, SessionRegister, StateUpdate
@@ -10,7 +11,7 @@ router = APIRouter()
 
 
 @router.post("/events")
-async def ingest_event(req: Request, con: asyncpg.Connection = Depends(db.db)) -> dict:
+async def ingest_event(req: Request) -> dict:
     body = await req.json()
 
     sid = body.get("uvs_session_id") or body.get("session_id")
@@ -25,78 +26,78 @@ async def ingest_event(req: Request, con: asyncpg.Connection = Depends(db.db)) -
     priority = body.get("session_priority") or body.get("priority")
     persona = body.get("persona")
 
-    await con.execute(
+    await db.execute(
         """INSERT INTO events (session_id, event_type, tool_name, command, payload)
-           VALUES ($1, $2, $3, $4, $5)""",
-        sid, event_type, tool_name, command, body,
+           VALUES (?, ?, ?, ?, ?)""",
+        sid, event_type, tool_name, command, json.dumps(body, default=str),
     )
 
     if sid:
-        await con.execute(
+        await db.execute(
             """INSERT INTO sessions (id, name, kind, purpose, priority, persona, cwd)
-               VALUES ($1, $2, $3, $4, $5, $6, $7)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT (id) DO UPDATE SET
-                 name     = COALESCE($2, sessions.name),
-                 kind     = COALESCE($3, sessions.kind),
-                 purpose  = COALESCE($4, sessions.purpose),
-                 priority = COALESCE($5, sessions.priority),
-                 persona  = COALESCE($6, sessions.persona),
-                 cwd      = COALESCE($7, sessions.cwd)""",
+                 name     = COALESCE(excluded.name, sessions.name),
+                 kind     = COALESCE(excluded.kind, sessions.kind),
+                 purpose  = COALESCE(excluded.purpose, sessions.purpose),
+                 priority = COALESCE(excluded.priority, sessions.priority),
+                 persona  = COALESCE(excluded.persona, sessions.persona),
+                 cwd      = COALESCE(excluded.cwd, sessions.cwd)""",
             sid, name, kind, purpose, priority, persona, cwd,
         )
 
-    await db.notify(con, {"type": "event", "session_id": sid, "event_type": event_type})
+    db.notify({"type": "event", "session_id": sid, "event_type": event_type})
     return {"ok": True}
 
 
 @router.post("/sessions/register")
-async def register_session(s: SessionRegister, con: asyncpg.Connection = Depends(db.db)) -> dict:
-    await con.execute(
+async def register_session(s: SessionRegister) -> dict:
+    await db.execute(
         """INSERT INTO sessions (id, name, persona, cwd, worktree, branch, pid, tmux_target, state)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active')
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')
            ON CONFLICT (id) DO UPDATE SET
-             name        = COALESCE($2, sessions.name),
-             persona     = COALESCE($3, sessions.persona),
-             cwd         = COALESCE($4, sessions.cwd),
-             worktree    = COALESCE($5, sessions.worktree),
-             branch      = COALESCE($6, sessions.branch),
-             pid         = COALESCE($7, sessions.pid),
-             tmux_target = COALESCE($8, sessions.tmux_target),
+             name        = COALESCE(excluded.name, sessions.name),
+             persona     = COALESCE(excluded.persona, sessions.persona),
+             cwd         = COALESCE(excluded.cwd, sessions.cwd),
+             worktree    = COALESCE(excluded.worktree, sessions.worktree),
+             branch      = COALESCE(excluded.branch, sessions.branch),
+             pid         = COALESCE(excluded.pid, sessions.pid),
+             tmux_target = COALESCE(excluded.tmux_target, sessions.tmux_target),
              state       = 'active'""",
         s.id, s.name, s.persona, s.cwd, s.worktree, s.branch, s.pid, s.tmux_target,
     )
-    await db.notify(con, {"type": "session", "session_id": s.id})
+    db.notify({"type": "session", "session_id": s.id})
     return {"ok": True}
 
 
 @router.post("/approvals")
-async def create_approval(a: ApprovalIn, con: asyncpg.Connection = Depends(db.db)) -> dict:
-    row = await con.fetchrow(
+async def create_approval(a: ApprovalIn) -> dict:
+    approval_id = await db.insert(
         """INSERT INTO approvals (session_id, tool_name, command, request, status)
-           VALUES ($1, $2, $3, $4, 'pending')
-           RETURNING id""",
-        a.session_id, a.tool_name, a.command, a.request,
+           VALUES (?, ?, ?, ?, 'pending')""",
+        a.session_id, a.tool_name, a.command, json.dumps(a.request, default=str),
     )
-    await con.execute(
-        "UPDATE sessions SET state = 'awaiting_human' WHERE id = $1", a.session_id
+    await db.execute(
+        "UPDATE sessions SET state = 'awaiting_human' WHERE id = ?", a.session_id
     )
-    await db.notify(con, {
+    db.notify({
         "type": "approval",
-        "id": row["id"],
+        "id": approval_id,
         "session_id": a.session_id,
         "tool_name": a.tool_name,
         "command": a.command,
     })
-    return {"ok": True, "id": row["id"]}
+    return {"ok": True, "id": approval_id}
 
 
 @router.post("/sessions/{id}/state")
-async def update_state(id: str, s: StateUpdate, con: asyncpg.Connection = Depends(db.db)) -> dict:
+async def update_state(id: str, s: StateUpdate) -> dict:
     if s.state == "terminated":
-        await con.execute(
-            "UPDATE sessions SET state = $2, ended_at = now() WHERE id = $1", id, s.state
+        await db.execute(
+            "UPDATE sessions SET state = ?, ended_at = CURRENT_TIMESTAMP WHERE id = ?",
+            s.state, id,
         )
     else:
-        await con.execute("UPDATE sessions SET state = $2 WHERE id = $1", id, s.state)
-    await db.notify(con, {"type": "session", "session_id": id, "state": s.state})
+        await db.execute("UPDATE sessions SET state = ? WHERE id = ?", s.state, id)
+    db.notify({"type": "session", "session_id": id, "state": s.state})
     return {"ok": True}

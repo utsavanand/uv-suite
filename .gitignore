@@ -29,3 +29,8 @@ portable-standards.md
 __pycache__/
 *.pyc
 watchtower/legacy/events.json
+
+# Watchtower local run (SQLite default)
+watchtower/.venv/
+watchtower/watchtower.db
+watchtower/*.db
