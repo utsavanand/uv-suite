@@ -71,6 +71,10 @@ a one-line explanation. Designing without a spec is a failure, not a fallback.
 
 !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-collect.sh 'map-codebase.md' || echo "No codebase map"`
 
+### Prior design constraints (reuse or update these — don't re-ask from scratch)
+
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/constraints.md' 80 || echo "No prior constraints — gather fresh"`
+
 ### Session checkpoint
 
 !`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
@@ -78,10 +82,20 @@ a one-line explanation. Designing without a spec is a failure, not a fallback.
 ## Step 1 — Establish design constraints (scaling & risk factors)
 
 Right-sizing requires knowing the constraints — without them you can't run the Challenge
-Test or judge what's over-engineering. Take each factor from the spec's non-functional
-requirements where stated; for anything missing, **ask the user with `AskUserQuestion`**
-(group related questions; don't re-ask what the spec already answers). For a trivial
-change, state your assumptions instead of asking.
+Test or judge what's over-engineering.
+
+**If a prior `architecture/constraints.md` is loaded above, start from it — don't re-ask
+from scratch.** Reconcile it:
+- If the user's request already says what changed (e.g. `/architect update constraints:
+  now 10× users`), apply that delta.
+- Otherwise present the prior constraints and ask with `AskUserQuestion` whether to reuse
+  as-is or update specific factors.
+Carry unchanged factors forward verbatim; only revisit what changed.
+
+**If there are no prior constraints**, gather them: take each factor from the spec's
+non-functional requirements where stated; for anything missing, **ask the user with
+`AskUserQuestion`** (group related questions; don't re-ask what the spec already answers).
+For a trivial change, state your assumptions instead of asking.
 
 Capture:
 - **Scale** — customers/users today and the ~12-month expectation; requests/sec; data volume.
@@ -95,9 +109,10 @@ Capture:
   toy vs revenue- or safety-critical). This sets how much resilience to invest.
 
 These constraints drive everything downstream: pass them to the specialists in Step 2, and
-use them for the Challenge Test in Step 3. **Write them to
+use them for the Challenge Test in Step 3. **Write the reconciled set to
 `<session-output-dir>/architecture/constraints.md` now** (the session dir printed above),
-before designing — so the right-sizing is recorded and auditable.
+before designing — overwriting any prior version, and noting what changed if you updated
+it. This keeps one current, auditable record of what the design is right-sized against.
 
 ## Step 2 — Consult domain specialists (only the relevant ones)
 

@@ -5,10 +5,11 @@ description: >
   (security, performance, testing, maintainability, api-contract, data-migration),
   scores each finding 1-10 for confidence, gates output by tier, and persists state
   to uv-out/review-state.md so /commit and /ship can detect completion. Pass --security
-  for a focused tool-backed (Semgrep/Gitleaks/Trivy) OWASP review, or --slop for a full
-  anti-slop audit (all six slop categories). Note: ambient slop detection also runs as a
-  PostToolUse hook on every write; --slop is the deep on-demand audit.
-argument-hint: "[file-or-branch] [--security|--slop]"
+  for a focused tool-backed (Semgrep/Gitleaks/Trivy) OWASP review, --slop for a full
+  anti-slop audit (all six slop categories), or --architecture to audit a design against
+  its recorded Design Constraints (traceability). Note: ambient slop detection also runs as
+  a PostToolUse hook on every write; --slop is the deep on-demand audit.
+argument-hint: "[file-or-branch] [--security|--slop|--architecture]"
 user-invocable: true
 context: fork
 model: claude-opus-4-6
@@ -96,12 +97,21 @@ project — skip Step 1's stop), run **only** that specialist, and skip all othe
   target — the full anti-slop audit across all six slop categories (over-engineering,
   architecture, test, doc, error-handling, comment slop), not just the diff-level
   `maintainability` subset that a normal review runs.
+- **`--architecture`**: audit the design against its recorded constraints (no diff needed).
+  Load the session's architecture artifacts and dispatch the `architecture-trace` specialist:
+
+  !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/constraints.md' 120 || echo "No constraints.md — run /architect first (it records design constraints)"`
+  !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/decisions.md' 200 || echo "No decisions.md"`
+  !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 120 || echo "No acts-plan.md"`
+
+  Pass those three to the specialist. If `constraints.md` is absent, stop and say so — there
+  is nothing to trace against.
 
 Otherwise, proceed normally from Step 1.
 
 ### Step 1 — Validate diff exists
 
-If the diff loaded above is empty or "No diff available", stop and tell the user there's nothing to review. Suggest `$ARGUMENTS` should be a branch name (e.g., `/review feature/foo`) if they want to review a different target. (Does not apply in a focused `--security`/`--slop` mode.)
+If the diff loaded above is empty or "No diff available", stop and tell the user there's nothing to review. Suggest `$ARGUMENTS` should be a branch name (e.g., `/review feature/foo`) if they want to review a different target. (Does not apply in a focused `--security`/`--slop`/`--architecture` mode.)
 
 ### Step 2 — Classify scope, pick specialists
 
