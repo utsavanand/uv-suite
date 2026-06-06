@@ -37,6 +37,11 @@
     z-index: 10;
   }
   header h1 { font-size: 16px; margin: 0; letter-spacing: 1px; }
+  header .setting { margin-left: auto; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  header .setting select {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 6px; font-size: 11px;
+  }
   header h1 .eye { color: var(--accent); }
   #conn {
     margin-left: auto;
@@ -221,6 +226,13 @@
 <body>
 <header>
   <h1><span class="eye">◉</span> WATCHTOWER</h1>
+  <label class="setting">Fork opens in
+    <select id="terminal-app" onchange="saveTerminalApp(this.value)">
+      <option value="auto">Auto</option>
+      <option value="terminal">Terminal</option>
+      <option value="iterm">iTerm</option>
+    </select>
+  </label>
   <div id="conn"><span class="dot"></span><span id="conn-text">connecting…</span></div>
 </header>
 <div id="banner"></div>
@@ -283,6 +295,16 @@ function timeAgo(ts) {
   return Math.floor(d / 86400) + "d ago";
 }
 
+function fmtDate(ts) {
+  if (!ts) return "—";
+  let t;
+  if (typeof ts === "number") t = ts * (ts < 1e12 ? 1000 : 1);
+  else if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(ts)) t = Date.parse(ts.replace(" ", "T") + "Z");
+  else t = Date.parse(ts);
+  if (isNaN(t)) return esc(ts);
+  return new Date(t).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
 function toast(msg, isErr) {
   const el = document.createElement("div");
   el.className = "toast" + (isErr ? " err" : "");
@@ -341,6 +363,7 @@ function cardHTML(s) {
     ${lineage}
     <div class="meta">
       <span class="k">priority</span><span class="v">${esc(s.priority ?? "—")}</span>
+      <span class="k">created</span><span class="v">${fmtDate(s.started_at)}</span>
       <span class="k">tool calls</span><span class="v">${esc(s.tool_calls ?? 0)}</span>
       <span class="k">last</span><span class="v">${timeAgo(s.last_event_at)}</span>
       <span class="k">cwd</span><span class="v cwd">${esc(s.cwd || "—")}</span>
@@ -431,6 +454,21 @@ async function newCheckpoint() {
     toast("Checkpoint saved");
     await refreshCheckpointList(name);
   } catch (e) { toast("Checkpoint failed: " + e.message, true); }
+}
+
+// ---------- settings ----------
+async function loadSettings() {
+  try {
+    const s = await api("/settings");
+    if (s && s.terminal_app) document.getElementById("terminal-app").value = s.terminal_app;
+  } catch { /* leave default */ }
+}
+
+async function saveTerminalApp(value) {
+  try {
+    await post("/settings", { key: "terminal_app", value });
+    toast("Fork opens in: " + value);
+  } catch (e) { toast("Couldn't save setting: " + e.message, true); }
 }
 
 // ---------- session actions ----------
@@ -575,6 +613,7 @@ function handleMessage(msg) {
 setInterval(renderSessions, 15000);
 
 load();
+loadSettings();
 connect();
 </script>
 </body>

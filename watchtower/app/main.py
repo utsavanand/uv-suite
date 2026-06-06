@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import db
-from app.routers import control, ingest, query, stream
+from app.routers import control, ingest, query, settings, stream
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "static")
 
@@ -27,6 +27,7 @@ app.include_router(ingest.router)
 app.include_router(query.router)
 app.include_router(stream.router)
 app.include_router(control.router)
+app.include_router(settings.router)
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

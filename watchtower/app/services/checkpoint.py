@@ -4,6 +4,8 @@ Writes a markdown checkpoint from the session's recent events + git state.
 No live session is required — everything is read from the database and the cwd's
 git repo, so we can checkpoint a session we don't own (e.g. before closing it).
 """
+import collections
+import json
 import os
 import subprocess
 from datetime import datetime, timezone
@@ -36,6 +38,42 @@ def _git_state(cwd: str) -> str:
     )
 
 
+def _summarize(events: list) -> str:
+    """Derive 'what was done' from event payloads: the prompts the user sent (the
+    actual asks), files edited, and a tool breakdown. Events arrive newest-first."""
+    prompts, files, tools = [], collections.Counter(), collections.Counter()
+    for e in events:
+        raw = e.get("payload")
+        try:
+            p = json.loads(raw) if isinstance(raw, str) else (raw or {})
+        except (ValueError, TypeError):
+            p = {}
+
+        if e.get("event_type") == "UserPromptSubmit":
+            txt = (p.get("prompt") or p.get("user_prompt") or "").strip()
+            if txt:
+                prompts.append(" ".join(txt.split())[:240])
+
+        tool = e.get("tool_name") or p.get("tool_name")
+        if tool:
+            tools[tool] += 1
+            fp = (p.get("tool_input") or {}).get("file_path")
+            if fp and tool in ("Edit", "Write", "MultiEdit"):
+                files[fp] += 1
+
+    parts = []
+    if prompts:
+        asks = "\n".join(f"- {t}" for t in reversed(prompts[:12]))  # chronological
+        parts.append(f"**Asked ({len(prompts)}):**\n{asks}")
+    if files:
+        touched = "\n".join(f"- `{f}` ({n}×)" for f, n in files.most_common(15))
+        parts.append(f"**Files changed:**\n{touched}")
+    if tools:
+        breakdown = ", ".join(f"{n}× {t}" for t, n in tools.most_common(10))
+        parts.append(f"**Tool usage:** {breakdown}")
+    return "\n\n".join(parts) if parts else "_No recorded activity yet._"
+
+
 def _render(session: dict, events: list, git_state: str, created: str) -> str:
     sid = session["id"]
     name = session.get("name") or sid
@@ -52,17 +90,7 @@ def _render(session: dict, events: list, git_state: str, created: str) -> str:
     ]
     meta = "\n".join(f"- **{k}:** {v}" for k, v in meta_rows if v)
 
-    lines = []
-    for e in events:
-        raw_ts = e["created_at"]
-        ts = raw_ts.isoformat() if hasattr(raw_ts, "isoformat") else (raw_ts or "")
-        bits = [e["event_type"] or "Event"]
-        if e["tool_name"]:
-            bits.append(e["tool_name"])
-        if e["command"]:
-            bits.append(f"`{e['command']}`")
-        lines.append(f"- {ts} — {' '.join(bits)}")
-    activity = "\n".join(lines) if lines else "_No recorded events._"
+    work = _summarize(events)
 
     return f"""---
 session: {sid}
@@ -80,9 +108,9 @@ source: watchtower
 
 {meta}
 
-## Recent activity
+## What was done
 
-{activity}
+{work}
 
 ## Git state
 
@@ -95,11 +123,11 @@ async def write_checkpoint(session: dict) -> str:
     cwd = session.get("cwd") or os.getcwd()
 
     events = await db.fetch(
-        """SELECT event_type, tool_name, command, created_at
+        """SELECT event_type, tool_name, command, payload, created_at
              FROM events
             WHERE session_id = ?
          ORDER BY created_at DESC
-            LIMIT 50""",
+            LIMIT 200""",
         sid,
     )
 

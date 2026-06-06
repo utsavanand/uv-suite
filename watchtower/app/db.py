@@ -59,6 +59,7 @@ _SCHEMA = [
         id INTEGER PRIMARY KEY AUTOINCREMENT, session_id text, tool_name text,
         command text, request text, status text DEFAULT 'pending', decided_by text,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP, decided_at text)""",
+    "CREATE TABLE IF NOT EXISTS settings (key text PRIMARY KEY, value text)",
     "CREATE INDEX IF NOT EXISTS idx_events_session_created ON events (session_id, created_at)",
     "CREATE INDEX IF NOT EXISTS idx_approvals_session_status ON approvals (session_id, status)",
 ]
@@ -106,6 +107,19 @@ async def insert(sql: str, *args) -> int:
         cur = await _db.execute(sql, args)
         await _db.commit()
         return cur.lastrowid
+
+
+async def get_setting(key: str, default: str | None = None) -> str | None:
+    row = await fetchrow("SELECT value FROM settings WHERE key = ?", key)
+    return row["value"] if row else default
+
+
+async def set_setting(key: str, value: str) -> None:
+    await execute(
+        "INSERT INTO settings (key, value) VALUES (?, ?) "
+        "ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+        key, value,
+    )
 
 
 def notify(payload: dict) -> None:
