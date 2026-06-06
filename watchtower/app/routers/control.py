@@ -19,11 +19,10 @@ from app.services import checkpoint, tmux
 
 router = APIRouter()
 
-# Keystrokes sent to answer a pending approval prompt.
-# TODO(version-coupled): Claude Code's permission UI may render an arrow-select
-# menu rather than a y/n prompt — in that case this needs arrow keys + Enter.
-# This mapping is the one part tightly coupled to the tool's current TUI.
-APPROVAL_KEYS = {"approve": "y", "deny": "n"}
+# Claude Code's permission gate is a numbered arrow-select menu confirmed with Enter and
+# cancelled with Esc (verified live: the trust-folder and tool-permission prompts use the
+# same widget — it is NOT a y/n prompt). Approve = select option 1 ("Yes") + Enter;
+# deny = Esc. This is the one part coupled to the tool's TUI; revisit if the widget changes.
 
 
 async def _load_session(id: str, con: asyncpg.Connection) -> dict:
@@ -90,8 +89,10 @@ async def approve_session(
     target = session["tmux_target"]
     # Read the current prompt before answering (surfaced for debugging / UI).
     prompt = await asyncio.to_thread(tmux.capture_pane, target)
-    keys = APPROVAL_KEYS[decision.decision]
-    await asyncio.to_thread(tmux.send_keys, target, keys)
+    if decision.decision == "approve":
+        await asyncio.to_thread(tmux.send_keys, target, "1", True)        # select "Yes" + Enter
+    else:
+        await asyncio.to_thread(tmux.send_keys, target, "Escape", False)  # Esc cancels → reject
 
     new_status = "approved" if decision.decision == "approve" else "denied"
     await con.execute(
