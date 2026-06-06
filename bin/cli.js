@@ -34,6 +34,7 @@ function usage() {
   Monitoring:
     uvs watch               Start Watchtower dashboard (open browser)
     uvs watch --bg          Start Watchtower in background
+    uvs watch --legacy      Start the legacy Node Watchtower (no Docker/Postgres)
 
   Personas:
     spike        Research & docs (Opus, max effort)
