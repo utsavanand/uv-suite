@@ -344,6 +344,16 @@ else
   fi
 fi
 
+# tmux — required for Watchtower to OWN and control uvs sessions (approve/close/send-keys).
+if command -v tmux &>/dev/null; then
+  echo "  ✓ tmux (Watchtower can own + control uvs sessions)"
+else
+  echo "  ⚠ tmux not found — Watchtower control (approve/close from the dashboard) needs it."
+  echo "    macOS: brew install tmux  ·  Debian/Ubuntu: apt install tmux"
+  echo "    Without tmux, uvs sessions launch normally but aren't Watchtower-controllable"
+  echo "    (out-of-band checkpoint still works)."
+fi
+
 # Go tools (Gitleaks, Trivy — brew or binary)
 if command -v brew &>/dev/null; then
   for tool_info in "gitleaks:Gitleaks (secret detection)" \
