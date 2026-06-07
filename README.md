@@ -1,6 +1,8 @@
 # UV Suite
 
-A portable layer that turns Claude Code, Cursor, or Codex into a labeled, observable, anti-slop dev environment — with named sessions, a real-time observability dashboard, anti-slop guardrails, and per-session memory across launches.
+A portable layer that turns Claude Code, Cursor, or Codex into a labeled, observable, anti-slop dev environment — with named sessions, a real-time observability **and control** dashboard, anti-slop guardrails, and per-session memory across launches.
+
+By [Utsav](https://www.utsava.xyz/) · [github.com/utsavanand/uv-suite](https://github.com/utsavanand/uv-suite)
 
 ## Install
 
@@ -24,7 +26,7 @@ uvs claude pro                # Claude Code, Professional persona
 uvs codex auto                # Codex, Auto persona
 uvs pro                       # Shorthand for uvs claude pro
 uvs install                   # Explicit install (also runs automatically on launch)
-uvs watch                     # Open the Watchtower observability dashboard
+uvs watch                     # Open the Watchtower observability + control dashboard
 uvs info                      # Show what's installed
 ```
 
@@ -69,22 +71,19 @@ Picking a persona (Spike / Sport / Professional / Auto) is a separate axis from 
 Each `uvs` launch generates a `UVS_SESSION_ID` and writes metadata to `.uv-suite-state/sessions/<id>.json`. This unlocks:
 
 - **Concurrent terminals don't collide.** Two `uvs` launches in the same repo run as distinct sessions with separate names, checkpoints, and dashboard rows.
-- **`uvs watch` shows them all.** The Watchtower dashboard at `localhost:4200` streams every tool call across every session in real time — labeled by your name, sorted by priority (high to top, low dimmed), color-coded by persona.
+- **`uvs watch` shows them all.** The Watchtower control plane at `localhost:4200` streams every session live and lets you act on them from the browser — see [Watchtower at a glance](#watchtower-at-a-glance).
 - **Per-session checkpoints.** `/session checkpoint` writes to `uv-out/checkpoints/<sid>/`, and `/session restore` auto-picks the current session's latest. Pass a session id prefix or name to restore from a different one.
 - **Status line shows it all.** The Claude Code status bar shows session name, persona, priority, and elapsed time continuously.
 
 ### Watchtower at a glance
 
-```
-Sessions               Events    Tool calls    Errors    Need human
-4                      1,247     914           2         0
+`uvs watch` starts the dashboard at `localhost:4200` — Python + **embedded SQLite**, no Docker and no database to set up (it provisions its own deps on first run). It's a control plane, not just a viewer, laid out in three panes:
 
-[payments retry [auto]   [P:high]  [outcome]      ] (147)
-[infra cleanup  [pro]    [P:med]   [long-running] ] (382)
-[exec deck      [spike]  [P:low]   [outcome]      ] (89)
-```
+- **Heartbeat** (left) — a live, scrolling stream of what every agent is doing, as it happens.
+- **Sessions** (center) — each session as a flat row (state · tokens · tool calls · last activity). Filter by time / priority / kind and search by name; expand a row to **checkpoint, view checkpoint history, compact, fork, close, or delete** it.
+- **Needs human** (right) — sessions waiting on you (a tool-permission prompt or an idle wait), with the tool + command as context. **Approve / Deny** from the browser; for `uvs`-launched (tmux-owned) sessions the keystroke is sent for you.
 
-Hooks fire on every Claude Code event (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `SessionStart`, `Stop`, `PermissionRequest`, ...) and forward to the dashboard with the session metadata merged in. Zero dependencies — vanilla Node + SSE.
+Sessions launched via `uvs` run inside a transparent tmux so Watchtower can act on them. Hooks forward every Claude Code event (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Notification`, `SessionStart`, `Stop`, ...) with session metadata merged in. A Node-only fallback (no Python) is available via `uvs watch --legacy`.
 
 ## Personas
 
@@ -240,6 +239,10 @@ uv-out/                  Agent output artifacts (gitignored)
 | [research/comparison.md](research/comparison.md) | UV Suite vs gstack vs Claude Code built-in — feature comparison + prompt-depth deep dive |
 | [research/tool-comparison.md](research/tool-comparison.md) | Claude Code vs Cursor vs Codex — how UV Suite works across all three |
 | [research/best-practices.md](research/best-practices.md) | Subagent patterns, remote sessions, sharing with engineers, cost optimization |
+
+## Author
+
+Built by [Utsav](https://www.utsava.xyz/) — [utsava.xyz](https://www.utsava.xyz/).
 
 ## License
 

@@ -1,8 +1,11 @@
 {
   "name": "uv-suite",
-  "version": "0.31.0",
-  "description": "Anti-slop guardrails, specialized agents, and a live observability + control plane for AI-assisted coding. 8 agents, 12 skills, 27 hooks, 6 guardrails, 4 personas; Watchtower (Python/Postgres) for monitoring + checkpoint/close/approve from the browser. Works with Claude Code, Cursor, and Codex.",
-  "author": "Utsav Anand",
+  "version": "0.32.0",
+  "description": "Anti-slop guardrails, specialized agents, and a live observability + control plane for AI-assisted coding. Watchtower (Python + SQLite, no setup) shows a live heartbeat, your sessions, and a needs-human approval queue \u2014 checkpoint, compact, fork, close, or approve sessions from the browser. 8 agents, 12 skills, ~28 hooks, 6 guardrails, 4 personas. Works with Claude Code, Cursor, and Codex.",
+  "author": {
+    "name": "Utsav",
+    "url": "https://www.utsava.xyz/"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
