@@ -46,7 +46,10 @@ async def ingest_event(req: Request) -> dict:
             sid, name, kind, purpose, priority, persona, cwd,
         )
 
-    db.notify({"type": "event", "session_id": sid, "event_type": event_type})
+    db.notify({
+        "type": "event", "session_id": sid,
+        "event_type": event_type, "tool_name": tool_name, "command": command,
+    })
     return {"ok": True}
 
 

@@ -46,6 +46,18 @@ async def get_session(id: str) -> dict:
     return row
 
 
+@router.get("/events")
+async def list_events(limit: int = 60) -> list[dict]:
+    """Recent events across all sessions, oldest-first — backfill for the heartbeat."""
+    rows = await db.fetch(
+        "SELECT id, session_id, event_type, tool_name, command, created_at "
+        "FROM events ORDER BY id DESC LIMIT ?",
+        limit,
+    )
+    rows.reverse()
+    return rows
+
+
 @router.get("/sessions/{id}/events")
 async def get_session_events(id: str, limit: int = 100) -> list[dict]:
     rows = await db.fetch(

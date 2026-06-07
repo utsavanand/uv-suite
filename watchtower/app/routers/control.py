@@ -108,42 +108,33 @@ async def close_session(id: str) -> dict:
     return {"ok": True, "checkpoint": path, "terminated_via": terminated_via}
 
 
-@router.post("/sessions/{id}/approve")
-async def approve_session(id: str, decision: ApprovalDecision) -> dict:
-    session = await _load_session(id)
+@router.post("/approvals/{approval_id}/decide")
+async def decide_approval(approval_id: int, decision: ApprovalDecision) -> dict:
+    """Resolve an approval by its own id. Actuates via send-keys when the session is
+    owned (tmux); otherwise still records the decision so it clears from the UI (the
+    user answers in the terminal). Never 404s on a missing/unowned session."""
+    appr = await db.fetchrow("SELECT * FROM approvals WHERE id = ?", approval_id)
+    if appr is None:
+        raise HTTPException(status_code=404, detail="approval not found")
 
-    if not session.get("tmux_target"):
-        raise HTTPException(
-            status_code=400,
-            detail="session not owned by Watchtower; approve in the terminal",
-        )
+    sid = appr["session_id"]
+    session = await db.fetchrow("SELECT * FROM sessions WHERE id = ?", sid)
 
-    approval = await db.fetchrow(
-        """SELECT id FROM approvals
-            WHERE session_id = ? AND status = 'pending'
-         ORDER BY created_at DESC
-            LIMIT 1""",
-        id,
-    )
-    if approval is None:
-        raise HTTPException(status_code=404, detail="no pending approval for session")
-
-    target = session["tmux_target"]
-    # Read the current prompt before answering (surfaced for debugging / UI).
-    prompt = await asyncio.to_thread(tmux.capture_pane, target)
-    if decision.decision == "approve":
-        await asyncio.to_thread(tmux.send_keys, target, "1", True)        # select "Yes" + Enter
-    else:
-        await asyncio.to_thread(tmux.send_keys, target, "Escape", False)  # Esc cancels → reject
+    actuated = False
+    if session and session.get("tmux_target"):
+        keys = "1" if decision.decision == "approve" else "Escape"  # numbered menu: 1=Yes / Esc=cancel
+        await asyncio.to_thread(tmux.send_keys, session["tmux_target"], keys, decision.decision == "approve")
+        actuated = True
 
     new_status = "approved" if decision.decision == "approve" else "denied"
     await db.execute(
         "UPDATE approvals SET status = ?, decided_by = ?, decided_at = CURRENT_TIMESTAMP WHERE id = ?",
-        new_status, decision.decided_by, approval["id"],
+        new_status, decision.decided_by, approval_id,
     )
-    await db.execute("UPDATE sessions SET state = 'active' WHERE id = ?", id)
-    db.notify({"type": "approval", "session_id": id, "status": new_status})
-    return {"ok": True, "status": new_status, "prompt": prompt[-500:]}
+    if session:
+        await db.execute("UPDATE sessions SET state = 'active' WHERE id = ?", sid)
+    db.notify({"type": "approval", "id": approval_id, "session_id": sid, "status": new_status})
+    return {"ok": True, "status": new_status, "actuated": actuated}
 
 
 @router.post("/sessions/{id}/compact")

@@ -10,228 +10,156 @@
     --panel: #161b22;
     --panel-2: #1c2430;
     --border: #2a3240;
-    --text: #c9d1d9;
-    --muted: #7d8590;
+    --text: #e6edf3;
+    --muted: #8b949e;
     --accent: #58a6ff;
     --active: #3fb950;
-    --idle: #7d8590;
+    --idle: #8b949e;
     --awaiting: #d29922;
     --terminated: #f85149;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font: 13px/1.5 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex; flex-direction: column; overflow: hidden;
   }
+
   header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 18px; border-bottom: 1px solid var(--border); background: var(--panel);
+    flex-shrink: 0;
   }
-  header h1 { font-size: 16px; margin: 0; letter-spacing: 1px; }
-  header .setting { margin-left: auto; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-  header .setting select {
-    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
-    border-radius: 5px; padding: 3px 6px; font-size: 11px;
-  }
-  header button { font-size: 11px; padding: 4px 9px; }
+  header h1 { font-size: 15px; margin: 0; letter-spacing: 0.5px; font-weight: 600; white-space: nowrap; }
   header h1 .eye { color: var(--accent); }
-  #conn {
-    margin-left: auto;
-    font-size: 11px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  .spacer { flex: 1; }
+  header .ctl { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  input, select {
+    font: inherit; font-size: 12px; background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px;
   }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  #search { width: 220px; }
+  #conn { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
   #conn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--idle); }
   #conn.up .dot { background: var(--active); }
   #conn.down .dot { background: var(--terminated); }
 
-  #banner {
-    display: none;
-    background: #4a1414;
-    color: #ffb3ad;
-    border-bottom: 1px solid var(--terminated);
-    padding: 8px 20px;
-    font-size: 12px;
-  }
+  #banner { display: none; background: #4a1414; color: #ffb3ad; border-bottom: 1px solid var(--terminated); padding: 8px 18px; font-size: 12px; flex-shrink: 0; }
   #banner.show { display: block; }
 
-  main { padding: 20px; max-width: 1400px; margin: 0 auto; }
-  h2 {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--muted);
-    margin: 24px 0 12px;
-    font-weight: 600;
+  /* 3-pane layout */
+  #layout { flex: 1; display: flex; min-height: 0; }
+  .pane { display: flex; flex-direction: column; min-height: 0; }
+  #heartbeat { width: 25%; min-width: 240px; border-right: 1px solid var(--border); }
+  #center { flex: 1; }
+  #approvals-pane { width: 30%; min-width: 280px; border-left: 1px solid var(--border); }
+  .pane-head {
+    display: flex; align-items: center; gap: 8px; padding: 11px 16px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted);
+    font-weight: 600; border-bottom: 1px solid var(--border); flex-shrink: 0;
   }
-  h2:first-child { margin-top: 0; }
-  .count { color: var(--accent); }
+  .pane-head .count { color: var(--accent); }
+  .pane-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
 
-  /* Approvals */
-  #approvals { display: flex; flex-direction: column; gap: 10px; }
-  #approvals-empty { color: var(--muted); font-style: italic; }
-  .approval {
-    background: var(--panel-2);
-    border: 1px solid var(--awaiting);
-    border-radius: 6px;
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-  .approval .info { flex: 1; min-width: 0; }
-  .approval .sess { color: var(--awaiting); font-weight: 600; }
-  .approval .cmd {
-    margin-top: 4px;
-    color: var(--text);
-    background: #0d1117;
-    border-radius: 4px;
-    padding: 5px 8px;
-    overflow-x: auto;
-    white-space: pre;
-  }
-  .approval .tool { color: var(--muted); }
+  /* Heartbeat */
+  #hb-log { font-family: var(--mono); font-size: 11.5px; line-height: 1.65; }
+  .hb-line { display: flex; gap: 7px; padding: 1px 0; white-space: nowrap; overflow: hidden; }
+  .hb-time { color: var(--muted); flex-shrink: 0; }
+  .hb-sess { color: var(--accent); flex-shrink: 0; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+  .hb-evt { color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+  .hb-line.t-prompt .hb-evt { color: var(--active); }
+  .hb-line.t-notify .hb-evt { color: var(--awaiting); }
+  .hb-line.t-meta .hb-evt { color: var(--muted); }
+  .hb-empty { color: var(--muted); font-style: italic; }
 
-  /* Session grid */
-  #grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 14px;
-  }
+  /* Filters bar (center) */
+  #filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  #filters .lbl { font-size: 11px; color: var(--muted); }
+  #date-range { display: none; gap: 6px; align-items: center; }
+  #date-range.show { display: flex; }
+
+  /* Sessions */
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-content: start; }
   .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--idle);
-    border-radius: 6px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--idle);
+    border-radius: 8px; padding: 13px; display: flex; flex-direction: column; gap: 9px;
   }
   .card.s-active { border-left-color: var(--active); }
-  .card.s-idle { border-left-color: var(--idle); }
-  .card.s-awaiting_human { border-left-color: var(--awaiting); box-shadow: 0 0 0 1px var(--awaiting), 0 0 14px -4px var(--awaiting); }
-  .card.s-terminated { border-left-color: var(--terminated); opacity: 0.7; }
-
-  .card .top { display: flex; align-items: flex-start; gap: 8px; }
-  .card .name { font-weight: 600; font-size: 14px; flex: 1; word-break: break-word; }
-  .badge {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 2px 7px;
-    border-radius: 10px;
-    white-space: nowrap;
-  }
+  .card.s-awaiting_human { border-left-color: var(--awaiting); box-shadow: 0 0 0 1px var(--awaiting); }
+  .card.s-terminated { border-left-color: var(--terminated); opacity: 0.55; }
+  .card.collapsed { gap: 0; padding: 9px 13px; }
+  .card .top { display: flex; align-items: center; gap: 8px; }
+  .card .caret { color: var(--muted); width: 12px; }
+  .card .name { font-weight: 600; font-size: 13.5px; flex: 1; word-break: break-word; }
+  .card .name mark { background: rgba(88,166,255,0.3); color: inherit; border-radius: 2px; }
+  .badge { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
   .badge.persona { background: var(--panel-2); color: var(--accent); border: 1px solid var(--border); }
+  .badge.kind { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
   .badge.state { color: #0d1117; font-weight: 700; }
   .badge.state.active { background: var(--active); }
   .badge.state.idle { background: var(--idle); }
   .badge.state.awaiting_human { background: var(--awaiting); }
   .badge.state.terminated { background: var(--terminated); }
-
+  .lineage { font-size: 11px; color: var(--muted); }
   .meta { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12px; }
   .meta .k { color: var(--muted); }
   .meta .v { color: var(--text); word-break: break-all; }
-  .meta .v.cwd { font-size: 11px; }
-
+  .meta .v.cwd { font-size: 11px; font-family: var(--mono); }
   .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
   .actions button { padding: 5px 9px; font-size: 11px; }
-  .lineage { font-size: 11px; color: var(--muted); margin: -2px 0 2px; }
+
+  /* Approvals */
+  #approvals-pane .pane-head { color: var(--awaiting); }
+  .approval { background: var(--panel-2); border: 1px solid var(--awaiting); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+  .approval .who { font-weight: 600; color: var(--awaiting); }
+  .approval .ctx { color: var(--muted); font-size: 12px; margin: 5px 0; }
+  .approval .cmd { font-family: var(--mono); font-size: 11.5px; background: #0d1117; border-radius: 5px; padding: 6px 8px; margin: 6px 0; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 120px; overflow-y: auto; }
+  .approval .row { display: flex; gap: 8px; margin-top: 8px; }
+  .approval .row button { flex: 1; }
+  .empty { color: var(--muted); font-style: italic; }
+
   button {
-    font: inherit;
-    font-size: 12px;
-    cursor: pointer;
-    border-radius: 5px;
-    padding: 6px 12px;
-    border: 1px solid var(--border);
-    background: var(--panel-2);
-    color: var(--text);
-    transition: background 0.12s, border-color 0.12s;
+    font: inherit; font-size: 12px; cursor: pointer; border-radius: 6px; padding: 6px 11px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--text); transition: background 0.12s;
   }
   button:hover { background: #2a3240; }
-  button:disabled { opacity: 0.5; cursor: default; }
   button.primary { border-color: var(--active); color: var(--active); }
   button.primary:hover { background: rgba(63,185,80,0.12); }
   button.danger { border-color: var(--terminated); color: var(--terminated); }
   button.danger:hover { background: rgba(248,81,73,0.12); }
 
   /* Toasts */
-  #toasts {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 50;
-  }
-  .toast {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: 6px;
-    padding: 10px 14px;
-    font-size: 12px;
-    max-width: 380px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-    animation: slidein 0.15s ease-out;
-    word-break: break-all;
-  }
+  #toasts { position: fixed; bottom: 18px; right: 18px; display: flex; flex-direction: column; gap: 8px; z-index: 50; }
+  .toast { background: var(--panel-2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 14px; font-size: 12px; max-width: 380px; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
   .toast.err { border-left-color: var(--terminated); }
-  @keyframes slidein { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
 
   /* Checkpoint modal */
-  #modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-    display: none; align-items: center; justify-content: center; z-index: 60;
-  }
+  #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 60; }
   #modal-overlay.show { display: flex; }
-  .modal {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-    width: min(860px, 92vw); height: min(640px, 86vh);
-    display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-  }
-  .modal > header {
-    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-  }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; width: min(860px, 92vw); height: min(640px, 86vh); display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,0.6); }
+  .modal > .mhead { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
   .modal .title { font-weight: 600; flex: 1; }
-  .modal .body { display: flex; min-height: 0; flex: 1; }
+  .modal .mbody { display: flex; min-height: 0; flex: 1; }
   .modal .cklist { width: 250px; border-right: 1px solid var(--border); overflow-y: auto; padding: 8px; }
-  .modal .ckitem {
-    padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;
-    border: 1px solid transparent;
-  }
+  .modal .ckitem { padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; border: 1px solid transparent; }
   .modal .ckitem:hover { background: var(--panel-2); }
   .modal .ckitem.sel { background: var(--panel-2); border-color: var(--border); }
   .modal .ckitem .when { color: var(--muted); font-size: 11px; }
-  .modal pre {
-    flex: 1; margin: 0; padding: 16px; overflow: auto; white-space: pre-wrap;
-    word-break: break-word; font-size: 12px; line-height: 1.5;
-  }
-  .modal .empty { color: var(--muted); padding: 16px; font-size: 12px; }
+  .modal pre { flex: 1; margin: 0; padding: 16px; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: 12px; line-height: 1.5; font-family: var(--mono); }
+  .modal .empty { padding: 16px; font-size: 12px; }
 </style>
 </head>
 <body>
 <header>
   <h1><span class="eye">◉</span> WATCHTOWER</h1>
-  <label class="setting">Fork opens in
+  <input id="search" type="search" placeholder="Search sessions by name…" oninput="setFilter('q', this.value)">
+  <div class="spacer"></div>
+  <label class="ctl">Fork in
     <select id="terminal-app" onchange="saveTerminalApp(this.value)">
-      <option value="auto">Auto</option>
-      <option value="terminal">Terminal</option>
-      <option value="iterm">iTerm</option>
+      <option value="auto">Auto</option><option value="terminal">Terminal</option><option value="iterm">iTerm</option>
     </select>
   </label>
   <button class="danger" onclick="cleanupAll()">Clean up all</button>
@@ -239,25 +167,54 @@
 </header>
 <div id="banner"></div>
 
-<main>
-  <h2>Needs human <span class="count" id="appr-count"></span></h2>
-  <div id="approvals"></div>
-  <div id="approvals-empty">No pending approvals.</div>
+<div id="layout">
+  <!-- LEFT: heartbeat -->
+  <div id="heartbeat" class="pane">
+    <div class="pane-head">Heartbeat <span class="count" id="hb-count"></span></div>
+    <div class="pane-body"><div id="hb-log"><div class="hb-empty">Waiting for activity…</div></div></div>
+  </div>
 
-  <h2>Sessions <span class="count" id="sess-count"></span></h2>
-  <div id="grid"></div>
-</main>
+  <!-- CENTER: sessions -->
+  <div id="center" class="pane">
+    <div id="filters">
+      <span class="lbl">Time</span>
+      <select id="f-time" onchange="onTimeChange(this.value)">
+        <option value="all">All time</option><option value="today">Today</option>
+        <option value="7d">Last 7 days</option><option value="30d">Last 30 days</option>
+        <option value="custom">Custom…</option>
+      </select>
+      <span id="date-range"><input type="date" id="f-from" onchange="setFilter('from', this.value)">
+        <span class="lbl">→</span><input type="date" id="f-to" onchange="setFilter('to', this.value)"></span>
+      <span class="lbl">Priority</span>
+      <select id="f-priority" onchange="setFilter('priority', this.value)">
+        <option value="all">All</option><option value="high">High</option><option value="med">Med</option><option value="low">Low</option>
+      </select>
+      <span class="lbl">Kind</span>
+      <select id="f-kind" onchange="setFilter('kind', this.value)">
+        <option value="all">All</option><option value="long-running">Long-running</option><option value="outcome">Outcome</option>
+      </select>
+    </div>
+    <div class="pane-head">Sessions <span class="count" id="sess-count"></span></div>
+    <div class="pane-body"><div id="grid"></div></div>
+  </div>
+
+  <!-- RIGHT: approvals -->
+  <div id="approvals-pane" class="pane">
+    <div class="pane-head">Needs human <span class="count" id="appr-count"></span></div>
+    <div class="pane-body"><div id="approvals"></div><div id="approvals-empty" class="empty">No pending approvals.</div></div>
+  </div>
+</div>
 
 <div id="toasts"></div>
 
 <div id="modal-overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
-    <header>
+    <div class="mhead">
       <span class="title" id="modal-title">Checkpoints</span>
       <button class="primary" onclick="newCheckpoint()">＋ New checkpoint</button>
       <button onclick="closeModal()">Close</button>
-    </header>
-    <div class="body">
+    </div>
+    <div class="mbody">
       <div class="cklist" id="modal-list"></div>
       <pre id="modal-content"></pre>
     </div>
@@ -268,107 +225,136 @@
 const API = "http://localhost:4200";
 const WS_URL = "ws://localhost:4200/live";
 
-const sessions = new Map();   // id -> session object
-const approvals = new Map();  // approval id -> approval object
+const sessions = new Map();
+const approvals = new Map();
+const expanded = new Set();   // terminated session ids the user expanded
+const HB_MAX = 200;
 
-const $grid = document.getElementById("grid");
-const $approvals = document.getElementById("approvals");
-const $apprEmpty = document.getElementById("approvals-empty");
-const $banner = document.getElementById("banner");
-const $conn = document.getElementById("conn");
-const $connText = document.getElementById("conn-text");
+const filters = { q: "", time: "all", from: "", to: "", priority: "all", kind: "all" };
+
+const $ = id => document.getElementById(id);
+const $grid = $("grid"), $approvals = $("approvals"), $apprEmpty = $("approvals-empty");
+const $banner = $("banner"), $conn = $("conn"), $hbLog = $("hb-log");
 
 // ---------- helpers ----------
 function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => (
-    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-  ));
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 }
-
+function toMillis(ts) {
+  if (!ts) return NaN;
+  if (typeof ts === "number") return ts * (ts < 1e12 ? 1000 : 1);
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(ts)) return Date.parse(ts.replace(" ", "T") + "Z");
+  return Date.parse(ts);
+}
 function timeAgo(ts) {
-  if (!ts) return "—";
-  const t = typeof ts === "number" ? ts * (ts < 1e12 ? 1000 : 1) : Date.parse(ts);
-  if (isNaN(t)) return esc(ts);
+  const t = toMillis(ts); if (isNaN(t)) return "—";
   const d = Math.floor((Date.now() - t) / 1000);
-  if (d < 5) return "just now";
-  if (d < 60) return d + "s ago";
-  if (d < 3600) return Math.floor(d / 60) + "m ago";
-  if (d < 86400) return Math.floor(d / 3600) + "h ago";
-  return Math.floor(d / 86400) + "d ago";
+  if (d < 5) return "just now"; if (d < 60) return d + "s ago";
+  if (d < 3600) return Math.floor(d/60) + "m ago";
+  if (d < 86400) return Math.floor(d/3600) + "h ago";
+  return Math.floor(d/86400) + "d ago";
 }
-
-function fmtDate(ts) {
-  if (!ts) return "—";
-  let t;
-  if (typeof ts === "number") t = ts * (ts < 1e12 ? 1000 : 1);
-  else if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(ts)) t = Date.parse(ts.replace(" ", "T") + "Z");
-  else t = Date.parse(ts);
-  if (isNaN(t)) return esc(ts);
-  return new Date(t).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-}
-
+function fmtDate(ts) { const t = toMillis(ts); return isNaN(t) ? "—" : new Date(t).toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}); }
+function clockTime(t) { return new Date(t).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
 function fmtTokens(s) {
-  const t = (s.input_tokens || 0) + (s.output_tokens || 0);
-  if (!t) return "—";
-  if (t >= 1e6) return (t / 1e6).toFixed(1) + "M";
-  if (t >= 1e3) return (t / 1e3).toFixed(1) + "k";
-  return String(t);
+  const t = (s.input_tokens||0) + (s.output_tokens||0);
+  if (!t) return "—"; if (t>=1e6) return (t/1e6).toFixed(1)+"M"; if (t>=1e3) return (t/1e3).toFixed(1)+"k"; return String(t);
 }
-
+function highlight(name, q) {
+  const n = esc(name);
+  if (!q) return n;
+  const i = name.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return n;
+  return esc(name.slice(0,i)) + "<mark>" + esc(name.slice(i,i+q.length)) + "</mark>" + esc(name.slice(i+q.length));
+}
 function toast(msg, isErr) {
   const el = document.createElement("div");
-  el.className = "toast" + (isErr ? " err" : "");
-  el.textContent = msg;
-  document.getElementById("toasts").appendChild(el);
-  setTimeout(() => el.remove(), isErr ? 7000 : 5000);
+  el.className = "toast" + (isErr ? " err" : ""); el.textContent = msg;
+  $("toasts").appendChild(el); setTimeout(() => el.remove(), isErr ? 7000 : 5000);
 }
-
-function showBanner(msg) {
-  $banner.textContent = msg;
-  $banner.classList.add("show");
-}
+function showBanner(m) { $banner.textContent = m; $banner.classList.add("show"); }
 function hideBanner() { $banner.classList.remove("show"); }
-
 async function api(path, opts) {
   const res = await fetch(API + path, opts);
   if (!res.ok) throw new Error("HTTP " + res.status + " for " + path);
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
+  const t = await res.text(); return t ? JSON.parse(t) : null;
 }
-
 async function post(path, body) {
-  return api(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  return api(path, { method:"POST", headers:{"Content-Type":"application/json"}, body: body ? JSON.stringify(body) : undefined });
+}
+async function getText(path) { const r = await fetch(API + path); if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }
+
+// ---------- filters ----------
+function setFilter(key, val) { filters[key] = val; renderSessions(); }
+function onTimeChange(val) {
+  filters.time = val;
+  $("date-range").classList.toggle("show", val === "custom");
+  renderSessions();
+}
+function matchesFilters(s) {
+  if (filters.q && !String(s.name || s.id).toLowerCase().includes(filters.q.toLowerCase())) return false;
+  if (filters.priority !== "all" && s.priority !== filters.priority) return false;
+  if (filters.kind !== "all" && s.kind !== filters.kind) return false;
+
+  const t = toMillis(s.last_event_at || s.started_at);
+  if (filters.time === "today") {
+    if (isNaN(t)) return false;
+    const d = new Date(t), now = new Date();
+    if (d.toDateString() !== now.toDateString()) return false;
+  } else if (filters.time === "7d" || filters.time === "30d") {
+    if (isNaN(t)) return false;
+    const days = filters.time === "7d" ? 7 : 30;
+    if (Date.now() - t > days * 86400000) return false;
+  } else if (filters.time === "custom") {
+    if (isNaN(t)) return false;
+    if (filters.from && t < Date.parse(filters.from)) return false;
+    if (filters.to && t > Date.parse(filters.to) + 86400000) return false;  // inclusive end-of-day
+  }
+  return true;
 }
 
-// ---------- rendering ----------
+// ---------- sessions ----------
 function renderSessions() {
-  const list = [...sessions.values()].sort((a, b) => {
-    const order = { awaiting_human: 0, active: 1, idle: 2, terminated: 3 };
+  const list = [...sessions.values()].filter(matchesFilters).sort((a, b) => {
+    const order = { awaiting_human:0, active:1, idle:2, terminated:3 };
     const sa = order[a.state] ?? 9, sb = order[b.state] ?? 9;
     if (sa !== sb) return sa - sb;
-    return (b.priority ?? 0) - (a.priority ?? 0);
+    return (toMillis(b.last_event_at || b.started_at) || 0) - (toMillis(a.last_event_at || a.started_at) || 0);
   });
-  document.getElementById("sess-count").textContent = list.length ? `(${list.length})` : "";
-  $grid.innerHTML = list.map(cardHTML).join("") || `<div style="color:var(--muted)">No sessions.</div>`;
+  $("sess-count").textContent = list.length ? `(${list.length})` : "";
+  $grid.innerHTML = list.map(cardHTML).join("") || `<div class="empty">No sessions match.</div>`;
 }
 
 function cardHTML(s) {
-  const title = esc(s.name || s.id);
   const state = s.state || "idle";
+  const name = highlight(s.name || s.id, filters.q);
+  if (state === "terminated" && !expanded.has(s.id)) {
+    return `<div class="card s-terminated collapsed">
+      <div class="top" style="cursor:pointer" onclick="toggleExpand('${esc(s.id)}')">
+        <span class="caret">▸</span><div class="name">${name}</div>
+        <span class="badge state terminated">terminated</span>
+      </div></div>`;
+  }
   const parent = s.parent_id ? sessions.get(s.parent_id) : null;
   const lineage = s.parent_id
-    ? `<div class="lineage">↳ forked from ${esc(parent ? (parent.name || parent.id.slice(0, 8)) : s.parent_id.slice(0, 8))}</div>`
-    : "";
+    ? `<div class="lineage">↳ forked from ${esc(parent ? (parent.name || parent.id.slice(0,8)) : s.parent_id.slice(0,8))}</div>` : "";
+  const caret = state === "terminated"
+    ? `<span class="caret" style="cursor:pointer" onclick="toggleExpand('${esc(s.id)}')">▾</span>` : "";
+  const actions = state === "terminated"
+    ? `<button class="danger" onclick="deleteSession('${esc(s.id)}')">Delete</button>`
+    : `<button onclick="createCheckpoint('${esc(s.id)}')">Checkpoint</button>
+       <button onclick="openCheckpoints('${esc(s.id)}')">History</button>
+       <button onclick="compact('${esc(s.id)}')">Compact</button>
+       <button onclick="fork('${esc(s.id)}')">Fork</button>
+       <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>
+       <button class="danger" onclick="deleteSession('${esc(s.id)}')">Delete</button>`;
   return `
   <div class="card s-${esc(state)}">
     <div class="top">
-      <div class="name">${title}</div>
+      ${caret}<div class="name">${name}</div>
       ${s.persona ? `<span class="badge persona">${esc(s.persona)}</span>` : ""}
-      <span class="badge state ${esc(state)}">${esc(state.replace("_", " "))}</span>
+      ${s.kind ? `<span class="badge kind">${esc(s.kind)}</span>` : ""}
+      <span class="badge state ${esc(state)}">${esc(state.replace("_"," "))}</span>
     </div>
     ${lineage}
     <div class="meta">
@@ -379,195 +365,158 @@ function cardHTML(s) {
       <span class="k">last</span><span class="v">${timeAgo(s.last_event_at)}</span>
       <span class="k">cwd</span><span class="v cwd">${esc(s.cwd || "—")}</span>
     </div>
-    <div class="actions">
-      ${state === "terminated" ? "" : `
-      <button onclick="createCheckpoint('${esc(s.id)}')">Checkpoint</button>
-      <button onclick="openCheckpoints('${esc(s.id)}')">History</button>
-      <button onclick="compact('${esc(s.id)}')">Compact</button>
-      <button onclick="fork('${esc(s.id)}')">Fork</button>
-      <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>`}
-      <button class="danger" onclick="deleteSession('${esc(s.id)}')">Delete</button>
-    </div>
+    <div class="actions">${actions}</div>
   </div>`;
 }
+function toggleExpand(id) { expanded.has(id) ? expanded.delete(id) : expanded.add(id); renderSessions(); }
 
+// ---------- approvals ----------
 function renderApprovals() {
   const list = [...approvals.values()];
-  document.getElementById("appr-count").textContent = list.length ? `(${list.length})` : "";
+  $("appr-count").textContent = list.length ? `(${list.length})` : "";
   $apprEmpty.style.display = list.length ? "none" : "block";
   $approvals.innerHTML = list.map(a => {
     const s = sessions.get(a.session_id);
     const who = esc(s ? (s.name || s.id) : a.session_id);
+    const ctx = s && s.cwd ? `in ${esc(s.cwd.split("/").slice(-2).join("/"))}` : "";
     return `
     <div class="approval">
-      <div class="info">
-        <div><span class="sess">${who}</span> <span class="tool">wants to run ${esc(a.tool_name || "a tool")}</span></div>
-        ${a.command ? `<div class="cmd">${esc(a.command)}</div>` : ""}
+      <div><span class="who">${who}</span> wants to run <b>${esc(a.tool_name || "a tool")}</b></div>
+      ${ctx ? `<div class="ctx">${ctx}</div>` : ""}
+      ${a.command ? `<div class="cmd">${esc(a.command)}</div>` : ""}
+      <div class="row">
+        <button class="primary" onclick="decide('${esc(a.id)}','approve')">Approve</button>
+        <button class="danger" onclick="decide('${esc(a.id)}','deny')">Deny</button>
       </div>
-      <button class="primary" onclick="decide('${esc(a.session_id)}','${esc(a.id)}','approve')">Approve</button>
-      <button class="danger" onclick="decide('${esc(a.session_id)}','${esc(a.id)}','deny')">Deny</button>
     </div>`;
   }).join("");
+}
+async function decide(approvalId, decision) {
+  try {
+    const r = await post(`/approvals/${approvalId}/decide`, { decision });
+    approvals.delete(Number(approvalId)); approvals.delete(approvalId);
+    renderApprovals();
+    const tail = r && r.actuated === false ? " (answer in the terminal — not an owned session)" : "";
+    toast(`${decision === "approve" ? "Approved" : "Denied"}${tail}`);
+  } catch (e) { toast("Decision failed: " + e.message, true); }
+}
+
+// ---------- heartbeat ----------
+function pushHeartbeat(ev) {
+  const empty = $hbLog.querySelector(".hb-empty"); if (empty) empty.remove();
+  const s = sessions.get(ev.session_id);
+  const who = s ? (s.name || s.id.slice(0,8)) : (ev.session_id ? ev.session_id.slice(0,8) : "?");
+  const et = ev.event_type || "event";
+  let cls = "t-meta";
+  if (et === "UserPromptSubmit") cls = "t-prompt";
+  else if (et === "Notification" || et === "PermissionRequest") cls = "t-notify";
+  else if (et.startsWith("PreToolUse") || et.startsWith("PostToolUse")) cls = "";
+  const detail = [et, ev.tool_name, ev.command].filter(Boolean).join(" ");
+  const line = document.createElement("div");
+  line.className = "hb-line " + cls;
+  line.innerHTML = `<span class="hb-time">${clockTime(ev.time || Date.now())}</span>`
+    + `<span class="hb-sess" title="${esc(who)}">${esc(who)}</span>`
+    + `<span class="hb-evt" title="${esc(detail)}">${esc(detail)}</span>`;
+  $hbLog.appendChild(line);
+  while ($hbLog.children.length > HB_MAX) $hbLog.removeChild($hbLog.firstChild);
+  const body = $hbLog.parentElement;
+  body.scrollTop = body.scrollHeight;
+  $("hb-count").textContent = `(${$hbLog.children.length})`;
 }
 
 // ---------- checkpoints modal ----------
 let modalSessionId = null;
-
-async function getText(path) {
-  const res = await fetch(API + path);
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  return res.text();
-}
-
 async function openCheckpoints(id) {
-  modalSessionId = id;
-  const s = sessions.get(id);
-  document.getElementById("modal-title").textContent = "Checkpoints — " + (s ? (s.name || s.id) : id);
-  document.getElementById("modal-content").textContent = "";
-  document.getElementById("modal-overlay").classList.add("show");
+  modalSessionId = id; const s = sessions.get(id);
+  $("modal-title").textContent = "Checkpoints — " + (s ? (s.name || s.id) : id);
+  $("modal-content").textContent = ""; $("modal-overlay").classList.add("show");
   await refreshCheckpointList();
 }
-
-function closeModal() {
-  document.getElementById("modal-overlay").classList.remove("show");
-  modalSessionId = null;
-}
-
+function closeModal() { $("modal-overlay").classList.remove("show"); modalSessionId = null; }
 async function refreshCheckpointList(selectName) {
-  const list = document.getElementById("modal-list");
-  let cps;
+  const list = $("modal-list"); let cps;
   try { cps = await api(`/sessions/${modalSessionId}/checkpoints`); }
   catch (e) { list.innerHTML = `<div class="empty">Failed: ${esc(e.message)}</div>`; return; }
-  if (!cps || !cps.length) {
-    list.innerHTML = `<div class="empty">No checkpoints yet. Click “＋ New checkpoint”.</div>`;
-    document.getElementById("modal-content").textContent = "";
-    return;
-  }
-  list.innerHTML = cps.map(c => `
-    <div class="ckitem" data-name="${esc(c.name)}" onclick="loadCheckpoint('${esc(c.name)}')">
-      <div>${esc(c.name)}</div><div class="when">${timeAgo(c.modified)}</div>
-    </div>`).join("");
+  if (!cps || !cps.length) { list.innerHTML = `<div class="empty">No checkpoints yet.</div>`; $("modal-content").textContent = ""; return; }
+  list.innerHTML = cps.map(c => `<div class="ckitem" data-name="${esc(c.name)}" onclick="loadCheckpoint('${esc(c.name)}')">
+    <div>${esc(c.name)}</div><div class="when">${timeAgo(c.modified)}</div></div>`).join("");
   loadCheckpoint(selectName && cps.some(c => c.name === selectName) ? selectName : cps[0].name);
 }
-
 async function loadCheckpoint(name) {
-  document.querySelectorAll("#modal-list .ckitem").forEach(el =>
-    el.classList.toggle("sel", el.dataset.name === name));
-  const pane = document.getElementById("modal-content");
+  document.querySelectorAll("#modal-list .ckitem").forEach(el => el.classList.toggle("sel", el.dataset.name === name));
+  const pane = $("modal-content");
   try { pane.textContent = await getText(`/sessions/${modalSessionId}/checkpoints/${encodeURIComponent(name)}`); }
   catch (e) { pane.textContent = "Failed to load: " + e.message; }
 }
-
 async function newCheckpoint() {
   if (!modalSessionId) return;
-  try {
-    const r = await post(`/sessions/${modalSessionId}/checkpoint`);
-    const name = r && r.path ? r.path.split("/").pop() : null;
-    toast("Checkpoint saved");
-    await refreshCheckpointList(name);
-  } catch (e) { toast("Checkpoint failed: " + e.message, true); }
+  try { const r = await post(`/sessions/${modalSessionId}/checkpoint`); toast("Checkpoint saved");
+    await refreshCheckpointList(r && r.path ? r.path.split("/").pop() : null); }
+  catch (e) { toast("Checkpoint failed: " + e.message, true); }
 }
 
 // ---------- settings ----------
 async function loadSettings() {
-  try {
-    const s = await api("/settings");
-    if (s && s.terminal_app) document.getElementById("terminal-app").value = s.terminal_app;
-  } catch { /* leave default */ }
+  try { const s = await api("/settings"); if (s && s.terminal_app) $("terminal-app").value = s.terminal_app; } catch {}
 }
-
 async function saveTerminalApp(value) {
-  try {
-    await post("/settings", { key: "terminal_app", value });
-    toast("Fork opens in: " + value);
-  } catch (e) { toast("Couldn't save setting: " + e.message, true); }
+  try { await post("/settings", { key:"terminal_app", value }); toast("Fork opens in: " + value); }
+  catch (e) { toast("Couldn't save setting: " + e.message, true); }
 }
 
 // ---------- session actions ----------
 async function createCheckpoint(id) {
-  try {
-    const r = await post(`/sessions/${id}/checkpoint`);
-    toast("Checkpoint saved: " + (r && r.path ? r.path.split("/").pop() : "ok"));
-  } catch (e) { toast("Checkpoint failed: " + e.message, true); }
+  try { const r = await post(`/sessions/${id}/checkpoint`); toast("Checkpoint saved: " + (r && r.path ? r.path.split("/").pop() : "ok")); }
+  catch (e) { toast("Checkpoint failed: " + e.message, true); }
 }
-
 async function compact(id) {
-  try {
-    await post(`/sessions/${id}/compact`);
-    toast("Sent /compact to the session");
-  } catch (e) { toast("Compact failed: " + e.message, true); }
+  try { await post(`/sessions/${id}/compact`); toast("Sent /compact to the session"); }
+  catch (e) { toast("Compact failed: " + e.message, true); }
 }
-
 async function fork(id) {
-  try {
-    const r = await post(`/sessions/${id}/fork`);
-    toast("Forked → " + (r.name || r.id) +
-      (r.terminal_opened ? " (opened a terminal)" : " — attach: tmux -L uvs attach -t " + r.tmux_target));
-  } catch (e) { toast("Fork failed: " + e.message, true); }
+  try { const r = await post(`/sessions/${id}/fork`);
+    toast("Forked → " + (r.name || r.id) + (r.terminal_opened ? " (opened a terminal)" : " — attach: tmux -L uvs attach -t " + r.tmux_target)); }
+  catch (e) { toast("Fork failed: " + e.message, true); }
 }
-
 async function deleteSession(id) {
-  const s = sessions.get(id);
-  const who = s ? (s.name || s.id) : id;
-  if (!confirm(`Delete "${who}" forever?\nRemoves it from Watchtower (its checkpoint files on disk are kept).`)) return;
-  try {
-    await api(`/sessions/${id}`, { method: "DELETE" });
-    sessions.delete(id);
-    renderSessions();
-    toast("Deleted " + who);
-  } catch (e) { toast("Delete failed: " + e.message, true); }
+  const s = sessions.get(id), who = s ? (s.name || s.id) : id;
+  if (!confirm(`Delete "${who}" forever?\nRemoves it from Watchtower (checkpoint files on disk are kept).`)) return;
+  try { await api(`/sessions/${id}`, { method:"DELETE" }); sessions.delete(id); renderSessions(); toast("Deleted " + who); }
+  catch (e) { toast("Delete failed: " + e.message, true); }
 }
-
 async function cleanupAll() {
   const n = sessions.size;
   if (!n) { toast("No sessions to clean up"); return; }
   if (!confirm(`Clean up ALL ${n} sessions?`)) return;
   if (!confirm(`Are you sure? This permanently deletes ${n} sessions and their events. This cannot be undone.`)) return;
-  try {
-    const r = await post("/sessions/cleanup");
-    sessions.clear();
-    approvals.clear();
-    renderSessions();
-    renderApprovals();
-    toast(`Cleaned up ${r && r.deleted != null ? r.deleted : n} sessions`);
-  } catch (e) { toast("Cleanup failed: " + e.message, true); }
+  try { const r = await post("/sessions/cleanup"); sessions.clear(); approvals.clear(); renderSessions(); renderApprovals();
+    toast(`Cleaned up ${r && r.deleted != null ? r.deleted : n} sessions`); }
+  catch (e) { toast("Cleanup failed: " + e.message, true); }
 }
-
 async function closeSession(id) {
   const s = sessions.get(id);
   if (!confirm(`Close session "${s ? (s.name || s.id) : id}"?`)) return;
   try {
     const r = await post(`/sessions/${id}/close`);
-    const via = r && r.terminated_via;
-    const ck = r && r.checkpoint ? " · checkpoint saved" : "";
+    const via = r && r.terminated_via, ck = r && r.checkpoint ? " · checkpoint saved" : "";
     if (via === "tmux" || via === "pid") toast("Closed — process terminated" + ck);
-    else toast("Marked terminated" + ck + ". No live process to kill (launch via `uvs <tool>` for full control).");
+    else toast("Marked terminated" + ck + ". No live process to kill.");
   } catch (e) { toast("Close failed: " + e.message, true); }
-}
-
-async function decide(sessionId, approvalId, decision) {
-  try {
-    await post(`/sessions/${sessionId}/approve`, { decision });
-    approvals.delete(approvalId);
-    renderApprovals();
-    toast(`${decision === "approve" ? "Approved" : "Denied"} for ${sessionId}`);
-  } catch (e) { toast("Decision failed: " + e.message, true); }
 }
 
 // ---------- initial load ----------
 async function load() {
   try {
-    const [sess, pend] = await Promise.all([
+    const [sess, pend, events] = await Promise.all([
       api("/sessions"),
       api("/approvals?status=pending").catch(() => []),
+      api("/events?limit=60").catch(() => []),
     ]);
-    sessions.clear();
-    (sess || []).forEach(s => sessions.set(s.id, s));
-    approvals.clear();
-    (pend || []).forEach(a => approvals.set(a.id, a));
-    hideBanner();
-    renderSessions();
-    renderApprovals();
+    sessions.clear(); (sess || []).forEach(s => sessions.set(s.id, s));
+    approvals.clear(); (pend || []).forEach(a => approvals.set(a.id, a));
+    hideBanner(); renderSessions(); renderApprovals();
+    $hbLog.innerHTML = ""; (events || []).forEach(e => pushHeartbeat({ ...e, time: toMillis(e.created_at) || Date.now() }));
+    if (!$hbLog.children.length) $hbLog.innerHTML = `<div class="hb-empty">Waiting for activity…</div>`;
   } catch (e) {
     showBanner("Cannot reach Watchtower at " + API + " — " + e.message);
   }
@@ -575,96 +524,47 @@ async function load() {
 
 // ---------- live updates ----------
 let ws = null, retry = 0;
-
 function connect() {
-  try { ws = new WebSocket(WS_URL); }
-  catch (e) { scheduleReconnect(); return; }
-
+  try { ws = new WebSocket(WS_URL); } catch { scheduleReconnect(); return; }
   ws.onopen = () => { retry = 0; setConn(true); };
-
-  ws.onmessage = ev => {
-    let msg;
-    try { msg = JSON.parse(ev.data); } catch { return; }
-    handleMessage(msg);
-  };
-
+  ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch { return; } handleMessage(m); };
   ws.onclose = () => { setConn(false); scheduleReconnect(); };
   ws.onerror = () => { try { ws.close(); } catch {} };
 }
-
-function scheduleReconnect() {
-  retry = Math.min(retry + 1, 6);
-  const delay = Math.min(1000 * 2 ** retry, 15000);
-  setTimeout(connect, delay);
-}
-
-function setConn(up) {
-  $conn.className = up ? "up" : "down";
-  $connText.textContent = up ? "live" : "reconnecting…";
-}
+function scheduleReconnect() { retry = Math.min(retry+1, 6); setTimeout(connect, Math.min(1000 * 2**retry, 15000)); }
+function setConn(up) { $conn.className = up ? "up" : "down"; $("conn-text").textContent = up ? "live" : "reconnecting…"; }
 
 function handleMessage(msg) {
   switch (msg.type) {
     case "snapshot":
-      sessions.clear();
-      (msg.sessions || []).forEach(s => sessions.set(s.id, s));
-      hideBanner();
-      renderSessions();
-      break;
-
+      sessions.clear(); (msg.sessions || []).forEach(s => sessions.set(s.id, s));
+      hideBanner(); renderSessions(); break;
     case "session": {
-      const s = msg.session || msg;
-      const id = s.id || msg.session_id;
-      if (!id) break;
-      const prev = sessions.get(id) || {};
-      sessions.set(id, { ...prev, ...s, id });
-      renderSessions();
-      break;
+      const s = msg.session || msg, id = s.id || msg.session_id; if (!id) break;
+      sessions.set(id, { ...(sessions.get(id) || {}), ...s, id }); renderSessions(); break;
     }
-
     case "session_deleted":
-      if (msg.session_id) { sessions.delete(msg.session_id); renderSessions(); }
-      break;
-
+      if (msg.session_id) { sessions.delete(msg.session_id); renderSessions(); } break;
     case "cleanup":
-      sessions.clear();
-      approvals.clear();
-      renderSessions();
-      renderApprovals();
-      break;
-
+      sessions.clear(); approvals.clear(); renderSessions(); renderApprovals(); break;
     case "event": {
-      const id = msg.session_id;
-      const s = sessions.get(id);
-      if (s) {
-        s.tool_calls = (s.tool_calls ?? 0) + 1;
-        s.last_event_at = msg.created_at || Date.now();
-        sessions.set(id, s);
-        renderSessions();
-      }
+      pushHeartbeat({ ...msg, time: Date.now() });
+      const s = sessions.get(msg.session_id);
+      if (s) { s.tool_calls = (s.tool_calls ?? 0) + (msg.tool_name ? 1 : 0); s.last_event_at = Date.now(); sessions.set(msg.session_id, s); renderSessions(); }
       break;
     }
-
     case "approval": {
-      const a = msg.approval || msg;
-      const id = a.id || `${msg.session_id}:${Date.now()}`;
-      if (a.status === "resolved" || a.resolved) {
-        approvals.delete(id);
-      } else {
-        approvals.set(id, { id, session_id: msg.session_id, ...a });
-      }
-      renderApprovals();
-      break;
+      const id = msg.id ?? (msg.approval && msg.approval.id);
+      if (id == null) break;
+      if (msg.status && msg.status !== "pending") approvals.delete(id);
+      else approvals.set(id, { id, session_id: msg.session_id, tool_name: msg.tool_name, command: msg.command, request: msg.request });
+      renderApprovals(); break;
     }
   }
 }
 
-// refresh relative timestamps
 setInterval(renderSessions, 15000);
-
-load();
-loadSettings();
-connect();
+load(); loadSettings(); connect();
 </script>
 </body>
 </html>
