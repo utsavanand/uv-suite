@@ -42,6 +42,7 @@
     background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
     border-radius: 5px; padding: 3px 6px; font-size: 11px;
   }
+  header button { font-size: 11px; padding: 4px 9px; }
   header h1 .eye { color: var(--accent); }
   #conn {
     margin-left: auto;
@@ -233,6 +234,7 @@
       <option value="iterm">iTerm</option>
     </select>
   </label>
+  <button class="danger" onclick="cleanupAll()">Clean up all</button>
   <div id="conn"><span class="dot"></span><span id="conn-text">connecting…</span></div>
 </header>
 <div id="banner"></div>
@@ -377,14 +379,15 @@ function cardHTML(s) {
       <span class="k">last</span><span class="v">${timeAgo(s.last_event_at)}</span>
       <span class="k">cwd</span><span class="v cwd">${esc(s.cwd || "—")}</span>
     </div>
-    ${state === "terminated" ? "" : `
     <div class="actions">
+      ${state === "terminated" ? "" : `
       <button onclick="createCheckpoint('${esc(s.id)}')">Checkpoint</button>
       <button onclick="openCheckpoints('${esc(s.id)}')">History</button>
       <button onclick="compact('${esc(s.id)}')">Compact</button>
       <button onclick="fork('${esc(s.id)}')">Fork</button>
-      <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>
-    </div>`}
+      <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>`}
+      <button class="danger" onclick="deleteSession('${esc(s.id)}')">Delete</button>
+    </div>
   </div>`;
 }
 
@@ -503,6 +506,33 @@ async function fork(id) {
   } catch (e) { toast("Fork failed: " + e.message, true); }
 }
 
+async function deleteSession(id) {
+  const s = sessions.get(id);
+  const who = s ? (s.name || s.id) : id;
+  if (!confirm(`Delete "${who}" forever?\nRemoves it from Watchtower (its checkpoint files on disk are kept).`)) return;
+  try {
+    await api(`/sessions/${id}`, { method: "DELETE" });
+    sessions.delete(id);
+    renderSessions();
+    toast("Deleted " + who);
+  } catch (e) { toast("Delete failed: " + e.message, true); }
+}
+
+async function cleanupAll() {
+  const n = sessions.size;
+  if (!n) { toast("No sessions to clean up"); return; }
+  if (!confirm(`Clean up ALL ${n} sessions?`)) return;
+  if (!confirm(`Are you sure? This permanently deletes ${n} sessions and their events. This cannot be undone.`)) return;
+  try {
+    const r = await post("/sessions/cleanup");
+    sessions.clear();
+    approvals.clear();
+    renderSessions();
+    renderApprovals();
+    toast(`Cleaned up ${r && r.deleted != null ? r.deleted : n} sessions`);
+  } catch (e) { toast("Cleanup failed: " + e.message, true); }
+}
+
 async function closeSession(id) {
   const s = sessions.get(id);
   if (!confirm(`Close session "${s ? (s.name || s.id) : id}"?`)) return;
@@ -591,6 +621,17 @@ function handleMessage(msg) {
       renderSessions();
       break;
     }
+
+    case "session_deleted":
+      if (msg.session_id) { sessions.delete(msg.session_id); renderSessions(); }
+      break;
+
+    case "cleanup":
+      sessions.clear();
+      approvals.clear();
+      renderSessions();
+      renderApprovals();
+      break;
 
     case "event": {
       const id = msg.session_id;

@@ -5,6 +5,7 @@
 # is started with `--host 127.0.0.1`; keep it bound to localhost.
 """
 import asyncio
+import json
 import os
 import shlex
 import shutil
@@ -169,6 +170,20 @@ async def fork_session(id: str, open: bool = True) -> dict:
     persona = parent.get("persona") or "professional"
     name = (parent.get("name") or parent["id"][:8]) + " (fork)"
 
+    # Write a metadata file so the child's hooks attribute events to it (name, persona,
+    # parent) instead of falling back to Claude's internal session id.
+    try:
+        meta_dir = os.path.join(cwd, ".uv-suite-state", "sessions")
+        os.makedirs(meta_dir, exist_ok=True)
+        with open(os.path.join(meta_dir, f"{child}.json"), "w") as f:
+            json.dump(
+                {"uvs_session_id": child, "name": name, "persona": persona,
+                 "parent_id": id, "cwd": cwd},
+                f,
+            )
+    except OSError:
+        pass  # best-effort; the hook still tags by UVS_SESSION_ID
+
     settings = os.path.join(cwd, ".claude", "personas", f"{persona}.json")
     claude = "claude" + (f" --settings {shlex.quote(settings)}" if os.path.isfile(settings) else "")
     cmd = f"UVS_SESSION_ID={child} UVS_IN_TMUX=1 exec {claude}"
@@ -187,6 +202,40 @@ async def fork_session(id: str, open: bool = True) -> dict:
     opened = await asyncio.to_thread(_open_terminal, target, pref) if open else False
     db.notify({"type": "session", "session_id": child, "state": "active"})
     return {"id": child, "name": name, "tmux_target": target, "parent_id": id, "terminal_opened": opened}
+
+
+@router.delete("/sessions/{id}")
+async def delete_session(id: str) -> dict:
+    """Permanently remove a session and its events/approvals from Watchtower.
+    Kills the live tmux session first (if owned + active) so it can't re-register.
+    On-disk checkpoint files in the project's uv-out/ are left intact."""
+    session = await db.fetchrow("SELECT tmux_target, state FROM sessions WHERE id = ?", id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    if session.get("tmux_target") and session.get("state") != "terminated":
+        await asyncio.to_thread(tmux.kill_session, session["tmux_target"])
+    await db.execute("DELETE FROM events WHERE session_id = ?", id)
+    await db.execute("DELETE FROM approvals WHERE session_id = ?", id)
+    await db.execute("DELETE FROM sessions WHERE id = ?", id)
+    db.notify({"type": "session_deleted", "session_id": id})
+    return {"ok": True, "deleted": id}
+
+
+@router.post("/sessions/cleanup")
+async def cleanup_sessions() -> dict:
+    """Permanently remove ALL sessions (and their events/approvals). Kills any owned,
+    still-live tmux sessions first. Used by the dashboard's double-confirmed cleanup."""
+    live = await db.fetch(
+        "SELECT tmux_target FROM sessions WHERE state != 'terminated' AND tmux_target IS NOT NULL"
+    )
+    for r in live:
+        await asyncio.to_thread(tmux.kill_session, r["tmux_target"])
+    count = (await db.fetchrow("SELECT count(*) AS n FROM sessions"))["n"]
+    await db.execute("DELETE FROM events")
+    await db.execute("DELETE FROM approvals")
+    await db.execute("DELETE FROM sessions")
+    db.notify({"type": "cleanup"})
+    return {"ok": True, "deleted": count}
 
 
 @router.post("/sessions/spawn")

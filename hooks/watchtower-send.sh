@@ -29,11 +29,11 @@ META_FILE=""
 PAYLOAD=""
 if command -v jq >/dev/null 2>&1; then
   if [ -n "$META_FILE" ] && [ -f "$META_FILE" ]; then
-    PAYLOAD=$(echo "$INPUT" | jq -c --arg etype "$EVENT_TYPE" --slurpfile m "$META_FILE" '
+    PAYLOAD=$(echo "$INPUT" | jq -c --arg etype "$EVENT_TYPE" --arg sid "$SID" --slurpfile m "$META_FILE" '
       . + {
         event_type: $etype,
         source_app: (.cwd // "" | split("/") | last),
-        uvs_session_id:   ($m[0].uvs_session_id // ""),
+        uvs_session_id:   ($m[0].uvs_session_id // $sid),
         session_name:     ($m[0].name // ""),
         session_kind:     ($m[0].kind // ""),
         session_purpose:  ($m[0].purpose // ""),
@@ -46,10 +46,13 @@ if command -v jq >/dev/null 2>&1; then
         _hook_ts: now
       }' 2>/dev/null)
   else
-    PAYLOAD=$(echo "$INPUT" | jq -c --arg etype "$EVENT_TYPE" '
+    # No metadata file (e.g. a forked session): still tag with the resolved UVS
+    # session id so events attribute to the right session, not Claude's internal id.
+    PAYLOAD=$(echo "$INPUT" | jq -c --arg etype "$EVENT_TYPE" --arg sid "$SID" '
       . + {
         event_type: $etype,
         source_app: (.cwd // "" | split("/") | last),
+        uvs_session_id: $sid,
         _hook_ts: now
       }' 2>/dev/null)
   fi
