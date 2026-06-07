@@ -136,6 +136,11 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/watchtower-send.sh Notification",
             "timeout": 2,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/watchtower-notify.sh",
+            "timeout": 5
           }
         ]
       }

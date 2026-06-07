@@ -46,6 +46,20 @@ async def ingest_event(req: Request) -> dict:
             sid, name, kind, purpose, priority, persona, cwd,
         )
 
+    # The user responded → clear any pending attention item for this session.
+    if sid and event_type == "UserPromptSubmit":
+        pending = await db.fetch(
+            "SELECT id FROM approvals WHERE session_id = ? AND status = 'pending'", sid
+        )
+        for p in pending:
+            await db.execute(
+                "UPDATE approvals SET status = 'resolved', decided_at = CURRENT_TIMESTAMP WHERE id = ?",
+                p["id"],
+            )
+            db.notify({"type": "approval", "id": p["id"], "session_id": sid, "status": "resolved"})
+        if pending:
+            await db.execute("UPDATE sessions SET state = 'active' WHERE id = ?", sid)
+
     db.notify({
         "type": "event", "session_id": sid,
         "event_type": event_type, "tool_name": tool_name, "command": command,
@@ -75,11 +89,24 @@ async def register_session(s: SessionRegister) -> dict:
 
 @router.post("/approvals")
 async def create_approval(a: ApprovalIn) -> dict:
-    approval_id = await db.insert(
-        """INSERT INTO approvals (session_id, tool_name, command, request, status)
-           VALUES (?, ?, ?, ?, 'pending')""",
-        a.session_id, a.tool_name, a.command, json.dumps(a.request, default=str),
+    # One attention item per session: refresh the existing pending one rather than
+    # stacking duplicates (PermissionRequest + Notification can both fire for one prompt).
+    existing = await db.fetchrow(
+        "SELECT id FROM approvals WHERE session_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1",
+        a.session_id,
     )
+    if existing:
+        approval_id = existing["id"]
+        await db.execute(
+            "UPDATE approvals SET tool_name = ?, command = ?, request = ?, created_at = CURRENT_TIMESTAMP WHERE id = ?",
+            a.tool_name, a.command, json.dumps(a.request, default=str), approval_id,
+        )
+    else:
+        approval_id = await db.insert(
+            """INSERT INTO approvals (session_id, tool_name, command, request, status)
+               VALUES (?, ?, ?, ?, 'pending')""",
+            a.session_id, a.tool_name, a.command, json.dumps(a.request, default=str),
+        )
     await db.execute(
         "UPDATE sessions SET state = 'awaiting_human' WHERE id = ?", a.session_id
     )

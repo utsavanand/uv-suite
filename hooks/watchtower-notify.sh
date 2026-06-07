@@ -10,6 +10,17 @@
 INPUT=$(cat)
 WATCHTOWER_URL="${UVS_WATCHTOWER_URL:-http://localhost:4200}"
 
+# Notification events carry a type; only surface ones that mean "human needed".
+# (permission_prompt = tool approval, idle_prompt = waiting for input.) PermissionRequest
+# events have no type, so they pass through.
+if command -v jq >/dev/null 2>&1; then
+  NTYPE=$(echo "$INPUT" | jq -r '.type // ""' 2>/dev/null)
+  case "$NTYPE" in
+    ""|permission_prompt|idle_prompt) ;;
+    *) exit 0 ;;
+  esac
+fi
+
 STATE_DIR="${CLAUDE_PROJECT_DIR:-.}/.uv-suite-state"
 
 # Resolve UVS session id: env first, then current-session pointer

@@ -379,9 +379,12 @@ function renderApprovals() {
     const s = sessions.get(a.session_id);
     const who = esc(s ? (s.name || s.id) : a.session_id);
     const ctx = s && s.cwd ? `in ${esc(s.cwd.split("/").slice(-2).join("/"))}` : "";
+    const head = a.tool_name
+      ? `<span class="who">${who}</span> wants to run <b>${esc(a.tool_name)}</b>`
+      : `<span class="who">${who}</span> needs your attention`;
     return `
     <div class="approval">
-      <div><span class="who">${who}</span> wants to run <b>${esc(a.tool_name || "a tool")}</b></div>
+      <div>${head}</div>
       ${ctx ? `<div class="ctx">${ctx}</div>` : ""}
       ${a.command ? `<div class="cmd">${esc(a.command)}</div>` : ""}
       <div class="row">
