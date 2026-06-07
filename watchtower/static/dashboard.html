@@ -81,34 +81,30 @@
   #date-range { display: none; gap: 6px; align-items: center; }
   #date-range.show { display: flex; }
 
-  /* Sessions */
-  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-content: start; }
-  .card {
-    background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--idle);
-    border-radius: 8px; padding: 13px; display: flex; flex-direction: column; gap: 9px;
-  }
-  .card.s-active { border-left-color: var(--active); }
-  .card.s-awaiting_human { border-left-color: var(--awaiting); box-shadow: 0 0 0 1px var(--awaiting); }
-  .card.s-terminated { border-left-color: var(--terminated); opacity: 0.55; }
-  .card.collapsed { gap: 0; padding: 9px 13px; }
-  .card .top { display: flex; align-items: center; gap: 8px; }
-  .card .caret { color: var(--muted); width: 12px; }
-  .card .name { font-weight: 600; font-size: 13.5px; flex: 1; word-break: break-word; }
-  .card .name mark { background: rgba(88,166,255,0.3); color: inherit; border-radius: 2px; }
-  .badge { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+  /* Sessions — flat rows */
+  #grid { display: flex; flex-direction: column; }
+  .srow { border-bottom: 1px solid var(--border); }
+  .srow .hdr { display: flex; align-items: center; gap: 10px; padding: 11px 4px; cursor: pointer; }
+  .srow .hdr:hover { background: rgba(255,255,255,0.025); }
+  .srow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--idle); flex-shrink: 0; }
+  .srow.s-active .dot { background: var(--active); }
+  .srow.s-awaiting_human .dot { background: var(--awaiting); box-shadow: 0 0 0 3px rgba(210,153,34,0.25); }
+  .srow.s-terminated { opacity: 0.5; }
+  .srow.s-terminated .dot { background: var(--terminated); }
+  .srow .name { font-weight: 600; font-size: 13.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42%; }
+  .srow .name mark { background: rgba(88,166,255,0.3); color: inherit; border-radius: 2px; }
+  .srow .quick { margin-left: auto; color: var(--muted); font-size: 11.5px; white-space: nowrap; display: flex; gap: 9px; align-items: center; }
+  .srow .quick .chev { font-size: 9px; width: 9px; }
+  .srow .detail { padding: 0 4px 14px 22px; display: flex; flex-direction: column; gap: 10px; }
+  .badge { font-size: 10px; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
   .badge.persona { background: var(--panel-2); color: var(--accent); border: 1px solid var(--border); }
   .badge.kind { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
-  .badge.state { color: #0d1117; font-weight: 700; }
-  .badge.state.active { background: var(--active); }
-  .badge.state.idle { background: var(--idle); }
-  .badge.state.awaiting_human { background: var(--awaiting); }
-  .badge.state.terminated { background: var(--terminated); }
   .lineage { font-size: 11px; color: var(--muted); }
-  .meta { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12px; }
+  .meta { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 12px; max-width: 480px; }
   .meta .k { color: var(--muted); }
   .meta .v { color: var(--text); word-break: break-all; }
   .meta .v.cwd { font-size: 11px; font-family: var(--mono); }
-  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
   .actions button { padding: 5px 9px; font-size: 11px; }
 
   /* Approvals */
@@ -227,7 +223,7 @@ const WS_URL = "ws://localhost:4200/live";
 
 const sessions = new Map();
 const approvals = new Map();
-const expanded = new Set();   // terminated session ids the user expanded
+const toggled = new Set();    // session ids whose open/closed state was flipped from default
 const HB_MAX = 200;
 
 const filters = { q: "", time: "all", from: "", to: "", priority: "all", kind: "all" };
@@ -322,53 +318,61 @@ function renderSessions() {
     return (toMillis(b.last_event_at || b.started_at) || 0) - (toMillis(a.last_event_at || a.started_at) || 0);
   });
   $("sess-count").textContent = list.length ? `(${list.length})` : "";
-  $grid.innerHTML = list.map(cardHTML).join("") || `<div class="empty">No sessions match.</div>`;
+  $grid.innerHTML = list.map(rowHTML).join("") || `<div class="empty">No sessions match.</div>`;
 }
 
-function cardHTML(s) {
+// A row is open by default unless terminated; clicking flips that default.
+function isOpen(s) { const def = (s.state || "idle") !== "terminated"; return toggled.has(s.id) ? !def : def; }
+function toggleRow(id) { toggled.has(id) ? toggled.delete(id) : toggled.add(id); renderSessions(); }
+
+function rowHTML(s) {
   const state = s.state || "idle";
   const name = highlight(s.name || s.id, filters.q);
-  if (state === "terminated" && !expanded.has(s.id)) {
-    return `<div class="card s-terminated collapsed">
-      <div class="top" style="cursor:pointer" onclick="toggleExpand('${esc(s.id)}')">
-        <span class="caret">▸</span><div class="name">${name}</div>
-        <span class="badge state terminated">terminated</span>
-      </div></div>`;
+  const open = isOpen(s);
+  const tok = (s.input_tokens || 0) + (s.output_tokens || 0);
+  const quick = `<span>${esc(state.replace("_", " "))}</span>`
+    + (tok ? `<span>${fmtTokens(s)} tok</span>` : "")
+    + `<span>${timeAgo(s.last_event_at)}</span>`
+    + `<span class="chev">${open ? "▾" : "▸"}</span>`;
+  const badges = (s.persona ? `<span class="badge persona">${esc(s.persona)}</span>` : "")
+    + (s.kind ? `<span class="badge kind">${esc(s.kind)}</span>` : "");
+
+  let detail = "";
+  if (open) {
+    const parent = s.parent_id ? sessions.get(s.parent_id) : null;
+    const lineage = s.parent_id
+      ? `<div class="lineage">↳ forked from ${esc(parent ? (parent.name || parent.id.slice(0,8)) : s.parent_id.slice(0,8))}</div>` : "";
+    const actions = state === "terminated"
+      ? `<button class="danger" onclick="deleteSession('${esc(s.id)}')">Delete</button>`
+      : `<button onclick="createCheckpoint('${esc(s.id)}')">Checkpoint</button>
+         <button onclick="openCheckpoints('${esc(s.id)}')">History</button>
+         <button onclick="compact('${esc(s.id)}')">Compact</button>
+         <button onclick="fork('${esc(s.id)}')">Fork</button>
+         <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>
+         <button class="danger" onclick="deleteSession('${esc(s.id)}')">Delete</button>`;
+    detail = `<div class="detail">
+      ${lineage}
+      <div class="meta">
+        <span class="k">priority</span><span class="v">${esc(s.priority ?? "—")}</span>
+        <span class="k">created</span><span class="v">${fmtDate(s.started_at)}</span>
+        <span class="k">tool calls</span><span class="v">${esc(s.tool_calls ?? 0)}</span>
+        <span class="k">tokens</span><span class="v">${fmtTokens(s)}</span>
+        <span class="k">last</span><span class="v">${timeAgo(s.last_event_at)}</span>
+        <span class="k">cwd</span><span class="v cwd">${esc(s.cwd || "—")}</span>
+      </div>
+      <div class="actions">${actions}</div>
+    </div>`;
   }
-  const parent = s.parent_id ? sessions.get(s.parent_id) : null;
-  const lineage = s.parent_id
-    ? `<div class="lineage">↳ forked from ${esc(parent ? (parent.name || parent.id.slice(0,8)) : s.parent_id.slice(0,8))}</div>` : "";
-  const caret = state === "terminated"
-    ? `<span class="caret" style="cursor:pointer" onclick="toggleExpand('${esc(s.id)}')">▾</span>` : "";
-  const actions = state === "terminated"
-    ? `<button class="danger" onclick="deleteSession('${esc(s.id)}')">Delete</button>`
-    : `<button onclick="createCheckpoint('${esc(s.id)}')">Checkpoint</button>
-       <button onclick="openCheckpoints('${esc(s.id)}')">History</button>
-       <button onclick="compact('${esc(s.id)}')">Compact</button>
-       <button onclick="fork('${esc(s.id)}')">Fork</button>
-       <button class="danger" onclick="closeSession('${esc(s.id)}')">Close</button>
-       <button class="danger" onclick="deleteSession('${esc(s.id)}')">Delete</button>`;
-  return `
-  <div class="card s-${esc(state)}">
-    <div class="top">
-      ${caret}<div class="name">${name}</div>
-      ${s.persona ? `<span class="badge persona">${esc(s.persona)}</span>` : ""}
-      ${s.kind ? `<span class="badge kind">${esc(s.kind)}</span>` : ""}
-      <span class="badge state ${esc(state)}">${esc(state.replace("_"," "))}</span>
+  return `<div class="srow s-${esc(state)}">
+    <div class="hdr" onclick="toggleRow('${esc(s.id)}')">
+      <span class="dot"></span>
+      <span class="name">${name}</span>
+      ${badges}
+      <span class="quick">${quick}</span>
     </div>
-    ${lineage}
-    <div class="meta">
-      <span class="k">priority</span><span class="v">${esc(s.priority ?? "—")}</span>
-      <span class="k">created</span><span class="v">${fmtDate(s.started_at)}</span>
-      <span class="k">tool calls</span><span class="v">${esc(s.tool_calls ?? 0)}</span>
-      <span class="k">tokens</span><span class="v" title="input + output (incl. cache)">${fmtTokens(s)}</span>
-      <span class="k">last</span><span class="v">${timeAgo(s.last_event_at)}</span>
-      <span class="k">cwd</span><span class="v cwd">${esc(s.cwd || "—")}</span>
-    </div>
-    <div class="actions">${actions}</div>
+    ${detail}
   </div>`;
 }
-function toggleExpand(id) { expanded.has(id) ? expanded.delete(id) : expanded.add(id); renderSessions(); }
 
 // ---------- approvals ----------
 function renderApprovals() {
