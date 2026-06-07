@@ -1,5 +1,6 @@
 """Ingest router: hooks and `uvs` POST here. Writes events/sessions/approvals
 and broadcasts to connected dashboards (in-process, no polling)."""
+import asyncio
 import json
 
 from fastapi import APIRouter, Request
@@ -8,6 +9,10 @@ from app import db
 from app.models import ApprovalIn, SessionRegister, StateUpdate, TokensIn
 
 router = APIRouter()
+
+# Serializes the check-then-write in create_approval so concurrent hooks
+# (PermissionRequest + Notification fire together) collapse to one attention item.
+_approval_lock = asyncio.Lock()
 
 
 @router.post("/events")
@@ -90,26 +95,32 @@ async def register_session(s: SessionRegister) -> dict:
 @router.post("/approvals")
 async def create_approval(a: ApprovalIn) -> dict:
     # One attention item per session: refresh the existing pending one rather than
-    # stacking duplicates (PermissionRequest + Notification can both fire for one prompt).
-    existing = await db.fetchrow(
-        "SELECT id FROM approvals WHERE session_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1",
-        a.session_id,
-    )
-    if existing:
-        approval_id = existing["id"]
-        await db.execute(
-            "UPDATE approvals SET tool_name = ?, command = ?, request = ?, created_at = CURRENT_TIMESTAMP WHERE id = ?",
-            a.tool_name, a.command, json.dumps(a.request, default=str), approval_id,
+    # stacking duplicates (PermissionRequest + Notification fire together for one prompt).
+    # Locked so the concurrent pair can't both miss the existing row and insert twice.
+    req_json = json.dumps(a.request, default=str)
+    async with _approval_lock:
+        existing = await db.fetchrow(
+            "SELECT * FROM approvals WHERE session_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1",
+            a.session_id,
         )
-    else:
-        approval_id = await db.insert(
-            """INSERT INTO approvals (session_id, tool_name, command, request, status)
-               VALUES (?, ?, ?, ?, 'pending')""",
-            a.session_id, a.tool_name, a.command, json.dumps(a.request, default=str),
-        )
-    await db.execute(
-        "UPDATE sessions SET state = 'awaiting_human' WHERE id = ?", a.session_id
-    )
+        if existing:
+            approval_id = existing["id"]
+            # Prefer the tool-specific source (PermissionRequest) over a generic
+            # Notification, regardless of which arrives second.
+            tool = a.tool_name or existing["tool_name"]
+            command = a.command if a.tool_name else (existing["command"] or a.command)
+            await db.execute(
+                "UPDATE approvals SET tool_name = ?, command = ?, request = ?, "
+                "created_at = CURRENT_TIMESTAMP WHERE id = ?",
+                tool, command, req_json, approval_id,
+            )
+        else:
+            approval_id = await db.insert(
+                """INSERT INTO approvals (session_id, tool_name, command, request, status)
+                   VALUES (?, ?, ?, ?, 'pending')""",
+                a.session_id, a.tool_name, a.command, req_json,
+            )
+        await db.execute("UPDATE sessions SET state = 'awaiting_human' WHERE id = ?", a.session_id)
     db.notify({
         "type": "approval",
         "id": approval_id,
