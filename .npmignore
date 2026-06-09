@@ -1,1 +1,11 @@
+# The package.json `files` allowlist includes whole dirs (watchtower/, skills/),
+# which otherwise sweep in local build/runtime cruft. Keep these out of the tarball.
+__pycache__/
+*.pyc
+*.db
+.venv/
+*.log
 watchtower/events.json
+watchtower/legacy/events.json
+watchtower/tests/
+skills/persona/
