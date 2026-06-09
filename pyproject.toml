@@ -11,3 +11,5 @@ ignore = ["E501"]  # long lines (mostly strings/SQL) are fine
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+# tests set WATCHTOWER_DB before importing the app, so imports can't all be top-of-file
+"watchtower/tests/*" = ["E402", "I001"]

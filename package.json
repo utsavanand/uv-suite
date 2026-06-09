@@ -46,6 +46,7 @@
   ],
   "scripts": {
     "check": "bash scripts/check.sh",
-    "lint": "uvx ruff check watchtower/ && node --check bin/cli.js"
+    "lint": "uvx ruff check watchtower/ && node --check bin/cli.js",
+    "test": "cd watchtower && uv run --native-tls --with-requirements requirements.txt --with pytest --with httpx python -m pytest tests/ -q"
   }
 }

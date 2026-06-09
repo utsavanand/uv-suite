@@ -7,6 +7,7 @@
 import asyncio
 import json
 import os
+import re
 import shlex
 import shutil
 import signal
@@ -21,6 +22,21 @@ from app.models import ApprovalDecision, SpawnRequest
 from app.services import checkpoint, tmux
 
 router = APIRouter()
+
+_SAFE_ID = re.compile(r"[A-Za-z0-9._-]{1,128}")
+
+
+def _require_safe_fs(session: dict) -> None:
+    """Guard the filesystem-write boundary: the session id must be a safe path
+    component (no separators / traversal) and any cwd must be an existing directory.
+    Session ids and cwds arrive from unauthenticated hook ingest, so don't trust them
+    when they drive `os.path.join` write paths or a tmux working dir."""
+    sid = session.get("id") or ""
+    if not _SAFE_ID.fullmatch(sid) or sid in (".", ".."):
+        raise HTTPException(status_code=400, detail="unsafe session id")
+    cwd = session.get("cwd")
+    if cwd and not os.path.isdir(cwd):
+        raise HTTPException(status_code=400, detail="session cwd is not an existing directory")
 
 
 def _terminal_app(pref: str | None = None) -> str:
@@ -78,6 +94,7 @@ async def _load_session(id: str) -> dict:
 @router.post("/sessions/{id}/checkpoint")
 async def checkpoint_session(id: str) -> dict:
     session = await _load_session(id)
+    _require_safe_fs(session)
     path = await checkpoint.write_checkpoint(session)
     db.notify({"type": "checkpoint", "session_id": id, "path": path})
     return {"path": path}
@@ -86,6 +103,7 @@ async def checkpoint_session(id: str) -> dict:
 @router.post("/sessions/{id}/close")
 async def close_session(id: str) -> dict:
     session = await _load_session(id)
+    _require_safe_fs(session)
 
     path = await checkpoint.write_checkpoint(session)
 
@@ -153,6 +171,7 @@ async def compact_session(id: str) -> dict:
 @router.post("/sessions/{id}/fork")
 async def fork_session(id: str, open: bool = True) -> dict:
     parent = await _load_session(id)
+    _require_safe_fs(parent)
     if not tmux.has_tmux():
         raise HTTPException(status_code=400, detail="tmux not available; cannot fork")
 
