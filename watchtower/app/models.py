@@ -1,18 +1,7 @@
 """Request/response models. Kept permissive — hook payloads carry arbitrary extra keys."""
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict
-
-
-class EventIn(BaseModel):
-    """A hook event. Most fields arrive inside the raw hook JSON; we pull out the
-    common columns and keep the whole thing in `payload`."""
-    model_config = ConfigDict(extra="allow")
-
-    event_type: str = "Unknown"
-    uvs_session_id: str | None = None
-    tool_name: str | None = None
-    command: str | None = None
+from pydantic import BaseModel
 
 
 class SessionRegister(BaseModel):
@@ -49,6 +38,6 @@ class ApprovalDecision(BaseModel):
 
 class SpawnRequest(BaseModel):
     tool: Literal["claude", "codex"] = "claude"
-    persona: str = "professional"
+    persona: Literal["spike", "sport", "professional", "auto"] = "professional"
     cwd: str | None = None
     task: str | None = None

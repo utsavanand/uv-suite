@@ -182,7 +182,7 @@ async def fork_session(id: str, open: bool = True) -> dict:
     try:
         target = await asyncio.to_thread(tmux.spawn, child, cmd, cwd)
     except RuntimeError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     await db.execute(
         """INSERT INTO sessions (id, name, persona, cwd, tmux_target, parent_id, state)
@@ -238,13 +238,14 @@ async def spawn_session(req: SpawnRequest) -> dict:
     cwd = req.cwd or os.getcwd()
 
     # Prefer the real `uvs <tool> <persona>` launcher; fall back to the bare tool.
-    launch = f"uvs {req.tool} {req.persona}" if shutil.which("uvs") else req.tool
+    # tool/persona are Literals (validated by the model), and quoted here as defense in depth.
+    launch = f"uvs {req.tool} {shlex.quote(req.persona)}" if shutil.which("uvs") else req.tool
     cmd = f"UVS_SESSION_ID={id} {launch}"
 
     try:
         target = await asyncio.to_thread(tmux.spawn, id, cmd, cwd)
     except RuntimeError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     await db.execute(
         """INSERT INTO sessions (id, persona, cwd, tmux_target, state)

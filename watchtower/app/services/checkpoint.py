@@ -4,11 +4,12 @@ Writes a markdown checkpoint from the session's recent events + git state.
 No live session is required — everything is read from the database and the cwd's
 git repo, so we can checkpoint a session we don't own (e.g. before closing it).
 """
+import asyncio
 import collections
 import json
 import os
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app import db
 
@@ -131,15 +132,20 @@ async def write_checkpoint(session: dict) -> str:
         sid,
     )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
+    # git calls + file writes are blocking (up to ~30s of git) — keep them off the
+    # event loop so a checkpoint doesn't stall the dashboard streams and hook ingest.
+    return await asyncio.to_thread(_write_files, session, events, cwd, now)
+
+
+def _write_files(session: dict, events: list, cwd: str, now: datetime) -> str:
     created = now.isoformat()
     git_state = _git_state(cwd)
     content = _render(session, events, git_state, created)
 
-    out_dir = os.path.join(cwd, "uv-out", "sessions", sid, "checkpoints")
+    out_dir = os.path.join(cwd, "uv-out", "sessions", session["id"], "checkpoints")
     os.makedirs(out_dir, exist_ok=True)
-    fname = f"manual-{now.strftime('%Y-%m-%d-%H%M')}.md"
-    path = os.path.join(out_dir, fname)
+    path = os.path.join(out_dir, f"manual-{now.strftime('%Y-%m-%d-%H%M')}.md")
 
     with open(path, "w") as f:
         f.write(content)

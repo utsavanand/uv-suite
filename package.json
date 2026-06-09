@@ -43,5 +43,9 @@
     "watchtower/",
     "install.sh",
     "README.md"
-  ]
+  ],
+  "scripts": {
+    "check": "bash scripts/check.sh",
+    "lint": "uvx ruff check watchtower/ && node --check bin/cli.js"
+  }
 }

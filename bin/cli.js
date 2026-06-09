@@ -45,15 +45,29 @@ function usage() {
 }
 
 function info() {
+  // Count from disk so these never drift out of sync with the actual contents.
+  const countDir = (sub, ext) => {
+    try {
+      return fs.readdirSync(path.join(UV_SUITE_DIR, sub)).filter((f) => f.endsWith(ext)).length;
+    } catch {
+      return "?";
+    }
+  };
+  let skills = "?";
+  try {
+    skills = fs
+      .readdirSync(path.join(UV_SUITE_DIR, "skills"))
+      .filter((d) => fs.existsSync(path.join(UV_SUITE_DIR, "skills", d, "SKILL.md"))).length;
+  } catch {}
   console.log(`
   UV Suite v${pkg.version}
 
   Contents:
-    10 agents      Claude Code (.md), Cursor (.mdc), Codex (.toml)
-    9  skills      Slash commands for Claude Code
-    5  hooks       auto-lint, slop-check, danger-zone, block-destructive, review-reminder
-    6  guardrails  Anti-slop rules
-    4  personas    Spike, Sport, Professional, Auto
+    ${countDir("agents/claude-code", ".md")} agents      Claude Code (.md), Cursor (.mdc), Codex (.toml)
+    ${skills} skills      Slash commands for Claude Code
+    ${countDir("hooks", ".sh")} hooks       Lifecycle automation
+    ${countDir("guardrails", ".md")} guardrails  Anti-slop rules
+    ${countDir("personas", ".json")} personas    Spike, Sport, Professional, Auto
 
   Source: ${UV_SUITE_DIR}
   `);
@@ -245,11 +259,6 @@ async function setupSession(persona) {
   fs.writeFileSync(path.join(stateDir, "current-session.txt"), sid);
 
   return { sid, name };
-}
-
-// Backwards-compat shim — older code in this file still references this name.
-function ensureInstalled(persona) {
-  syncPackageFiles(persona);
 }
 
 // Launch `tool` so Watchtower can control it: wrap it in a transparent tmux session

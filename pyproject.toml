@@ -1,0 +1,13 @@
+# Lint config for UV Suite's own Python (the Watchtower app under watchtower/app).
+# Run: uvx ruff check watchtower/  ·  uvx ruff format watchtower/
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["watchtower/legacy", "fixtures", "website"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501"]  # long lines (mostly strings/SQL) are fine
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]

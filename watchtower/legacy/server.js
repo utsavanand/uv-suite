@@ -51,8 +51,7 @@ function saveEvents() {
 }
 
 const server = http.createServer((req, res) => {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // Same-origin only — the event log holds prompts/commands; don't expose it cross-origin.
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -234,7 +233,7 @@ server.on("error", (err) => {
   req.end();
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, "127.0.0.1", () => {
   console.log(`UV Suite Watchtower running at http://localhost:${PORT}`);
   console.log(`${events.length} events loaded from disk`);
   console.log(

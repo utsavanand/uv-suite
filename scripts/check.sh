@@ -61,7 +61,11 @@ section "Skills don't use simple_expansion in ! blocks"
 #   $VAR       bare variable expansion
 # Only flag inside lines beginning with !` or ! `
 for sf in skills/*/SKILL.md; do
-  bad_lines=$(grep -nE '^!`' "$sf" | grep -E '\$\(|\$\{?[A-Z_][A-Z_0-9]*' || true)
+  # CLAUDE_PROJECT_DIR and ARGUMENTS are harness-provided substitutions and are allowed;
+  # strip them, then flag any *other* shell expansion still present in a ! block.
+  bad_lines=$(grep -nE '^!`' "$sf" \
+    | sed -E 's/\$\{CLAUDE_PROJECT_DIR[^}]*\}//g; s/\$CLAUDE_PROJECT_DIR//g; s/\$ARGUMENTS//g' \
+    | grep -E '\$\(|\$\{?[A-Z_][A-Z_0-9]*' || true)
   if [ -n "$bad_lines" ]; then
     bad "$sf has variable/command expansion in a ! block:"
     echo "$bad_lines" | sed 's/^/      /'
@@ -109,13 +113,20 @@ done
 
 section "Watchtower syntax"
 if command -v node > /dev/null; then
-  if node -c watchtower/server.js 2>/dev/null; then
-    ok "watchtower/server.js parses"
+  if node -c watchtower/legacy/server.js 2>/dev/null; then
+    ok "watchtower/legacy/server.js parses"
   else
-    bad "watchtower/server.js has a syntax error"
+    bad "watchtower/legacy/server.js has a syntax error"
   fi
 else
   ok "node not installed, skipping"
+fi
+if command -v python3 > /dev/null; then
+  if python3 -m py_compile watchtower/app/*.py watchtower/app/routers/*.py watchtower/app/services/*.py 2>/dev/null; then
+    ok "watchtower/app/*.py compile"
+  else
+    bad "watchtower/app has a syntax error"
+  fi
 fi
 
 # --- Summary -----------------------------------------------------------------

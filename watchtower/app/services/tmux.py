@@ -43,12 +43,5 @@ def send_keys(target: str, keys: str, enter: bool = True) -> tuple[bool, str]:
     return _tmux(*args)
 
 
-def capture_pane(target: str) -> str:
-    ok, out = _tmux("capture-pane", "-t", target, "-p")
-    if not ok:
-        raise RuntimeError(f"tmux capture-pane failed: {out}")
-    return out
-
-
 def kill_session(target: str) -> tuple[bool, str]:
     return _tmux("kill-session", "-t", target)
