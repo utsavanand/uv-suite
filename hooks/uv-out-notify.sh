@@ -1,11 +1,11 @@
 #!/bin/bash
 # UV Suite Hook: surface real skill artifacts written to uv-out/ after a run.
 # Event: Stop
-# A skill (/spec, /review, /understand, …) writes artifacts inside a forked sub-agent
+# A skill (/uvs-spec, /uvs-review, /uvs-understand, …) writes artifacts inside a forked sub-agent
 # whose transcript the user never sees; this prints the path when control returns.
 #
 # Scoped to the CURRENT session and excludes checkpoints — checkpoints are background
-# state (surfaced by the dashboard and /session restore), and listing every session's
+# state (surfaced by the dashboard and /uvs-session restore), and listing every session's
 # checkpoints here produced cross-session noise.
 
 [ -d uv-out ] || exit 0

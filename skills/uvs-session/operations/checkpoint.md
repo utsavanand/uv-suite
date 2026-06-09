@@ -5,7 +5,7 @@ Using the checkpoint-dir, frontmatter, and git state printed above, write
 filename if `REST` is non-empty). The directory is per-session — two `uv`
 launches in the same repo write to different folders, so checkpoints don't
 collide. **Begin the file with the exact YAML frontmatter block printed above** —
-`/session restore` parses these fields to pick the right checkpoint and display
+`/uvs-session restore` parses these fields to pick the right checkpoint and display
 session context. Also write/overwrite `<checkpoint-dir>/latest.md` with the same
 content so the next session's restore finds the freshest state. Body (keep under
 80 lines; frontmatter is required and not counted):

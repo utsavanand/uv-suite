@@ -6,7 +6,7 @@ file_exists "target: qa.py" "$TARGET"
 
 if [ "$LLM_MODE" = 1 ]; then
   OUT="$REPO_ROOT/uv-out/test-write-tests.out"
-  if run_skill "$OUT" "/test fixtures/pdf-qa/backend/app/qa.py"; then
+  if run_skill "$OUT" "/uvs-test fixtures/pdf-qa/backend/app/qa.py"; then
     # Must exercise the actual code under test.
     must_have "$OUT" "Index" "tests the Index class"
     must_have "$OUT" "answer" "tests the answer() method"

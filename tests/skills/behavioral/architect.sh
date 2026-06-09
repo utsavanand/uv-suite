@@ -7,7 +7,7 @@ file_exists "fixture: todo-feature.md" "$FIX"
 
 if [ "$LLM_MODE" = 1 ]; then
   OUT="$REPO_ROOT/uv-out/test-architect.out"
-  if run_skill "$OUT" "/architect $(cat "$FIX")"; then
+  if run_skill "$OUT" "/uvs-architect $(cat "$FIX")"; then
     grep -qiE 'act ?[0-9]|## act|acts\b' "$OUT" && ok "decomposes into Acts" || bad "no Acts breakdown"
     grep -qiE 'sqlite|database|data store' "$OUT" && ok "plans the data store" || bad "no data store in plan"
     # 100 tasks, one process, single user — none of this is justified.

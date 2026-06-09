@@ -1,10 +1,10 @@
 ---
-name: review
+name: uvs-review
 description: >
   Multi-specialist code review. Dispatches concern-specific subagents in parallel
   (security, performance, testing, maintainability, api-contract, data-migration),
   scores each finding 1-10 for confidence, gates output by tier, and persists state
-  to uv-out/review-state.md so /commit and /ship can detect completion. Pass --security
+  to uv-out/review-state.md so /uvs-commit and /ship can detect completion. Pass --security
   for a focused tool-backed (Semgrep/Gitleaks/Trivy) OWASP review, --slop for a full
   anti-slop audit (all six slop categories), or --architecture to audit a design against
   its recorded Design Constraints (traceability). Note: ambient slop detection also runs as
@@ -50,7 +50,7 @@ Write the review report and state under this directory (scoped to the current se
 
 !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
-Stable flat pointer maintained for `/commit` and `/ship`:
+Stable flat pointer maintained for `/uvs-commit` and `/ship`:
 
 !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-pointer.sh review-state.md review/state.md`
 
@@ -66,7 +66,7 @@ Stable flat pointer maintained for `/commit` and `/ship`:
 
 ### Architecture map
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-codebase.md 100 || echo "No codebase map — run /understand first for better review context"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-codebase.md 100 || echo "No codebase map — run /uvs-understand first for better review context"`
 
 ### Architecture decisions
 
@@ -90,17 +90,17 @@ Execute these steps in order. Do not skip steps.
 focused mode, a diff is **not** required (the target may be a directory or the whole
 project — skip Step 1's stop), run **only** that specialist, and skip all others.
 
-- **`--security`** (the former `/review --security`): dispatch the `security` specialist in
+- **`--security`** (the former `/uvs-review --security`): dispatch the `security` specialist in
   **deep-scan mode** — it runs the available SAST / secret / dependency tools (Semgrep,
   Gitleaks, Trivy) over the target in addition to diff reasoning.
-- **`--slop`** (the former `/review --slop`): dispatch the **anti-slop-guard** agent over the
+- **`--slop`** (the former `/uvs-review --slop`): dispatch the **anti-slop-guard** agent over the
   target — the full anti-slop audit across all six slop categories (over-engineering,
   architecture, test, doc, error-handling, comment slop), not just the diff-level
   `maintainability` subset that a normal review runs.
 - **`--architecture`**: audit the design against its recorded constraints (no diff needed).
   Load the session's architecture artifacts and dispatch the `architecture-trace` specialist:
 
-  !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/constraints.md' 120 || echo "No constraints.md — run /architect first (it records design constraints)"`
+  !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/constraints.md' 120 || echo "No constraints.md — run /uvs-architect first (it records design constraints)"`
   !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/decisions.md' 200 || echo "No decisions.md"`
   !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 120 || echo "No acts-plan.md"`
 
@@ -111,7 +111,7 @@ Otherwise, proceed normally from Step 1.
 
 ### Step 1 — Validate diff exists
 
-If the diff loaded above is empty or "No diff available", stop and tell the user there's nothing to review. Suggest `$ARGUMENTS` should be a branch name (e.g., `/review feature/foo`) if they want to review a different target. (Does not apply in a focused `--security`/`--slop`/`--architecture` mode.)
+If the diff loaded above is empty or "No diff available", stop and tell the user there's nothing to review. Suggest `$ARGUMENTS` should be a branch name (e.g., `/uvs-review feature/foo`) if they want to review a different target. (Does not apply in a focused `--security`/`--slop`/`--architecture` mode.)
 
 ### Step 2 — Classify scope, pick specialists
 
@@ -130,7 +130,7 @@ Skip a specialist if the diff has zero relevance to its scope. Document which yo
 
 ### Step 3 — Dispatch specialists in parallel
 
-For each selected specialist, you (the orchestrator) read the corresponding specialist prompt at `.claude/skills/review/specialists/<name>.md`, then launch a subagent in a single message (parallel tool-call block) passing the specialist's prompt content + the diff loaded above as the subagent's task.
+For each selected specialist, you (the orchestrator) read the corresponding specialist prompt at `.claude/skills/uvs-review/specialists/<name>.md`, then launch a subagent in a single message (parallel tool-call block) passing the specialist's prompt content + the diff loaded above as the subagent's task.
 
 Use `Agent(general-purpose)` for each dispatch. Pass the diff, the specialist prompt content, and the relevant project context. Expected return shape per specialist:
 
@@ -171,7 +171,7 @@ Confidence scoring rubric (specialists apply this; orchestrator validates):
 
 For each surfaced finding (tier Critical/High/Medium), assign `fix_class`:
 
-- `auto_fix`: trivial, mechanical fix where wrong-ness is unambiguous. Apply directly if the user runs `/commit` or asks. Examples: missing `await`, comment slop, dead variable.
+- `auto_fix`: trivial, mechanical fix where wrong-ness is unambiguous. Apply directly if the user runs `/uvs-commit` or asks. Examples: missing `await`, comment slop, dead variable.
 - `ask`: judgment call or risky change. Surface to user, wait for direction. Examples: refactor proposal, security finding requiring threat assessment, API contract break.
 - `info`: not actionable, just worth knowing. Example: "test coverage dropped from 87% to 82% on touched files."
 
@@ -179,7 +179,7 @@ For each surfaced finding (tier Critical/High/Medium), assign `fix_class`:
 
 Write the review state to `<session-output-dir>/review/state.md` (the
 `<session-output-dir>` printed above, e.g. `uv-out/sessions/<sid>/`). The flat pointer
-`uv-out/review-state.md` already points here, so `/commit` and `/ship` read it unchanged.
+`uv-out/review-state.md` already points here, so `/uvs-commit` and `/ship` read it unchanged.
 Use this exact frontmatter schema so they can parse it:
 
 ```yaml
@@ -222,7 +222,7 @@ Do not paste the appendix into the chat unless asked. Keep terminal output focus
 
 ## Notes for downstream skills
 
-`/commit` reads `uv-out/review-state.md` and:
+`/uvs-commit` reads `uv-out/review-state.md` and:
 - Refuses to commit if `summary.critical > 0` unless user explicitly overrides
 - Auto-applies `fix_class: auto_fix` findings before commit when `summary.ask == 0`
 - Includes review summary in commit message footer

@@ -1,5 +1,5 @@
 ---
-name: lite
+name: uvs-lite
 description: >
   Toggle lite mode — instructs the assistant to be terse (no preamble,
   no summaries, no decorative formatting). Use when tokens are limited
@@ -29,7 +29,7 @@ $ARGUMENTS
    - `on` — write `on` to `.uv-suite-state/lite-mode.txt`. Reply: `Lite mode: ON`.
    - `off` — write `off` to `.uv-suite-state/lite-mode.txt`. Reply: `Lite mode: OFF`.
    - `status` or empty — read the file (default `off` if missing) and reply with the current state.
-   - Anything else — reply: `Usage: /lite [on | off | status]` and stop.
+   - Anything else — reply: `Usage: /uvs-lite [on | off | status]` and stop.
 3. The change takes effect **on the next user prompt** (the `lite-mode-inject.sh` UserPromptSubmit hook reads the file each turn).
 
 ## How lite mode works

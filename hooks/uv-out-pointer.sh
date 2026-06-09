@@ -1,6 +1,6 @@
 #!/bin/bash
 # UV Suite helper: maintain a stable flat pointer into the current session's output.
-# Fixed-path consumers (/commit, /ship read uv-out/review-state.md and uv-out/qa-state.md)
+# Fixed-path consumers (/uvs-commit, /ship read uv-out/review-state.md and uv-out/qa-state.md)
 # keep working while the real artifact lives under uv-out/sessions/<sid>/.
 #
 # Usage: uv-out-pointer.sh <flat-name> <session-relative-target>

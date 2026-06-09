@@ -6,7 +6,7 @@ file_exists "flawed fixture: paginate.py" "$FLAW/paginate.py"
 
 if [ "$LLM_MODE" = 1 ]; then
   OUT="$REPO_ROOT/uv-out/test-review.out"
-  if run_skill "$OUT" "/review tests/skills/fixtures/flawed/paginate.py"; then
+  if run_skill "$OUT" "/uvs-review tests/skills/fixtures/flawed/paginate.py"; then
     must_have "$OUT" "paginate" "locates paginate.py"
     grep -qiE 'off.?by.?one|page \* size|skip|overlap|index' "$OUT" \
       && ok "flags the off-by-one" \

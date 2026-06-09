@@ -40,29 +40,29 @@ Label this session (Enter to skip — you'll be reminded):
   priority [low/med/high]:  high
 ```
 
-Skip any field with Enter. If you skip the name, `/session init` will be suggested every few prompts until you label it. Set `UVS_NO_PROMPT=1` to suppress prompts entirely.
+Skip any field with Enter. If you skip the name, `/uvs-session init` will be suggested every few prompts until you label it. Set `UVS_NO_PROMPT=1` to suppress prompts entirely.
 
 ## Start here
 
 After `uvs claude pro`, pick the path that matches what you're doing. Each path names the first skill to run and the canonical next steps.
 
 ### Existing codebase (you didn't write this)
-1. `/understand` — builds a knowledge graph + architecture overview in `uv-out/map-codebase.md`. Other skills (`/architect`, `/review`, `/review --security`) read it automatically.
-2. `/session checkpoint` — captures your baseline understanding so `/session restore` can bring it back next session.
-3. Then: `/review` on the current diff, or `/spec` for the next feature.
+1. `/uvs-understand` — builds a knowledge graph + architecture overview in `uv-out/map-codebase.md`. Other skills (`/uvs-architect`, `/uvs-review`, `/uvs-review --security`) read it automatically.
+2. `/uvs-session checkpoint` — captures your baseline understanding so `/uvs-session restore` can bring it back next session.
+3. Then: `/uvs-review` on the current diff, or `/uvs-spec` for the next feature.
 
 ### New project (you're starting from scratch)
-1. `/spec` — converts your idea into a structured spec in `uv-out/specs/`.
-2. `/architect` — breaks the spec into Acts with cycle budgets. Reads the spec automatically.
-3. Then: implement Act by Act. Use `/test` and `/review` per Act.
+1. `/uvs-spec` — converts your idea into a structured spec in `uv-out/specs/`.
+2. `/uvs-architect` — breaks the spec into Acts with cycle budgets. Reads the spec automatically.
+3. Then: implement Act by Act. Use `/uvs-test` and `/uvs-review` per Act.
 
 ### Reviewing a PR
-1. `/review [branch-name]` — reads diff + `CLAUDE.md` + `DANGER-ZONES.md` + prior `uv-out/` artifacts.
-2. `/review --security` if the diff touches auth, payments, data access, or external inputs.
+1. `/uvs-review [branch-name]` — reads diff + `CLAUDE.md` + `DANGER-ZONES.md` + prior `uv-out/` artifacts.
+2. `/uvs-review --security` if the diff touches auth, payments, data access, or external inputs.
 
 ### Shipping
-1. `/session checkpoint` to capture state.
-2. `/commit` — runs review, tests, commits, optionally opens a PR.
+1. `/uvs-session checkpoint` to capture state.
+2. `/uvs-commit` — runs review, tests, commits, optionally opens a PR.
 
 Picking a persona (Spike / Sport / Professional / Auto) is a separate axis from picking a first skill — see [Personas](#personas) below for which mode fits which situation.
 
@@ -72,7 +72,7 @@ Each `uvs` launch generates a `UVS_SESSION_ID` and writes metadata to `.uv-suite
 
 - **Concurrent terminals don't collide.** Two `uvs` launches in the same repo run as distinct sessions with separate names, checkpoints, and dashboard rows.
 - **`uvs watch` shows them all.** The Watchtower control plane at `localhost:4200` streams every session live and lets you act on them from the browser — see [Watchtower at a glance](#watchtower-at-a-glance).
-- **Per-session checkpoints.** `/session checkpoint` writes to `uv-out/checkpoints/<sid>/`, and `/session restore` auto-picks the current session's latest. Pass a session id prefix or name to restore from a different one.
+- **Per-session checkpoints.** `/uvs-session checkpoint` writes to `uv-out/checkpoints/<sid>/`, and `/uvs-session restore` auto-picks the current session's latest. Pass a session id prefix or name to restore from a different one.
 - **Status line shows it all.** The Claude Code status bar shows session name, persona, priority, and elapsed time continuously.
 
 ### Watchtower at a glance
@@ -127,21 +127,22 @@ Human gates  After each     End only     Every Act          Final output
 
 ## Skills (slash commands)
 
-11 skills. Each `skills/<name>/SKILL.md` is a thin orchestrator that dispatches to agents.
+12 skills. Each `skills/<name>/SKILL.md` is a thin orchestrator that dispatches to agents.
 
 | Command | What it does |
 |---|---|
-| `/understand [dir]` | Map a codebase or whole stack — auto-detects repo vs stack |
-| `/spec [requirements]` | Write a technical specification |
-| `/architect [spec]` | Design architecture, decompose into Acts |
-| `/test [file]` | Write tests or evals: `--unit` / `--integration` / `--eval` ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
-| `/review` | Multi-specialist code review; add `--security` (OWASP via Semgrep/Gitleaks/Trivy) or `--slop` (anti-slop audit) |
-| `/prototype [concept]` | Build a static React prototype |
-| `/qa` | Browser QA via Playwright MCP |
-| `/investigate` | Systematic root-cause debugging |
-| `/commit` | Review → test → commit (and optionally PR) |
-| `/session init\|checkpoint\|restore\|end\|auto` | Session lifecycle — label, checkpoint, restore, end, or auto-checkpoint |
-| `/uv-help` | List every skill, agent, hook, guardrail, and persona |
+| `/uvs-understand [dir]` | Map a codebase or whole stack — auto-detects repo vs stack |
+| `/uvs-spec [requirements]` | Write a technical specification |
+| `/uvs-architect [spec]` | Design architecture, decompose into Acts |
+| `/uvs-test [file]` | Write tests or evals: `--unit` / `--integration` / `--eval` ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
+| `/uvs-review` | Multi-specialist code review; add `--security` (OWASP via Semgrep/Gitleaks/Trivy) or `--slop` (anti-slop audit) |
+| `/uvs-prototype [concept]` | Build a static React prototype |
+| `/uvs-qa` | Browser QA via Playwright MCP |
+| `/uvs-investigate` | Systematic root-cause debugging |
+| `/uvs-commit` | Review → test → commit (and optionally PR) |
+| `/uvs-session init\|checkpoint\|restore\|end\|auto` | Session lifecycle — label, checkpoint, restore, end, or auto-checkpoint |
+| `/uvs-lite [on\|off]` | Toggle terse output mode — no preamble, no summaries; persists across turns |
+| `/uvs-help` | List every skill, agent, hook, guardrail, and persona |
 
 ## Hooks (lifecycle automation)
 
@@ -154,7 +155,7 @@ Fire automatically on Claude Code events. You never invoke these. ~28 scripts li
 | doc-slop-grep | File edit/write | Catches vague adjectives in markdown on the spike persona |
 | danger-zone-check | File edit | Warns if file is in DANGER-ZONES.md |
 | block-destructive | Bash command | Blocks `rm -rf /`, force push to main, `DROP TABLE` |
-| session-label-nag | UserPromptSubmit | Reminds you to run `/session init` every Nth prompt while the session has no name |
+| session-label-nag | UserPromptSubmit | Reminds you to run `/uvs-session init` every Nth prompt while the session has no name |
 | context-warning | PostToolUse | Warns when context usage crosses thresholds |
 | watchtower-send | All events | Forwards every event (with session metadata) to `localhost:4200` |
 | session-start | SessionStart | Records start time, fires bootstrap event with session metadata |
@@ -185,11 +186,11 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 
 | Output | Read by |
 |---|---|
-| `uv-out/map-codebase.md` | /architect, /review, /review --security |
-| `uv-out/specs/*.md` | /architect, /test, /test --eval |
-| `uv-out/architecture/*.md` | /review, /test, /review --slop |
-| `uv-out/review-*.md` | /review --slop, /review --security |
-| `uv-out/checkpoints/<sid>/*.md` | /session restore |
+| `uv-out/map-codebase.md` | /uvs-architect, /uvs-review, /uvs-review --security |
+| `uv-out/specs/*.md` | /uvs-architect, /uvs-test, /uvs-test --eval |
+| `uv-out/architecture/*.md` | /uvs-review, /uvs-test, /uvs-review --slop |
+| `uv-out/review-*.md` | /uvs-review --slop, /uvs-review --security |
+| `uv-out/checkpoints/<sid>/*.md` | /uvs-session restore |
 
 ## Integrations
 

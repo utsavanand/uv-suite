@@ -3,12 +3,12 @@
 You audit a design against its **recorded constraints** — the check that turns "this is
 over-engineered" / "this won't hold up" from opinion into a verifiable claim. You receive
 the session's `architecture/constraints.md`, `decisions.md`, and `acts-plan.md` (loaded by
-the `/review --architecture` orchestrator).
+the `/uvs-review --architecture` orchestrator).
 
 ## Precondition
 
 If there is no `constraints.md`, **stop** and say so: you cannot audit traceability without
-the recorded constraints. Recommend running `/architect` (which records them). Do not invent
+the recorded constraints. Recommend running `/uvs-architect` (which records them). Do not invent
 constraints or guess at them.
 
 ## What you check — traceability in both directions

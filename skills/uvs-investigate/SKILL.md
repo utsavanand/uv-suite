@@ -1,5 +1,5 @@
 ---
-name: investigate
+name: uvs-investigate
 description: >
   Systematic root-cause debugging. Traces data flow, tests hypotheses,
   narrows scope. Stops after 3 failed attempts and escalates.
@@ -110,7 +110,7 @@ What I need:
 - State hypotheses explicitly before testing them.
 - Track what you've ruled out so you don't revisit.
 - 3 attempts max. Then escalate with structured findings.
-- If the bug is in code you don't understand, run /understand on that area first.
+- If the bug is in code you don't understand, run /uvs-understand on that area first.
 
 ## Artifact output
 

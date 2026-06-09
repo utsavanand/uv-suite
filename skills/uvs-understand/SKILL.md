@@ -1,5 +1,5 @@
 ---
-name: understand
+name: uvs-understand
 description: >
   Understand code: map a single codebase or a whole multi-service stack. Repo mode
   produces an architecture overview, domain map, sequence diagrams, and entry points;
@@ -114,5 +114,5 @@ T="$(echo "$ARGUMENTS"|xargs)"; D="$T"; [ -d "$D" ] || D="."; cat "$D/graphify-o
 Based on the `MODE` printed above, follow the matching mode file. It owns the process and
 the output for that mode:
 
-- **MODE=repo** → follow `skills/understand/modes/repo.md`
-- **MODE=stack** → follow `skills/understand/modes/stack.md`
+- **MODE=repo** → follow `skills/uvs-understand/modes/repo.md`
+- **MODE=stack** → follow `skills/uvs-understand/modes/stack.md`

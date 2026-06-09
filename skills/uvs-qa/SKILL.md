@@ -1,10 +1,10 @@
 ---
-name: qa
+name: uvs-qa
 description: >
   Browser-based QA: exercises the running app via Playwright MCP, captures console
   errors and visual evidence, optionally fixes source bugs with atomic commits and
   generates regression tests. Three tiers (quick / standard / exhaustive). Writes
-  uv-out/qa-state.md so /commit and /ship can detect completion and read the health
+  uv-out/qa-state.md so /uvs-commit and /ship can detect completion and read the health
   score.
 argument-hint: "[url] [--tier quick|standard|exhaustive]"
 user-invocable: true
@@ -50,7 +50,7 @@ Write QA artifacts under this directory (scoped to the current session). The
 
 !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
 
-Stable flat pointer maintained for `/commit` and `/ship`:
+Stable flat pointer maintained for `/uvs-commit` and `/ship`:
 
 !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-pointer.sh qa-state.md qa/state.md`
 
@@ -122,7 +122,7 @@ Sort findings into severity buckets:
 | `medium` | Visual regression visible to user (layout shift, missing image, alignment), console warning, slow interaction (>2s with no spinner) |
 | `low` | Minor visual nit, accessibility warning that doesn't block use, console info-level message |
 
-Assign confidence 1-10 to each (same rubric as `/review`):
+Assign confidence 1-10 to each (same rubric as `/uvs-review`):
 - 9-10: Reproduced in this run with screenshot evidence
 - 7-8: Pattern-matched against a known bug class (e.g., 404 on resource fetch in console) with screenshot
 - 5-6: Likely issue but couldn't reproduce reliably (e.g., race condition observed once)
@@ -191,7 +191,7 @@ If a baseline was provided or auto-detected, compute `delta = current - baseline
 
 Write the canonical state to `<session-output-dir>/qa/state.md` (overwritten each run), and
 keep this run's detailed copy at `<session-output-dir>/qa/<ts>/qa-state.md`. The flat pointer
-`uv-out/qa-state.md` already points at `qa/state.md`, so `/commit` and `/ship` read the latest
+`uv-out/qa-state.md` already points at `qa/state.md`, so `/uvs-commit` and `/ship` read the latest
 run unchanged.
 
 State frontmatter schema:
@@ -250,7 +250,7 @@ If no fixes were applied (tier=`quick` or no critical bugs), say so explicitly â
 
 ## Notes for downstream skills
 
-`/commit` reads `uv-out/qa-state.md` and:
+`/uvs-commit` reads `uv-out/qa-state.md` and:
 - Surfaces `issues_remaining.critical > 0` as a blocker (user must override)
 - Includes `health_score` + `delta` in commit message footer when run after QA
 
@@ -270,5 +270,5 @@ If no fixes were applied (tier=`quick` or no critical bugs), say so explicitly â
 This skill is new. No formal eval suite gates it; correctness is validated by running it against real apps in this workspace. Expected failure modes to watch for in early runs:
 - Playwright MCP tool names may drift; update `allowed-tools` if `mcp__playwright__*` wildcard stops matching.
 - Health-score weights are a starting point â€” adjust the formula in Step 8 if real runs produce uninformative scores.
-- Atomic-commit-per-fix can be noisy; consider squashing pre-PR or extending `/commit` to bundle when fixes are related.
+- Atomic-commit-per-fix can be noisy; consider squashing pre-PR or extending `/uvs-commit` to bundle when fixes are related.
 - Auto-detection of framework via config file presence misses monorepos; add support if needed.

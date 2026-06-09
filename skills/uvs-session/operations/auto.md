@@ -2,7 +2,7 @@
 
 Show the line of output above; it confirms the new mode/interval. No commentary.
 The change applies to the very next interval — no restart needed.
-Usage: `/session auto on|off|<minutes>|status` (default interval 10 min, range
+Usage: `/uvs-session auto on|off|<minutes>|status` (default interval 10 min, range
 1-1440). `status` or no argument prints the current mode and interval.
 
 How it works:

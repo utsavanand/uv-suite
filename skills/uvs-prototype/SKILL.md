@@ -1,5 +1,5 @@
 ---
-name: prototype
+name: uvs-prototype
 description: >
   Build an interactive prototype as a static React site. For concept exploration,
   stakeholder demos, presentations, and documentation websites.

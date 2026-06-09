@@ -1,6 +1,6 @@
 #!/bin/bash
 # UV Suite Hook: SessionStart — when UVS_RESTORE_FROM is set, inject a
-# system-context instruction telling Claude to /session restore that session as
+# system-context instruction telling Claude to /uvs-session restore that session as
 # the first action of the new session.
 #
 # This is how the Watchtower's "Open in new terminal" restore button hooks
@@ -20,7 +20,7 @@ case "$UVS_RESTORE_FROM" in
     ;;
 esac
 
-MSG="[uv-suite auto-restore] This session was opened via the Watchtower restore flow. Your FIRST action must be to run \`/session restore $UVS_RESTORE_FROM\` to load the prior session's latest checkpoint. After /session restore completes, summarize what you picked up in 1-2 sentences, then wait for the user's next instruction."
+MSG="[uv-suite auto-restore] This session was opened via the Watchtower restore flow. Your FIRST action must be to run \`/uvs-session restore $UVS_RESTORE_FROM\` to load the prior session's latest checkpoint. After /uvs-session restore completes, summarize what you picked up in 1-2 sentences, then wait for the user's next instruction."
 
 if command -v jq >/dev/null 2>&1; then
   jq -nc --arg ctx "$MSG" '{hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:$ctx}}'

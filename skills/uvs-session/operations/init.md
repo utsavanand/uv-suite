@@ -3,7 +3,7 @@
 Show the helper output above. Do not add commentary; the command confirms what
 changed. The Watchtower dashboard refreshes within a few seconds (next event
 refreshes session metadata).
-Usage: `/session init <name>` · `--kind long|outcome` · `--priority low|med|high`
+Usage: `/uvs-session init <name>` · `--kind long|outcome` · `--priority low|med|high`
 · `--purpose <text>` · `show` · `clear`. Each call sets one field; run multiple
 times to set more.
 

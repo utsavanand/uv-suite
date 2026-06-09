@@ -33,11 +33,11 @@ UNTRACKED=$(git ls-files --others --exclude-standard 2>/dev/null | head -5)
 
 REVIEW_MSG=""
 if [ -n "$STAGED" ] || [ -n "$UNSTAGED" ] || [ -n "$UNTRACKED" ]; then
-  REVIEW_MSG="Uncommitted changes — consider /review and /review --slop before committing. "
+  REVIEW_MSG="Uncommitted changes — consider /uvs-review and /uvs-review --slop before committing. "
 fi
 
 # Checkpoint prompt
-CHECKPOINT_MSG="Run /session checkpoint to save session state for next time. Run /session restore at the start of your next session."
+CHECKPOINT_MSG="Run /uvs-session checkpoint to save session state for next time. Run /uvs-session restore at the start of your next session."
 
 FULL_MSG="${DURATION_MSG}${REVIEW_MSG}${CHECKPOINT_MSG}"
 

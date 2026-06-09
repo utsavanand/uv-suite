@@ -1,7 +1,7 @@
 #!/bin/bash
 # UV Suite Hook: Remind to review before ending session
 # Event: Stop
-# If there are uncommitted changes, reminds the user to run /review and /review --slop.
+# If there are uncommitted changes, reminds the user to run /uvs-review and /uvs-review --slop.
 
 # Check for uncommitted changes
 STAGED=$(git diff --cached --stat 2>/dev/null)
@@ -28,7 +28,7 @@ fi
 cat <<EOF
 {
   "continue": true,
-  "systemMessage": "SESSION END REMINDER: There are uncommitted changes in the working tree.\n\n${SUMMARY}\nConsider running /review and /review --slop before committing."
+  "systemMessage": "SESSION END REMINDER: There are uncommitted changes in the working tree.\n\n${SUMMARY}\nConsider running /uvs-review and /uvs-review --slop before committing."
 }
 EOF
 

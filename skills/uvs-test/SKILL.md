@@ -1,5 +1,5 @@
 ---
-name: test
+name: uvs-test
 description: >
   Write tests or LLM evals. Routes to a specialist: the test-writer agent for
   code tests (unit/integration), the eval-writer agent for AI/LLM evals (--eval).
@@ -77,12 +77,12 @@ Read the `MODE` line above. It names the specialist prompt file and the agent to
 
 | MODE | Specialist prompt | Agent |
 |---|---|---|
-| unit | `skills/test/specialists/unit.md` | `test-writer` |
-| integration | `skills/test/specialists/integration.md` | `test-writer` |
-| eval | `skills/test/specialists/eval.md` | `eval-writer` |
+| unit | `skills/uvs-test/specialists/unit.md` | `test-writer` |
+| integration | `skills/uvs-test/specialists/integration.md` | `test-writer` |
+| eval | `skills/uvs-test/specialists/eval.md` | `eval-writer` |
 
 You (the orchestrator) read the matching specialist prompt at
-`.claude/skills/test/specialists/<mode>.md`, then dispatch the named agent via the Agent
+`.claude/skills/uvs-test/specialists/<mode>.md`, then dispatch the named agent via the Agent
 tool, passing the specialist prompt content + the target (`$ARGUMENTS`) + the gathered
 context above as the agent's task. Do not write the tests or evals yourself — the agent does.
 

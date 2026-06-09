@@ -6,7 +6,7 @@ file_exists "fixture: todo-feature.md" "$FIX"
 
 if [ "$LLM_MODE" = 1 ]; then
   OUT="$REPO_ROOT/uv-out/test-spec.out"
-  if run_skill "$OUT" "/spec $(cat "$FIX")"; then
+  if run_skill "$OUT" "/uvs-spec $(cat "$FIX")"; then
     # The four operations + the storage choice must be specified.
     for t in add list delete SQLite; do must_have "$OUT" "$t" "spec covers '$t'"; done
     grep -qiE 'done|complete' "$OUT" && ok "spec covers mark-done" || bad "spec missing mark-done"

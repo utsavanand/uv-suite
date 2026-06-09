@@ -1,5 +1,5 @@
 ---
-name: uv-help
+name: uvs-help
 description: >
   Show all UV Suite skills, agents, hooks, guardrails, and personas.
   Use when you want to know what's available or how to use a specific feature.
@@ -28,74 +28,74 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/understand [target]` | Map a codebase or stack (auto-detects scope) | `/understand focus on the auth flow and session management` |
+| `/uvs-understand [target]` | Map a codebase or stack (auto-detects scope) | `/uvs-understand focus on the auth flow and session management` |
 
 ### Plan
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/spec [requirements]` | Write a technical specification | `/spec webhook retry with exponential backoff, max 3 retries` |
-| `/architect [spec]` | Design architecture, decompose into Acts | `/architect design for horizontal scaling, expect 10x traffic` |
+| `/uvs-spec [requirements]` | Write a technical specification | `/uvs-spec webhook retry with exponential backoff, max 3 retries` |
+| `/uvs-architect [spec]` | Design architecture, decompose into Acts | `/uvs-architect design for horizontal scaling, expect 10x traffic` |
 
 ### Build
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/test [target]` | Generate tests matching project conventions | `/test src/auth/login.ts focus on error paths` |
-| `/test --unit [target]` | Write unit tests | `/test --unit src/auth/login.ts focus on error paths` |
-| `/test --integration [target]` | Write integration tests | `/test --integration the checkout flow end to end` |
-| `/test --eval [prompt]` | Write AI/LLM evaluation cases | `/test --eval test the search ranking prompt for adversarial inputs` |
-| `/prototype [concept]` | Build a static React prototype | `/prototype event booking app with calendar and payment flow` |
+| `/uvs-test [target]` | Generate tests matching project conventions | `/uvs-test src/auth/login.ts focus on error paths` |
+| `/uvs-test --unit [target]` | Write unit tests | `/uvs-test --unit src/auth/login.ts focus on error paths` |
+| `/uvs-test --integration [target]` | Write integration tests | `/uvs-test --integration the checkout flow end to end` |
+| `/uvs-test --eval [prompt]` | Write AI/LLM evaluation cases | `/uvs-test --eval test the search ranking prompt for adversarial inputs` |
+| `/uvs-prototype [concept]` | Build a static React prototype | `/uvs-prototype event booking app with calendar and payment flow` |
 
 ### Review
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/review [focus]` | Code review: correctness, security, perf, slop | `/review pay attention to the new database migration` |
-| `/review --slop [target]` | Detect 6 categories of AI-generated slop | `/review --slop src/components/ check for over-engineering` |
-| `/review --security [target]` | OWASP audit, dependency scan, secret detection | `/review --security src/payments/ focus on webhook signature validation` |
+| `/uvs-review [focus]` | Code review: correctness, security, perf, slop | `/uvs-review pay attention to the new database migration` |
+| `/uvs-review --slop [target]` | Detect 6 categories of AI-generated slop | `/uvs-review --slop src/components/ check for over-engineering` |
+| `/uvs-review --security [target]` | OWASP audit, dependency scan, secret detection | `/uvs-review --security src/payments/ focus on webhook signature validation` |
 
 ### Ship
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/commit [message]` | Test, lint, review, commit (optionally open PR) | `/commit "Add webhook retry logic" pr` |
-| `/investigate [bug]` | Root-cause debugging (3 attempts then escalate) | `/investigate search returns stale results after reindex` |
+| `/uvs-commit [message]` | Test, lint, review, commit (optionally open PR) | `/uvs-commit "Add webhook retry logic" pr` |
+| `/uvs-investigate [bug]` | Root-cause debugging (3 attempts then escalate) | `/uvs-investigate search returns stale results after reindex` |
 
 ### Session
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/session init` | Start a new session and set up artifacts | `/session init` |
-| `/session checkpoint [label]` | Save session state for next time | `/session checkpoint auth-refactor` |
-| `/session restore` | Load latest checkpoint at session start | `/session restore` |
-| `/session end` | Wrap up and persist final session state | `/session end` |
-| `/session auto` | Auto-checkpoint on a cadence during work | `/session auto` |
+| `/uvs-session init` | Start a new session and set up artifacts | `/uvs-session init` |
+| `/uvs-session checkpoint [label]` | Save session state for next time | `/uvs-session checkpoint auth-refactor` |
+| `/uvs-session restore` | Load latest checkpoint at session start | `/uvs-session restore` |
+| `/uvs-session end` | Wrap up and persist final session state | `/uvs-session end` |
+| `/uvs-session auto` | Auto-checkpoint on a cadence during work | `/uvs-session auto` |
 
 ### QA
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/qa [target]` | Manual/exploratory QA of a change or flow | `/qa walk through the new checkout flow` |
+| `/uvs-qa [target]` | Manual/exploratory QA of a change or flow | `/uvs-qa walk through the new checkout flow` |
 
 ### Util
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/uv-help [topic]` | Show all UV Suite skills, agents, and hooks | `/uv-help review` |
+| `/uvs-help [topic]` | Show all UV Suite skills, agents, and hooks | `/uvs-help review` |
 
 ## Agents (spawned by skills)
 
 | Agent | Model | Used by |
 |-------|-------|---------|
-| Cartographer | Opus | /understand |
-| Spec Writer | Opus | /spec |
-| Architect | Opus | /architect |
-| Reviewer | Opus | /review, /investigate |
-| Test Writer | Sonnet | /test |
-| Eval Writer | Opus | /test --eval |
-| Anti-Slop Guard | Opus | /review --slop |
-| Prototype Builder | Sonnet | /prototype |
+| Cartographer | Opus | /uvs-understand |
+| Spec Writer | Opus | /uvs-spec |
+| Architect | Opus | /uvs-architect |
+| Reviewer | Opus | /uvs-review, /uvs-investigate |
+| Test Writer | Sonnet | /uvs-test |
+| Eval Writer | Opus | /uvs-test --eval |
+| Anti-Slop Guard | Opus | /uvs-review --slop |
+| Prototype Builder | Sonnet | /uvs-prototype |
 
 ## Hooks (automatic, you don't invoke these)
 
@@ -130,7 +130,7 @@ each other's prior output automatically (current session first, then prior sessi
 
 ## Tips
 
-- **Direct the agent:** Every skill accepts arguments. "/review" does a generic review. "/review focus on the error handling in the retry logic" gives targeted results.
-- **Run in parallel:** "Run /review, /review --slop, and /review --security in parallel" — Claude spawns all three simultaneously. `--slop` and `--security` are modes of `/review`, not separate skills. Ambient slop detection also runs automatically as a PostToolUse hook on every write.
-- **Checkpoint before stopping:** "/session checkpoint" saves your session state. "/session restore" loads it next time.
+- **Direct the agent:** Every skill accepts arguments. "/uvs-review" does a generic review. "/uvs-review focus on the error handling in the retry logic" gives targeted results.
+- **Run in parallel:** "Run /uvs-review, /uvs-review --slop, and /uvs-review --security in parallel" — Claude spawns all three simultaneously. `--slop` and `--security` are modes of `/uvs-review`, not separate skills. Ambient slop detection also runs automatically as a PostToolUse hook on every write.
+- **Checkpoint before stopping:** "/uvs-session checkpoint" saves your session state. "/uvs-session restore" loads it next time.
 - **Use the right persona:** `uvs spike` for research, `uvs pro` for production code, `uvs auto` to let it run.

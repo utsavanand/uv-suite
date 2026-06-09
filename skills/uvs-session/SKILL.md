@@ -1,5 +1,5 @@
 ---
-name: session
+name: uvs-session
 description: >
   Manage the UV Suite session lifecycle: label it (init), save a checkpoint,
   restore a prior checkpoint, end it cleanly, or toggle auto-checkpoints.
@@ -69,19 +69,19 @@ esac
 Read the `SUBCOMMAND=...` marker printed by the dispatch block above, then read
 and follow the matching operation file:
 
-- `init` → `skills/session/operations/init.md`
-- `checkpoint` → `skills/session/operations/checkpoint.md`
-- `restore` → `skills/session/operations/restore.md`
-- `end` → `skills/session/operations/end.md`
-- `auto` → `skills/session/operations/auto.md`
+- `init` → `skills/uvs-session/operations/init.md`
+- `checkpoint` → `skills/uvs-session/operations/checkpoint.md`
+- `restore` → `skills/uvs-session/operations/restore.md`
+- `end` → `skills/uvs-session/operations/end.md`
+- `auto` → `skills/uvs-session/operations/auto.md`
 
 The operation file references the context the dispatch block already printed
 above (helper output, checkpoint-dir, frontmatter, git state, session list).
 
 ### help / unknown
 Tell the user the subcommands and their one-line usage:
-- `/session init <name>|--kind|--priority|--purpose|show|clear` — label the session
-- `/session checkpoint [label]` — save a checkpoint
-- `/session restore [<id-prefix>|<name>|list]` — load a prior checkpoint
-- `/session end [label]` — write the final checkpoint and terminate
-- `/session auto on|off|<minutes>|status` — toggle automatic checkpoints
+- `/uvs-session init <name>|--kind|--priority|--purpose|show|clear` — label the session
+- `/uvs-session checkpoint [label]` — save a checkpoint
+- `/uvs-session restore [<id-prefix>|<name>|list]` — load a prior checkpoint
+- `/uvs-session end [label]` — write the final checkpoint and terminate
+- `/uvs-session auto on|off|<minutes>|status` — toggle automatic checkpoints

@@ -5,7 +5,7 @@
    given) and **override** the frontmatter line
    `checkpoint_kind: auto-mechanical` to read `checkpoint_kind: final-manual` so
    it's distinguishable from the auto-checkpoints. Also write/overwrite
-   `<checkpoint-dir>/latest.md` with the same content so `/session restore` picks
+   `<checkpoint-dir>/latest.md` with the same content so `/uvs-session restore` picks
    it up. Use the live conversation context — this is the highest-fidelity record
    before the session closes; anything not written here is lost unless it's in
    code or the auto-checkpoints. Final-checkpoint body structure:

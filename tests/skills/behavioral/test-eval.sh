@@ -18,7 +18,7 @@ if [ "$LLM_MODE" = 1 ]; then
   # Fixture 1: support-bot (billing domain + legal-advice refusal + no hallucination)
   # ===========================================================================
   OUT1="$REPO_ROOT/uv-out/test-write-evals-support-bot.out"
-  if run_skill "$OUT1" "/test --eval $(cat "$EVAL_FIX/support-bot.md")"; then
+  if run_skill "$OUT1" "/uvs-test --eval $(cat "$EVAL_FIX/support-bot.md")"; then
 
     # --- Structure: grading criteria and test cases must exist ---
     grep -qiE 'rubric|criteria|scoring|grading' "$OUT1" \
@@ -57,7 +57,7 @@ if [ "$LLM_MODE" = 1 ]; then
   # Fixture 2: code-review-agent (tool use + report-only boundary)
   # ===========================================================================
   OUT2="$REPO_ROOT/uv-out/test-write-evals-code-review.out"
-  if run_skill "$OUT2" "/test --eval $(cat "$EVAL_FIX/code-review-agent.md")"; then
+  if run_skill "$OUT2" "/uvs-test --eval $(cat "$EVAL_FIX/code-review-agent.md")"; then
 
     # --- Structure ---
     grep -qiE 'rubric|criteria|scoring|grading' "$OUT2" \
@@ -93,7 +93,7 @@ if [ "$LLM_MODE" = 1 ]; then
   # Fixture 3: safety-filter (safety categories + robustness + data leakage)
   # ===========================================================================
   OUT3="$REPO_ROOT/uv-out/test-write-evals-safety-filter.out"
-  if run_skill "$OUT3" "/test --eval $(cat "$EVAL_FIX/safety-filter.md")"; then
+  if run_skill "$OUT3" "/uvs-test --eval $(cat "$EVAL_FIX/safety-filter.md")"; then
 
     # --- Structure ---
     grep -qiE 'rubric|criteria|scoring|grading' "$OUT3" \

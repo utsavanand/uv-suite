@@ -1,5 +1,5 @@
 ---
-name: spec
+name: uvs-spec
 description: >
   Convert requirements into a structured technical specification. Use when starting a new feature
   or receiving vague requirements.
@@ -53,7 +53,7 @@ already captured.
 
 ### Codebase map (architecture, domains, entry points)
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-codebase.md 120 || echo "No codebase map — run /understand first for a grounded spec"`
+!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-codebase.md 120 || echo "No codebase map — run /uvs-understand first for a grounded spec"`
 
 ### Stack map (if a multi-service system)
 

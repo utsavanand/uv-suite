@@ -1,5 +1,5 @@
 ---
-name: architect
+name: uvs-architect
 description: >
   Design system architecture and decompose work into Acts with tasks, dependencies, and cycle budgets.
   Use after a spec is approved, before coding begins.
@@ -46,7 +46,7 @@ Resolve the spec in this exact order:
    with its session + date, default newest). `Read` it. Proceed.
 4. **No spec anywhere** (and `$ARGUMENTS` is empty or just a vague phrase) → **STOP. Do NOT
    architect.** Ask with `AskUserQuestion`, offering:
-   - **Run `/spec` first** (recommended — architecture needs a curated spec), or
+   - **Run `/uvs-spec` first** (recommended — architecture needs a curated spec), or
    - **Describe the problem now** → if they choose this, draft a brief spec inline
      (problem · requirements · success criteria), **confirm it with the user**, and only
      then continue to design from it.
@@ -86,7 +86,7 @@ Test or judge what's over-engineering.
 
 **If a prior `architecture/constraints.md` is loaded above, start from it — don't re-ask
 from scratch.** Reconcile it:
-- If the user's request already says what changed (e.g. `/architect update constraints:
+- If the user's request already says what changed (e.g. `/uvs-architect update constraints:
   now 10× users`), apply that delta.
 - Otherwise present the prior constraints and ask with `AskUserQuestion` whether to reuse
   as-is or update specific factors.
@@ -126,7 +126,7 @@ specialists — skip the rest and document which you skipped and why.
 | `ml-systems` | model training/serving, data/feature pipelines, model lifecycle/monitoring |
 | `full-stack` | a web/product app — frontend/backend/API, state, auth, data layer |
 
-For each relevant specialist, read `.claude/skills/architect/specialists/<name>.md` and
+For each relevant specialist, read `.claude/skills/uvs-architect/specialists/<name>.md` and
 dispatch it via `Agent(general-purpose)`, passing the specialist prompt + the spec + the
 codebase map. They run in parallel and return scoped, slop-guarded recommendations (with
 sources where they researched).

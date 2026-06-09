@@ -4,7 +4,7 @@
 #
 # Reads the metadata file at .uv-suite-state/sessions/$UVS_SESSION_ID.json.
 # If the session has no name, injects an additionalContext nudge once every
-# Nth user prompt (default 3) so Claude reminds the user to run /session init.
+# Nth user prompt (default 3) so Claude reminds the user to run /uvs-session init.
 # Skips when the prompt is itself a slash command.
 
 INPUT=$(cat)
@@ -53,7 +53,7 @@ if [ "$COUNT" -ne 1 ] && [ "$REMAINDER" -ne 1 ]; then
   exit 0
 fi
 
-MSG="[uv-suite] This session has no name yet. Briefly remind the user to run /session init to set name, kind (long-running/outcome), purpose, and priority — these label the session in the watchtower dashboard. One sentence is enough; then proceed with the user's request."
+MSG="[uv-suite] This session has no name yet. Briefly remind the user to run /uvs-session init to set name, kind (long-running/outcome), purpose, and priority — these label the session in the watchtower dashboard. One sentence is enough; then proceed with the user's request."
 
 if command -v jq >/dev/null 2>&1; then
   jq -nc --arg ctx "$MSG" '{hookSpecificOutput:{hookEventName:"UserPromptSubmit",additionalContext:$ctx}}'
