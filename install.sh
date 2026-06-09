@@ -111,7 +111,7 @@ for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
 done
 echo "  ✓ /understand (auto-detects repo vs stack), /spec, /architect, /test (--unit/--integration/--eval)"
 echo "  ✓ /review (--security/--slop/--architecture), /prototype, /qa, /investigate"
-echo "  ✓ /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help"
+echo "  ✓ /commit, /session (init|checkpoint|restore|end|auto), /uv-help"
 
 # --- Install hooks ---
 echo "Installing hook scripts..."
@@ -211,7 +211,7 @@ This project uses [UV Suite](https://github.com/utsavanand/uv-suite) v${UV_VERSI
 
 ### Skills
 
-/understand (auto-detects repo vs stack), /spec, /architect, /test (--unit/--integration/--eval), /review (--security/--slop/--architecture), /prototype, /qa, /investigate, /commit, /session (init|checkpoint|restore|end|auto), /confirm, /uv-help
+/understand (auto-detects repo vs stack), /spec, /architect, /test (--unit/--integration/--eval), /review (--security/--slop/--architecture), /prototype, /qa, /investigate, /commit, /session (init|checkpoint|restore|end|auto), /uv-help
 
 ### When to use which skill (reach for these proactively)
 
@@ -434,7 +434,6 @@ echo "  /qa [target]                  Browser-based QA (Playwright MCP)"
 echo "  /investigate [question]       Multi-step codebase investigation"
 echo "  /commit                       Stage and commit changes"
 echo "  /session <init|checkpoint|restore|end|auto>  Manage session lifecycle"
-echo "  /confirm                      Confirm a HITL gate"
 echo "  /uv-help                      Show UV Suite help"
 echo ""
 

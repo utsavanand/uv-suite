@@ -127,7 +127,7 @@ Human gates  After each     End only     Every Act          Final output
 
 ## Skills (slash commands)
 
-12 skills. Each `skills/<name>/SKILL.md` is a thin orchestrator that dispatches to agents.
+11 skills. Each `skills/<name>/SKILL.md` is a thin orchestrator that dispatches to agents.
 
 | Command | What it does |
 |---|---|
@@ -141,12 +141,11 @@ Human gates  After each     End only     Every Act          Final output
 | `/investigate` | Systematic root-cause debugging |
 | `/commit` | Review → test → commit (and optionally PR) |
 | `/session init\|checkpoint\|restore\|end\|auto` | Session lifecycle — label, checkpoint, restore, end, or auto-checkpoint |
-| `/confirm [on\|off\|<n>]` | Toggle reframe-and-confirm for prompts over `<n>` words |
 | `/uv-help` | List every skill, agent, hook, guardrail, and persona |
 
 ## Hooks (lifecycle automation)
 
-Fire automatically on Claude Code events. You never invoke these. ~26 scripts live in `hooks/`.
+Fire automatically on Claude Code events. You never invoke these. ~28 scripts live in `hooks/`.
 
 | Hook | Fires on | What it does |
 |---|---|---|
@@ -155,7 +154,6 @@ Fire automatically on Claude Code events. You never invoke these. ~26 scripts li
 | doc-slop-grep | File edit/write | Catches vague adjectives in markdown on the spike persona |
 | danger-zone-check | File edit | Warns if file is in DANGER-ZONES.md |
 | block-destructive | Bash command | Blocks `rm -rf /`, force push to main, `DROP TABLE` |
-| confirm-prompt | UserPromptSubmit | For prompts over the threshold, requires Claude to restate before any work starts |
 | session-label-nag | UserPromptSubmit | Reminds you to run `/session init` every Nth prompt while the session has no name |
 | context-warning | PostToolUse | Warns when context usage crosses thresholds |
 | watchtower-send | All events | Forwards every event (with session metadata) to `localhost:4200` |
@@ -211,7 +209,7 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
   settings.json          Permissions and hooks (seeded from your persona on first install)
   agents/                8 agent definitions (canonical .md)
   skills/                12 slash commands
-  hooks/                 ~26 hook scripts
+  hooks/                 ~28 hook scripts
   rules/                 6 anti-slop guardrails (Pro / Auto only)
   personas/              4 persona configs
 .codex/agents/           8 Codex agent definitions (generated from .claude/agents)

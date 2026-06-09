@@ -82,11 +82,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/confirm-prompt.sh",
-            "timeout": 3
-          },
-          {
-            "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-label-nag.sh",
             "timeout": 3
           },

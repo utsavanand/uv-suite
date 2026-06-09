@@ -82,7 +82,6 @@ Every skill accepts free-form arguments to direct the agent. Examples shown belo
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/confirm [question]` | Ask for explicit confirmation before acting | `/confirm before deleting the staging database` |
 | `/uv-help [topic]` | Show all UV Suite skills, agents, and hooks | `/uv-help review` |
 
 ## Agents (spawned by skills)
