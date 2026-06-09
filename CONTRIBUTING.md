@@ -10,14 +10,15 @@ This repo is the *source*. `uvs install` copies subsets of it into a project's
 installed project.
 
 ```
-skills/<name>/SKILL.md   12 skills, one slash command each; SKILL.md is a thin
-                         orchestrator (the prompt + its tool grants). Fan-out
-                         skills carry a sub-folder the orchestrator routes into:
-                           review/specialists/    one file per review specialist
-                           architect/specialists/ one file per domain expert (researches)
-                           test/specialists/      one file per test specialist
-                           understand/modes/      one file per understand mode
-                           session/operations/    one file per session operation
+skills/uvs-<name>/SKILL.md  12 skills, one slash command each (all `uvs-` prefixed for
+                         discoverability); SKILL.md is a thin orchestrator (the prompt +
+                         its tool grants). Fan-out skills carry a sub-folder the
+                         orchestrator routes into:
+                           uvs-review/specialists/    one file per review specialist
+                           uvs-architect/specialists/ one file per domain expert (researches)
+                           uvs-test/specialists/      one file per test specialist
+                           uvs-understand/modes/      one file per understand mode
+                           uvs-session/operations/    one file per session operation
 agents/
   claude-code/<name>.md     subagent definitions — the SINGLE SOURCE OF TRUTH
   generate.py               generates Cursor (.mdc) + Codex (.toml) from the .md files
@@ -56,8 +57,9 @@ the actual instructions live in those sub-folder files.
 
 ## Adding a skill
 
-1. Create `skills/<name>/SKILL.md` with valid frontmatter (copy an existing skill).
-   Keep the SKILL.md a thin orchestrator. If the skill fans out, put each branch in
+1. Create `skills/uvs-<name>/SKILL.md` with valid frontmatter (copy an existing skill).
+   All skills are `uvs-` prefixed (so `/uvs` surfaces them); the `name:` frontmatter
+   must equal the directory name, prefix included. Keep the SKILL.md a thin orchestrator. If the skill fans out, put each branch in
    a sub-folder and have SKILL.md route to it: `specialists/` for review/test-style
    fan-out, `modes/` for understand-style mode selection, `operations/` for
    session-style operations.

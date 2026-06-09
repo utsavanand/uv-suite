@@ -34,10 +34,10 @@ On every `uvs` launch, you'll be prompted to label the session:
 
 ```
 Label this session (Enter to skip — you'll be reminded):
-  name:                     payments retry refactor
-  kind [long/outcome]:      outcome
-  purpose:                  ship retry-on-5xx for the Stripe webhook handler
-  priority [low/med/high]:  high
+  name:     payments retry refactor
+  kind (1=long-running  2=outcome, Enter to skip): 2
+  purpose:  ship retry-on-5xx for the Stripe webhook handler
+  priority (1=low  2=med  3=high, Enter to skip): 3
 ```
 
 Skip any field with Enter. If you skip the name, `/uvs-session init` will be suggested every few prompts until you label it. Set `UVS_NO_PROMPT=1` to suppress prompts entirely.
@@ -72,7 +72,7 @@ Each `uvs` launch generates a `UVS_SESSION_ID` and writes metadata to `.uv-suite
 
 - **Concurrent terminals don't collide.** Two `uvs` launches in the same repo run as distinct sessions with separate names, checkpoints, and dashboard rows.
 - **`uvs watch` shows them all.** The Watchtower control plane at `localhost:4200` streams every session live and lets you act on them from the browser — see [Watchtower at a glance](#watchtower-at-a-glance).
-- **Per-session checkpoints.** `/uvs-session checkpoint` writes to `uv-out/checkpoints/<sid>/`, and `/uvs-session restore` auto-picks the current session's latest. Pass a session id prefix or name to restore from a different one.
+- **Per-session checkpoints.** `/uvs-session checkpoint` writes to `uv-out/sessions/<sid>/checkpoints/`, and `/uvs-session restore` auto-picks the current session's latest. Pass a session id prefix or name to restore from a different one.
 - **Status line shows it all.** The Claude Code status bar shows session name, persona, priority, and elapsed time continuously.
 
 ### Watchtower at a glance
@@ -135,7 +135,7 @@ Human gates  After each     End only     Every Act          Final output
 | `/uvs-spec [requirements]` | Write a technical specification |
 | `/uvs-architect [spec]` | Design architecture, decompose into Acts |
 | `/uvs-test [file]` | Write tests or evals: `--unit` / `--integration` / `--eval` ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
-| `/uvs-review` | Multi-specialist code review; add `--security` (OWASP via Semgrep/Gitleaks/Trivy) or `--slop` (anti-slop audit) |
+| `/uvs-review` | Multi-specialist code review; add `--security` (OWASP via Semgrep/Gitleaks/Trivy), `--slop` (anti-slop audit), or `--architecture` (trace design vs. constraints) |
 | `/uvs-prototype [concept]` | Build a static React prototype |
 | `/uvs-qa` | Browser QA via Playwright MCP |
 | `/uvs-investigate` | Systematic root-cause debugging |
@@ -156,8 +156,10 @@ Fire automatically on Claude Code events. You never invoke these. ~28 scripts li
 | danger-zone-check | File edit | Warns if file is in DANGER-ZONES.md |
 | block-destructive | Bash command | Blocks `rm -rf /`, force push to main, `DROP TABLE` |
 | session-label-nag | UserPromptSubmit | Reminds you to run `/uvs-session init` every Nth prompt while the session has no name |
-| context-warning | PostToolUse | Warns when context usage crosses thresholds |
-| watchtower-send | All events | Forwards every event (with session metadata) to `localhost:4200` |
+| watchtower-send | All events | Forwards every event (with session metadata) to the dashboard at `localhost:4200` |
+| watchtower-notify | Notification / PermissionRequest | Surfaces "needs human" approvals to the dashboard |
+| watchtower-tokens | Stop | Reports per-session token usage (parsed from the transcript) |
+| watchtower-end | SessionEnd | Marks the session terminated on the dashboard |
 | session-start | SessionStart | Records start time, fires bootstrap event with session metadata |
 | session-timer | PostToolUse | Reminders at 45 / 90 / 180 minutes |
 | session-end | Stop | Shows duration, today's total, reflection prompt |
@@ -190,7 +192,7 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 | `uv-out/specs/*.md` | /uvs-architect, /uvs-test, /uvs-test --eval |
 | `uv-out/architecture/*.md` | /uvs-review, /uvs-test, /uvs-review --slop |
 | `uv-out/review-*.md` | /uvs-review --slop, /uvs-review --security |
-| `uv-out/checkpoints/<sid>/*.md` | /uvs-session restore |
+| `uv-out/sessions/<sid>/checkpoints/*.md` | /uvs-session restore |
 
 ## Integrations
 
@@ -221,7 +223,7 @@ DANGER-ZONES.md          Risky areas (commit this)
   current-session.txt
   sessions/<sid>.json
 uv-out/                  Agent output artifacts (gitignored)
-  checkpoints/<sid>/     Per-session checkpoints
+  sessions/<sid>/checkpoints/   Per-session checkpoints
 ```
 
 ## Documentation
