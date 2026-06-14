@@ -1,19 +1,32 @@
-# UV Suite
+<div align="center">
 
-A portable layer that turns Claude Code, Cursor, or Codex into a labeled, observable, anti-slop dev environment — with named sessions, a real-time observability **and control** dashboard, anti-slop guardrails, and per-session memory across launches.
+# 🛠️ UV Suite
 
-By [Utsav](https://www.utsava.xyz/) · [github.com/utsavanand/uv-suite](https://github.com/utsavanand/uv-suite)
+### A labeled, observable, anti-slop layer over every AI coding agent you run.
+
+Turn Claude Code, Cursor, or Codex into a named, observable dev environment —
+with real-time observability **and control**, anti-slop guardrails, and
+per-session memory that survives across launches. One dashboard over every
+session, on your machine.
+
+**[Install](#install) · [Quick Start](#quick-start) · [Start here](#start-here) · [Watchtower](#sessions-and-watchtower)**
+
+Works with **Claude Code · Cursor · Codex**
+
+</div>
+
+---
 
 ## Install
 
-```bash
+```sh
 npm install -g uv-suite
 uvs claude pro                # auto-installs into the current project on first launch
 ```
 
 Or with npx:
 
-```bash
+```sh
 npx uv-suite install          # explicit install only
 ```
 
@@ -21,7 +34,7 @@ npx uv-suite install          # explicit install only
 
 ## Quick Start
 
-```bash
+```sh
 uvs claude pro                # Claude Code, Professional persona
 uvs codex auto                # Codex, Auto persona
 uvs pro                       # Shorthand for uvs claude pro
@@ -41,6 +54,36 @@ Label this session (Enter to skip — you'll be reminded):
 ```
 
 Skip any field with Enter. If you skip the name, `/uvs-session init` will be suggested every few prompts until you label it. Set `UVS_NO_PROMPT=1` to suppress prompts entirely.
+
+## What it does
+
+### 🏷️ Named, labeled sessions
+Every `uvs` launch generates a `UVS_SESSION_ID` and writes metadata to
+`.uv-suite-state/sessions/<id>.json`. Two launches in the same repo run as
+distinct sessions with separate names, checkpoints, and dashboard rows — so
+concurrent terminals never collide.
+
+### 🔭 Watchtower — observability and control
+`uvs watch` starts a dashboard at `localhost:4200` — Python + embedded SQLite,
+no Docker and no database to set up. It's a control plane, not just a viewer:
+stream every session live, then **checkpoint, fork, compact, close, or delete**
+any of them from the browser.
+
+### 🔔 Human in the loop
+The **Needs human** panel surfaces the sessions waiting on you — a
+tool-permission prompt or an idle wait — with the tool and command as context.
+**Approve / Deny** from the browser; for `uvs`-launched (tmux-owned) sessions
+the keystroke is sent for you.
+
+### 🛡️ Anti-slop guardrails
+Six guardrails (comment, doc, test, error-handling, over-engineering, and
+architecture slop) run ambiently on the Pro / Auto personas, catching
+AI-generated noise as it's written rather than at review time.
+
+### 📜 Per-session memory
+`/uvs-session checkpoint` writes to `uv-out/sessions/<sid>/checkpoints/`, and
+`/uvs-session restore` auto-picks the current session's latest — so context
+survives across launches, compaction, and terminal restarts.
 
 ## Start here
 

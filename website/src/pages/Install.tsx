@@ -1,26 +1,71 @@
-import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { motion } from "framer-motion";
+import { useState } from "react";
 
-const fade = { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.3 } }
+const fade = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  transition: { duration: 0.3 },
+};
 
-type Persona = 'spike' | 'sport' | 'professional' | 'auto'
+type Persona = "spike" | "sport" | "professional" | "auto";
 
-const personas: Record<Persona, { label: string; desc: string; effort: string; hooks: string; model: string }> = {
-  spike: { label: 'Spike', desc: 'Research and documentation', effort: 'max', hooks: '1 (doc slop)', model: 'Opus' },
-  sport: { label: 'Sport', desc: 'New projects, prototyping', effort: 'high', hooks: '1 (lint)', model: 'Sonnet' },
-  professional: { label: 'Professional', desc: 'Production code', effort: 'high', hooks: '5 (all)', model: 'Inherit' },
-  auto: { label: 'Auto', desc: 'Fully autonomous', effort: 'max', hooks: '2 (lint + block)', model: 'Inherit' },
-}
+const personas: Record<
+  Persona,
+  {
+    label: string;
+    desc: string;
+    effort: string;
+    guardrails: string;
+    model: string;
+    cmd: string;
+  }
+> = {
+  spike: {
+    label: "Spike",
+    desc: "Research and documentation",
+    effort: "max",
+    guardrails: "Doc slop",
+    model: "Opus",
+    cmd: "spike",
+  },
+  sport: {
+    label: "Sport",
+    desc: "New projects, prototyping",
+    effort: "high",
+    guardrails: "None",
+    model: "Sonnet",
+    cmd: "sport",
+  },
+  professional: {
+    label: "Professional",
+    desc: "Production code",
+    effort: "high",
+    guardrails: "All 6",
+    model: "Inherit",
+    cmd: "pro",
+  },
+  auto: {
+    label: "Auto",
+    desc: "Fully autonomous",
+    effort: "max",
+    guardrails: "All 6",
+    model: "Inherit",
+    cmd: "auto",
+  },
+};
 
 export function Install() {
-  const [persona, setPersona] = useState<Persona>('professional')
+  const [persona, setPersona] = useState<Persona>("professional");
 
   return (
     <div className="space-y-16">
       <motion.section {...fade}>
-        <h1 className="text-[40px] font-semibold leading-[1.1] tracking-tight">Install</h1>
+        <h1 className="text-[40px] font-semibold leading-[1.1] tracking-tight">
+          Install
+        </h1>
         <p className="mt-4 max-w-xl text-base text-text-secondary leading-relaxed">
-          One command. 10 agents, 10 skills, 8 hooks, 6 guardrails, 4 personas. Pick a persona and go.
+          One command. 8 agents, 12 skills, 28 hooks, 6 guardrails, 4 personas.
+          Auto-installs into the current project on first launch.
         </p>
       </motion.section>
 
@@ -28,22 +73,40 @@ export function Install() {
       <section>
         <h2 className="text-xl font-semibold">Quick install</h2>
         <div className="mt-4 rounded-lg bg-surface-code border border-border-light p-5">
-          <code className="text-sm text-text-secondary">$ ./install.sh --persona {persona}</code>
+          <pre className="text-sm leading-relaxed text-text-secondary">
+            {`$ npm install -g uv-suite
+$ uvs claude ${personas[persona].cmd}     # auto-installs on first launch`}
+          </pre>
         </div>
+        <p className="mt-3 text-xs text-text-tertiary">
+          The CLI is{" "}
+          <code className="bg-surface-dim px-1 py-0.5 rounded">uvs</code>, not{" "}
+          <code className="bg-surface-dim px-1 py-0.5 rounded">uv</code> — that
+          name belongs to Astral's Python package manager. Or{" "}
+          <code className="bg-surface-dim px-1 py-0.5 rounded">
+            npx uv-suite install
+          </code>{" "}
+          for an explicit install.
+        </p>
       </section>
 
       {/* Persona selector */}
       <section>
         <h2 className="text-xl font-semibold">Choose a persona</h2>
-        <p className="mt-1 text-sm text-text-secondary">Different contexts need different rigor. The persona sets model, effort, hooks, and permissions.</p>
+        <p className="mt-1 text-sm text-text-secondary">
+          Different contexts need different rigor. The persona sets model,
+          effort, guardrails, and permissions.
+        </p>
 
         <div className="mt-4 flex gap-px overflow-hidden rounded-t-lg bg-border-light">
-          {(Object.keys(personas) as Persona[]).map(p => (
+          {(Object.keys(personas) as Persona[]).map((p) => (
             <button
               key={p}
               onClick={() => setPersona(p)}
               className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
-                persona === p ? 'bg-surface text-text-primary' : 'bg-surface-dim text-text-tertiary hover:text-text-secondary'
+                persona === p
+                  ? "bg-surface text-text-primary"
+                  : "bg-surface-dim text-text-tertiary hover:text-text-secondary"
               }`}
             >
               {personas[p].label}
@@ -60,24 +123,34 @@ export function Install() {
         >
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
             <div>
-              <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary">For</div>
+              <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
+                For
+              </div>
               <div className="mt-1 text-sm">{personas[persona].desc}</div>
             </div>
             <div>
-              <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Model</div>
+              <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
+                Model
+              </div>
               <div className="mt-1 text-sm">{personas[persona].model}</div>
             </div>
             <div>
-              <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Effort</div>
+              <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
+                Effort
+              </div>
               <div className="mt-1 text-sm">{personas[persona].effort}</div>
             </div>
             <div>
-              <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Hooks</div>
-              <div className="mt-1 text-sm">{personas[persona].hooks}</div>
+              <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
+                Guardrails
+              </div>
+              <div className="mt-1 text-sm">{personas[persona].guardrails}</div>
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-border-light">
-            <code className="text-xs text-text-tertiary">$ ./uv.sh {persona === 'professional' ? 'pro' : persona}</code>
+            <code className="text-xs text-text-tertiary">
+              $ uvs claude {personas[persona].cmd}
+            </code>
           </div>
         </motion.div>
       </section>
@@ -96,18 +169,22 @@ export function Install() {
             </thead>
             <tbody>
               {[
-                { cat: 'Agents', n: '10', loc: '.claude/agents/*.md' },
-                { cat: 'Skills', n: '10', loc: '.claude/skills/*/SKILL.md' },
-                { cat: 'Hooks', n: '7+1', loc: '.claude/hooks/*.sh + prompt hook' },
-                { cat: 'Guardrails', n: '6', loc: '.claude/rules/*.md' },
-                { cat: 'Personas', n: '4', loc: '.claude/personas/*.json' },
-                { cat: 'Settings', n: '1', loc: '.claude/settings.json' },
-                { cat: 'Launcher', n: '1', loc: './uv.sh' },
-              ].map(r => (
-                <tr key={r.cat} className="border-b border-border-light last:border-0">
+                { cat: "Agents", n: "8", loc: ".claude/agents/*.md" },
+                { cat: "Skills", n: "12", loc: ".claude/skills/*/SKILL.md" },
+                { cat: "Hooks", n: "~28", loc: ".claude/hooks/*.sh" },
+                { cat: "Guardrails", n: "6", loc: ".claude/rules/*.md" },
+                { cat: "Personas", n: "4", loc: ".claude/personas/*.json" },
+                { cat: "Settings", n: "1", loc: ".claude/settings.json" },
+              ].map((r) => (
+                <tr
+                  key={r.cat}
+                  className="border-b border-border-light last:border-0"
+                >
                   <td className="px-4 py-2.5 font-medium">{r.cat}</td>
                   <td className="px-4 py-2.5 text-text-secondary">{r.n}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-text-tertiary">{r.loc}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-text-tertiary">
+                    {r.loc}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -115,121 +192,43 @@ export function Install() {
         </div>
       </section>
 
-      {/* All 9 skills */}
+      {/* Common commands */}
       <section>
-        <h2 className="text-xl font-semibold">Skills</h2>
-        <p className="mt-1 text-sm text-text-secondary">Slash commands that spawn the right agent with the right context.</p>
-        <div className="mt-4 overflow-hidden rounded-lg border border-border-light">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-light bg-surface-dim text-left text-xs text-text-tertiary">
-                <th className="px-4 py-2.5 font-medium">Command</th>
-                <th className="px-4 py-2.5 font-medium">Agent</th>
-                <th className="px-4 py-2.5 font-medium hidden md:table-cell">What it does</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { cmd: '/map-codebase', agent: 'Cartographer', does: 'Knowledge graph of a single codebase' },
-                { cmd: '/map-stack', agent: 'Cartographer', does: 'Map multiple services and their connections' },
-                { cmd: '/spec', agent: 'Spec Writer', does: 'Requirements to structured specification' },
-                { cmd: '/architect', agent: 'Architect', does: 'System design, Acts breakdown with cycle budgets' },
-                { cmd: '/review', agent: 'Reviewer', does: 'Correctness, security, performance, slop check' },
-                { cmd: '/write-tests', agent: 'Test Writer', does: 'Meaningful tests matching project conventions' },
-                { cmd: '/write-evals', agent: 'Eval Writer', does: 'AI/LLM feature evaluation cases' },
-                { cmd: '/slop-check', agent: 'Anti-Slop Guard', does: '6 categories of AI slop detection' },
-                { cmd: '/prototype', agent: 'Prototype Builder', does: 'Static React site, demo, or presentation' },
-                { cmd: '/security-review', agent: 'Security', does: 'OWASP audit, dependency scan, secret detection' },
-              ].map(r => (
-                <tr key={r.cmd} className="border-b border-border-light last:border-0">
-                  <td className="px-4 py-2.5 font-mono text-xs">{r.cmd}</td>
-                  <td className="px-4 py-2.5 text-text-secondary">{r.agent}</td>
-                  <td className="px-4 py-2.5 text-text-tertiary hidden md:table-cell">{r.does}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Hooks */}
-      <section>
-        <h2 className="text-xl font-semibold">Hooks</h2>
-        <p className="mt-1 text-sm text-text-secondary">Fire automatically. You never invoke these.</p>
-        <div className="mt-4 overflow-hidden rounded-lg border border-border-light">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-light bg-surface-dim text-left text-xs text-text-tertiary">
-                <th className="px-4 py-2.5 font-medium">Hook</th>
-                <th className="px-4 py-2.5 font-medium">Fires on</th>
-                <th className="px-4 py-2.5 font-medium hidden md:table-cell">What it does</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { hook: 'auto-lint.sh', fires: 'Every file write', does: 'Runs prettier, ruff, or gofmt' },
-                { hook: 'Real-time slop check', fires: 'Every file write', does: 'Haiku scans for obvious slop patterns' },
-                { hook: 'danger-zone-check.sh', fires: 'Every file edit', does: 'Warns if file is in DANGER-ZONES.md' },
-                { hook: 'block-destructive.sh', fires: 'Every bash command', does: 'Blocks rm -rf, force push, DROP TABLE' },
-                { hook: 'session-review-reminder.sh', fires: 'Session ending', does: 'Reminds to review uncommitted changes' },
-              ].map(r => (
-                <tr key={r.hook} className="border-b border-border-light last:border-0">
-                  <td className="px-4 py-2.5 font-mono text-xs">{r.hook}</td>
-                  <td className="px-4 py-2.5 text-text-secondary">{r.fires}</td>
-                  <td className="px-4 py-2.5 text-text-tertiary hidden md:table-cell">{r.does}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Extending */}
-      <section>
-        <h2 className="text-xl font-semibold">Extending</h2>
-        <div className="mt-4 grid gap-6 md:grid-cols-2">
-          <div>
-            <h3 className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Add a custom agent</h3>
-            <pre className="mt-3 rounded-lg bg-surface-code border border-border-light p-4 text-xs leading-loose text-text-secondary">
-{`# .claude/agents/my-agent.md
----
-name: my-agent
-description: What it does
-model: sonnet
----
-You are [role]. Your job is to...`}
-            </pre>
-          </div>
-          <div>
-            <h3 className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Add a custom guardrail</h3>
-            <pre className="mt-3 rounded-lg bg-surface-code border border-border-light p-4 text-xs leading-loose text-text-secondary">
-{`# .claude/rules/api-envelope.md
-All API endpoints MUST return:
-{ data, error, meta }
-
-Do not return raw data
-without the envelope.`}
-            </pre>
-          </div>
+        <h2 className="text-xl font-semibold">Common commands</h2>
+        <div className="mt-4 rounded-lg bg-surface-code border border-border-light p-5">
+          <pre className="text-xs leading-relaxed text-text-secondary">
+            {`$ uvs claude pro       # Claude Code, Professional persona
+$ uvs codex auto       # Codex, Auto persona
+$ uvs pro              # Shorthand for uvs claude pro
+$ uvs watch            # Open the Watchtower dashboard
+$ uvs install          # Explicit install
+$ uvs info             # Show what's installed`}
+          </pre>
         </div>
       </section>
 
       {/* Project structure */}
       <section>
-        <h2 className="text-xl font-semibold">Project structure after install</h2>
-        <pre className="mt-4 rounded-lg bg-surface-code border border-border-light p-5 text-xs leading-loose text-text-secondary">
-{`.claude/
-  settings.json          Permissions, hooks (from persona)
-  settings.local.json    Personal overrides (gitignored)
-  agents/                10 agent definitions
-  skills/                9 slash commands
-  hooks/                 4 hook scripts
-  rules/                 6 anti-slop guardrails
+        <h2 className="text-xl font-semibold">
+          Project structure after install
+        </h2>
+        <pre className="mt-4 rounded-lg bg-surface-code border border-border-light p-5 text-xs leading-loose text-text-secondary overflow-x-auto">
+          {`.claude/
+  settings.json          Permissions and hooks (seeded from your persona)
+  agents/                8 agent definitions (canonical .md)
+  skills/                12 slash commands
+  hooks/                 ~28 hook scripts
+  rules/                 6 anti-slop guardrails (Pro / Auto only)
   personas/              4 persona configs
+.codex/agents/           8 Codex agent definitions (generated)
+.cursor/rules/           8 Cursor rule definitions (generated)
+AGENTS.md                Codex instruction file
 DANGER-ZONES.md          Risky areas (commit this)
-uv.sh                   Session launcher`}
+.uv-suite-state/         Session metadata + counters (gitignored)
+uv-out/                  Agent output artifacts (gitignored)
+  sessions/<sid>/checkpoints/   Per-session checkpoints`}
         </pre>
       </section>
     </div>
-  )
+  );
 }
