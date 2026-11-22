@@ -1,0 +1,34 @@
+name = "uv-coding"
+description = "Architect specs and plans, dev builds, qa verifies, release ships; nobody pushes but release"
+
+[roles.architect]
+card = { purpose = "Writes the spec and the architecture; assigns build work" }
+skills = ["uvs-spec", "uvs-architect", "uvs-understand"]
+
+[roles.dev]
+card = { purpose = "Builds what the plan says and raises the PR" }
+skills = ["uvs-prototype", "uvs-test", "uvs-commit"]
+
+[roles.qa]
+card = { purpose = "Reviews every diff and runs QA before anything is done" }
+skills = ["uvs-review", "uvs-qa"]
+
+[roles.release]
+card = { purpose = "Bumps, tags and releases; the only role that pushes" }
+skills = ["uvs-commit"]
+
+[[rules]]
+role = "dev"
+review_by = "qa"
+
+[[rules]]
+role = "dev"
+may_not = ["push"]
+
+[[rules]]
+role = "qa"
+may_not = ["push"]
+
+[[rules]]
+role = "architect"
+may_not = ["push"]

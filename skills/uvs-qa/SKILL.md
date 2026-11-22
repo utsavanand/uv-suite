@@ -272,3 +272,11 @@ This skill is new. No formal eval suite gates it; correctness is validated by ru
 - Health-score weights are a starting point — adjust the formula in Step 8 if real runs produce uninformative scores.
 - Atomic-commit-per-fix can be noisy; consider squashing pre-PR or extending `/uvs-commit` to bundle when fixes are related.
 - Auto-detection of framework via config file presence misses monorepos; add support if needed.
+
+## Verdict (when run as a flow step)
+
+When DuckTerm's runner drives this skill, end with exactly one of these choices
+and a one-line reason, and write the report to the file path the runner names:
+
+- `pass` — the change does what the spec says and the checks are green
+- `fail` — a check failed or a requirement is unmet; the report says which

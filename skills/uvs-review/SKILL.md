@@ -234,3 +234,13 @@ Do not paste the appendix into the chat unless asked. Keep terminal output focus
 ## Dogfood note (2026-06-05)
 
 This skill was rewritten with gstack-derived structural patterns (parallel specialist dispatch, confidence-scored output gating, persisted state coupling). No formal eval gate was used; correctness is validated by running against real PRs in this workspace and tuning specialist prompts as gaps surface. If you spot a finding category that's getting missed or a noise pattern that's leaking through tier gating, edit the relevant specialist file or this orchestrator directly.
+
+## Verdict (when run as a flow step)
+
+When DuckTerm's runner drives this skill, end with exactly one of these choices
+and a one-line reason, and write the findings to the file path the runner
+names:
+
+- `approve` — nothing blocks a merge
+- `revise` — fixable issues, listed in the findings
+- `reject` — the change should not land in this form

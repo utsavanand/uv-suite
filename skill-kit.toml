@@ -1,0 +1,520 @@
+manifest_version = 1
+name        = "uv-suite"
+description = "Spec, architecture, review and test workflows for coding agents: 12 skills, 8 agents, 6 hooks, 6 guardrails, 4 personas, a review flow and a feature flow"
+version     = "0.34.0"
+author      = "utsavanand"
+homepage    = "https://github.com/utsavanand/uv-suite"
+license     = "MIT"
+conflicts_with = []
+teams = ["teams/uv-coding.toml"]
+
+# A persona tunes model, effort, permissions, hooks and guardrails together (personas.md).
+[options.persona]
+default = "professional"
+choices = ["professional", "sport", "auto", "spike"]
+
+# ── knowledge ────────────────────────────────────────────────────────────────
+[[components]]
+kind = "knowledge"
+path = "knowledge/practices.md"
+
+[[components]]
+kind = "knowledge"
+path = "knowledge/human-in-the-loop.md"
+load = "on-demand"
+description = "Cycle budgets, intervention types and learning loops: the HITL framework every gate follows"
+
+[[components]]
+kind = "knowledge"
+path = "knowledge/sharing-and-standards.md"
+load = "on-demand"
+description = "Danger zones, team standards and sharing levels for using the suite across a team"
+
+[[components]]
+kind = "knowledge"
+path = "acts-methodology.md"
+load = "on-demand"
+description = "The ACTS methodology behind the suite: read when asked how the skills fit together"
+
+# guardrails: anti-slop rules read while writing code; which personas get them follows personas.md
+[[components]]
+kind = "knowledge"
+path = "guardrails/architecture-slop.md"
+load = { paths = ["**/*"] }
+when = { persona = ["professional", "auto"] }
+
+[[components]]
+kind = "knowledge"
+path = "guardrails/comment-slop.md"
+load = { paths = ["**/*"] }
+when = { persona = ["professional", "auto"] }
+
+[[components]]
+kind = "knowledge"
+path = "guardrails/error-handling-slop.md"
+load = { paths = ["**/*"] }
+when = { persona = ["professional", "auto"] }
+
+[[components]]
+kind = "knowledge"
+path = "guardrails/overengineering-slop.md"
+load = { paths = ["**/*"] }
+when = { persona = ["professional", "auto"] }
+
+[[components]]
+kind = "knowledge"
+path = "guardrails/test-slop.md"
+load = { paths = ["**/*"] }
+when = { persona = ["professional", "auto"] }
+
+[[components]]
+kind = "knowledge"
+path = "guardrails/doc-slop.md"
+load = { paths = ["**/*.md", "**/*.txt", "**/*.rst"] }
+when = { persona = ["professional", "auto", "spike"] }
+
+# ── skills ───────────────────────────────────────────────────────────────────
+[[components]]
+kind = "skill"
+path = "skills/uvs-spec"
+effects = "workspace"
+outputs = { spec = { file = "uv-out/spec.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-architect"
+effects = "workspace"
+inputs  = { spec = "file" }
+outputs = { plan = { file = "uv-out/architecture.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-prototype"
+effects = "workspace"
+inputs  = { plan = "file" }
+outputs = { changes = { file = "uv-out/changes.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-test"
+effects = "workspace"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-review"
+effects = "read-only"
+inputs  = { diff = "file" }
+outputs = { verdict = { choice = ["approve", "revise", "reject"] }, findings = { file = "uv-out/review-findings.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-qa"
+effects = "read-only"
+inputs  = { diff = "file" }
+outputs = { verdict = { choice = ["pass", "fail"] }, report = { file = "uv-out/qa-report.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-understand"
+effects = "read-only"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-investigate"
+effects = "read-only"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-commit"
+effects = "workspace"
+invocation = "user"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-session"
+effects = "workspace"
+invocation = "user"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-help"
+effects = "read-only"
+invocation = "user"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-lite"
+effects = "read-only"
+invocation = "user"
+
+# ── agents (the canonical Claude Code definitions; adapters render Codex and others) ──
+[[components]]
+kind = "agent"
+path = "agents/claude-code/anti-slop-guard.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/architect.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/cartographer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/eval-writer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/prototype-builder.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/reviewer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/spec-writer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/test-writer.md"
+
+# ── hooks: one neutral script each (hooks/kit/), which personas get them follows personas.md ──
+[[components]]
+kind = "hook"
+name = "block_destructive"
+event = "before_tool"
+match = "shell"
+command = "hooks/kit/block-destructive.sh"
+blocking = true
+timeout = 5
+when = { persona = ["professional", "auto"] }
+
+[[components]]
+kind = "hook"
+name = "danger_zone_write"
+event = "before_tool"
+match = "write"
+command = "hooks/kit/danger-zone-check.sh"
+blocking = false
+timeout = 5
+when = { persona = ["professional", "auto"] }
+
+[[components]]
+kind = "hook"
+name = "danger_zone_edit"
+event = "before_tool"
+match = "edit"
+command = "hooks/kit/danger-zone-check.sh"
+blocking = false
+timeout = 5
+when = { persona = ["professional", "auto"] }
+
+[[components]]
+kind = "hook"
+name = "auto_lint_write"
+event = "after_tool"
+match = "write"
+command = "hooks/kit/auto-lint.sh"
+blocking = false
+timeout = 15
+when = { persona = ["professional", "auto", "sport"] }
+
+[[components]]
+kind = "hook"
+name = "auto_lint_edit"
+event = "after_tool"
+match = "edit"
+command = "hooks/kit/auto-lint.sh"
+blocking = false
+timeout = 15
+when = { persona = ["professional", "auto", "sport"] }
+
+[[components]]
+kind = "hook"
+name = "slop_grep_write"
+event = "after_tool"
+match = "write"
+command = "hooks/kit/slop-grep.sh"
+blocking = false
+timeout = 3
+when = { persona = ["professional"] }
+
+[[components]]
+kind = "hook"
+name = "slop_grep_edit"
+event = "after_tool"
+match = "edit"
+command = "hooks/kit/slop-grep.sh"
+blocking = false
+timeout = 3
+when = { persona = ["professional"] }
+
+[[components]]
+kind = "hook"
+name = "doc_slop_write"
+event = "after_tool"
+match = "write"
+command = "hooks/kit/doc-slop-grep.sh"
+blocking = false
+timeout = 3
+when = { persona = ["spike"] }
+
+[[components]]
+kind = "hook"
+name = "review_reminder"
+event = "stop"
+command = "hooks/kit/session-review-reminder.sh"
+blocking = false
+timeout = 10
+when = { persona = ["professional"] }
+
+# ── permissions: each persona's allow and deny lists, converted to the neutral form ──
+[[components]]
+kind = "permission"
+name = "rules_professional"
+when = { persona = "professional" }
+rules = [
+  { tool = "read", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "shell", match = "git status *", decision = "allow" },
+  { tool = "shell", match = "git diff *", decision = "allow" },
+  { tool = "shell", match = "git log *", decision = "allow" },
+  { tool = "shell", match = "git show *", decision = "allow" },
+  { tool = "shell", match = "git ls-files *", decision = "allow" },
+  { tool = "shell", match = "git branch *", decision = "allow" },
+  { tool = "shell", match = "git blame *", decision = "allow" },
+  { tool = "shell", match = "git remote *", decision = "allow" },
+  { tool = "shell", match = "cat *", decision = "allow" },
+  { tool = "shell", match = "ls *", decision = "allow" },
+  { tool = "shell", match = "head *", decision = "allow" },
+  { tool = "shell", match = "tail *", decision = "allow" },
+  { tool = "shell", match = "find *", decision = "allow" },
+  { tool = "shell", match = "wc *", decision = "allow" },
+  { tool = "shell", match = "grep *", decision = "allow" },
+  { tool = "shell", match = "rg *", decision = "allow" },
+  { tool = "shell", match = "jq *", decision = "allow" },
+  { tool = "shell", match = "sed -n *", decision = "allow" },
+  { tool = "shell", match = "awk *", decision = "allow" },
+  { tool = "shell", match = "tree *", decision = "allow" },
+  { tool = "shell", match = "du *", decision = "allow" },
+  { tool = "shell", match = "df *", decision = "allow" },
+  { tool = "shell", match = "file *", decision = "allow" },
+  { tool = "shell", match = "stat *", decision = "allow" },
+  { tool = "shell", match = "diff *", decision = "allow" },
+  { tool = "shell", match = "basename *", decision = "allow" },
+  { tool = "shell", match = "dirname *", decision = "allow" },
+  { tool = "shell", match = "realpath *", decision = "allow" },
+  { tool = "shell", match = "npm test *", decision = "allow" },
+  { tool = "shell", match = "npm run test *", decision = "allow" },
+  { tool = "shell", match = "npm run lint *", decision = "allow" },
+  { tool = "shell", match = "npm run build *", decision = "allow" },
+  { tool = "shell", match = "npm audit *", decision = "allow" },
+  { tool = "shell", match = "npx jest *", decision = "allow" },
+  { tool = "shell", match = "npx vitest *", decision = "allow" },
+  { tool = "shell", match = "npx prettier *", decision = "allow" },
+  { tool = "shell", match = "pytest *", decision = "allow" },
+  { tool = "shell", match = "go test *", decision = "allow" },
+  { tool = "shell", match = "cargo test *", decision = "allow" },
+  { tool = "shell", match = "chmod *", decision = "allow" },
+  { tool = "shell", match = "mkdir *", decision = "allow" },
+  { tool = "shell", match = "rm /tmp/*", decision = "allow" },
+  { tool = "shell", match = "cat *", decision = "allow" },
+  { tool = "shell", match = "ls *", decision = "allow" },
+  { tool = "shell", match = "echo *", decision = "allow" },
+  { tool = "shell", match = "printf *", decision = "allow" },
+  { tool = "shell", match = "node --check *", decision = "allow" },
+  { tool = "shell", match = "bash -n *", decision = "allow" },
+  { tool = "shell", match = "rm -rf /", decision = "deny" },
+  { tool = "shell", match = "rm -rf ~", decision = "deny" },
+  { tool = "shell", match = "rm -rf .", decision = "deny" },
+  { tool = "shell", match = "sudo rm *", decision = "deny" },
+  { tool = "shell", match = "git push --force * main", decision = "deny" },
+  { tool = "shell", match = "git push --force * master", decision = "deny" },
+  { tool = "shell", match = "git reset --hard origin/*", decision = "deny" },
+  { tool = "shell", match = "sudo rm -rf *", decision = "deny" },
+]
+
+[[components]]
+kind = "permission"
+name = "rules_sport"
+when = { persona = "sport" }
+rules = [
+  { tool = "read", match = "*", decision = "allow" },
+  { tool = "write", match = "*", decision = "allow" },
+  { tool = "edit", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "shell", match = "npm *", decision = "allow" },
+  { tool = "shell", match = "npx *", decision = "allow" },
+  { tool = "shell", match = "node *", decision = "allow" },
+  { tool = "shell", match = "git *", decision = "allow" },
+  { tool = "shell", match = "chmod *", decision = "allow" },
+  { tool = "shell", match = "mkdir *", decision = "allow" },
+  { tool = "shell", match = "rm /tmp/*", decision = "allow" },
+  { tool = "shell", match = "cat *", decision = "allow" },
+  { tool = "shell", match = "ls *", decision = "allow" },
+  { tool = "shell", match = "head *", decision = "allow" },
+  { tool = "shell", match = "tail *", decision = "allow" },
+  { tool = "shell", match = "find *", decision = "allow" },
+  { tool = "shell", match = "wc *", decision = "allow" },
+  { tool = "shell", match = "grep *", decision = "allow" },
+  { tool = "shell", match = "rg *", decision = "allow" },
+  { tool = "shell", match = "jq *", decision = "allow" },
+  { tool = "shell", match = "sed -n *", decision = "allow" },
+  { tool = "shell", match = "awk *", decision = "allow" },
+  { tool = "shell", match = "tree *", decision = "allow" },
+  { tool = "shell", match = "du *", decision = "allow" },
+  { tool = "shell", match = "df *", decision = "allow" },
+  { tool = "shell", match = "file *", decision = "allow" },
+  { tool = "shell", match = "stat *", decision = "allow" },
+  { tool = "shell", match = "diff *", decision = "allow" },
+  { tool = "shell", match = "echo *", decision = "allow" },
+  { tool = "shell", match = "printf *", decision = "allow" },
+  { tool = "shell", match = "node --check *", decision = "allow" },
+  { tool = "shell", match = "bash -n *", decision = "allow" },
+  { tool = "shell", match = "rm -rf /", decision = "deny" },
+  { tool = "shell", match = "rm -rf ~", decision = "deny" },
+  { tool = "shell", match = "rm -rf .", decision = "deny" },
+  { tool = "shell", match = "sudo rm *", decision = "deny" },
+  { tool = "shell", match = "sudo rm -rf *", decision = "deny" },
+  { tool = "shell", match = "git push --force * main", decision = "deny" },
+  { tool = "shell", match = "git push --force * master", decision = "deny" },
+]
+
+[[components]]
+kind = "permission"
+name = "rules_auto"
+when = { persona = "auto" }
+rules = [
+  { tool = "read", match = "*", decision = "allow" },
+  { tool = "write", match = "*", decision = "allow" },
+  { tool = "edit", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "shell", match = "git *", decision = "allow" },
+  { tool = "shell", match = "npm *", decision = "allow" },
+  { tool = "shell", match = "npx *", decision = "allow" },
+  { tool = "shell", match = "node *", decision = "allow" },
+  { tool = "shell", match = "pytest *", decision = "allow" },
+  { tool = "shell", match = "go *", decision = "allow" },
+  { tool = "shell", match = "cargo *", decision = "allow" },
+  { tool = "shell", match = "mvn *", decision = "allow" },
+  { tool = "shell", match = "docker *", decision = "allow" },
+  { tool = "shell", match = "make *", decision = "allow" },
+  { tool = "shell", match = "mkdir *", decision = "allow" },
+  { tool = "shell", match = "ls *", decision = "allow" },
+  { tool = "shell", match = "cat *", decision = "allow" },
+  { tool = "shell", match = "find *", decision = "allow" },
+  { tool = "shell", match = "wc *", decision = "allow" },
+  { tool = "shell", match = "head *", decision = "allow" },
+  { tool = "shell", match = "tail *", decision = "allow" },
+  { tool = "shell", match = "grep *", decision = "allow" },
+  { tool = "shell", match = "rg *", decision = "allow" },
+  { tool = "shell", match = "jq *", decision = "allow" },
+  { tool = "shell", match = "sed -n *", decision = "allow" },
+  { tool = "shell", match = "awk *", decision = "allow" },
+  { tool = "shell", match = "tree *", decision = "allow" },
+  { tool = "shell", match = "du *", decision = "allow" },
+  { tool = "shell", match = "df *", decision = "allow" },
+  { tool = "shell", match = "file *", decision = "allow" },
+  { tool = "shell", match = "stat *", decision = "allow" },
+  { tool = "shell", match = "diff *", decision = "allow" },
+  { tool = "shell", match = "curl *", decision = "allow" },
+  { tool = "shell", match = "chmod *", decision = "allow" },
+  { tool = "shell", match = "rm /tmp/*", decision = "allow" },
+  { tool = "shell", match = "echo *", decision = "allow" },
+  { tool = "shell", match = "printf *", decision = "allow" },
+  { tool = "shell", match = "node --check *", decision = "allow" },
+  { tool = "shell", match = "bash -n *", decision = "allow" },
+  { tool = "shell", match = "rm -rf /", decision = "deny" },
+  { tool = "shell", match = "rm -rf ~", decision = "deny" },
+  { tool = "shell", match = "sudo rm -rf *", decision = "deny" },
+  { tool = "shell", match = "git push --force * main", decision = "deny" },
+  { tool = "shell", match = "git push --force * master", decision = "deny" },
+  { tool = "shell", match = "rm -rf .", decision = "deny" },
+  { tool = "shell", match = "sudo rm *", decision = "deny" },
+]
+
+[[components]]
+kind = "permission"
+name = "rules_spike"
+when = { persona = "spike" }
+rules = [
+  { tool = "read", match = "*", decision = "allow" },
+  { tool = "write", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "shell", match = "git status *", decision = "allow" },
+  { tool = "shell", match = "git diff *", decision = "allow" },
+  { tool = "shell", match = "git log *", decision = "allow" },
+  { tool = "shell", match = "git show *", decision = "allow" },
+  { tool = "shell", match = "git ls-files *", decision = "allow" },
+  { tool = "shell", match = "find *", decision = "allow" },
+  { tool = "shell", match = "wc *", decision = "allow" },
+  { tool = "shell", match = "head *", decision = "allow" },
+  { tool = "shell", match = "tail *", decision = "allow" },
+  { tool = "edit", match = "*", decision = "allow" },
+  { tool = "shell", match = "git *", decision = "allow" },
+  { tool = "shell", match = "npx prettier *", decision = "allow" },
+  { tool = "shell", match = "npx markdown-* *", decision = "allow" },
+  { tool = "shell", match = "curl *", decision = "allow" },
+  { tool = "shell", match = "chmod *", decision = "allow" },
+  { tool = "shell", match = "mkdir *", decision = "allow" },
+  { tool = "shell", match = "rm /tmp/*", decision = "allow" },
+  { tool = "shell", match = "cat *", decision = "allow" },
+  { tool = "shell", match = "ls *", decision = "allow" },
+  { tool = "shell", match = "grep *", decision = "allow" },
+  { tool = "shell", match = "rg *", decision = "allow" },
+  { tool = "shell", match = "jq *", decision = "allow" },
+  { tool = "shell", match = "less *", decision = "allow" },
+  { tool = "shell", match = "sed -n *", decision = "allow" },
+  { tool = "shell", match = "awk *", decision = "allow" },
+  { tool = "shell", match = "file *", decision = "allow" },
+  { tool = "shell", match = "echo *", decision = "allow" },
+  { tool = "shell", match = "printf *", decision = "allow" },
+  { tool = "shell", match = "node --check *", decision = "allow" },
+  { tool = "shell", match = "bash -n *", decision = "allow" },
+  { tool = "shell", match = "rm -rf /", decision = "deny" },
+  { tool = "shell", match = "rm -rf ~", decision = "deny" },
+  { tool = "shell", match = "rm -rf .", decision = "deny" },
+  { tool = "shell", match = "sudo rm *", decision = "deny" },
+  { tool = "shell", match = "sudo rm -rf *", decision = "deny" },
+  { tool = "shell", match = "git push --force * main", decision = "deny" },
+  { tool = "shell", match = "git push --force * master", decision = "deny" },
+]
+
+# ── flows and per-persona harness settings ───────────────────────────────────
+[[components]]
+kind = "flow"
+path = "flows/review.json"
+
+[[components]]
+kind = "flow"
+path = "flows/feature.json"
+
+[[components]]
+kind = "settings"
+harness = "claude-code"
+path = "harness/claude-code/professional.json"
+when = { persona = "professional" }
+
+[[components]]
+kind = "settings"
+harness = "claude-code"
+path = "harness/claude-code/sport.json"
+when = { persona = "sport" }
+
+[[components]]
+kind = "settings"
+harness = "claude-code"
+path = "harness/claude-code/auto.json"
+when = { persona = "auto" }
+
+[[components]]
+kind = "settings"
+harness = "claude-code"
+path = "harness/claude-code/spike.json"
+when = { persona = "spike" }
