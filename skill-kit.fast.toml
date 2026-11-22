@@ -1,0 +1,214 @@
+manifest_version = 1
+name        = "uv-suite-fast"
+description = "UV Suite, fast: wide permissions, lint only, no guardrails; for prototypes and throwaway work"
+version     = "0.34.0"
+author      = "utsavanand"
+homepage    = "https://github.com/utsavanand/uv-suite"
+license     = "MIT"
+conflicts_with = ["uv-suite", "uv-suite-docs"]
+teams = ["teams/uv-coding.toml"]
+
+# One of three UV Suite kits sharing this repository: uv-suite (careful), uv-suite-fast, uv-suite-docs.
+
+[[components]]
+kind = "knowledge"
+path = "knowledge/practices.md"
+
+[[components]]
+kind = "knowledge"
+path = "knowledge/human-in-the-loop.md"
+load = "on-demand"
+description = "Cycle budgets, intervention types and learning loops: the HITL framework every gate follows"
+
+[[components]]
+kind = "knowledge"
+path = "knowledge/sharing-and-standards.md"
+load = "on-demand"
+description = "Danger zones, team standards and sharing levels for using the suite across a team"
+
+[[components]]
+kind = "knowledge"
+path = "acts-methodology.md"
+load = "on-demand"
+description = "The ACTS methodology behind the suite"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-spec"
+effects = "workspace"
+outputs = { spec = { file = "uv-out/spec.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-architect"
+effects = "workspace"
+inputs  = { spec = "file" }
+outputs = { plan = { file = "uv-out/architecture.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-prototype"
+effects = "workspace"
+inputs  = { plan = "file" }
+outputs = { changes = { file = "uv-out/changes.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-test"
+effects = "workspace"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-review"
+effects = "read-only"
+inputs  = { diff = "file" }
+outputs = { verdict = { choice = ["approve", "revise", "reject"] }, findings = { file = "uv-out/review-findings.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-qa"
+effects = "read-only"
+inputs  = { diff = "file" }
+outputs = { verdict = { choice = ["pass", "fail"] }, report = { file = "uv-out/qa-report.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-understand"
+effects = "read-only"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-investigate"
+effects = "read-only"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-commit"
+effects = "workspace"
+invocation = "user"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-session"
+effects = "workspace"
+invocation = "user"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-help"
+effects = "read-only"
+invocation = "user"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-lite"
+effects = "read-only"
+invocation = "user"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/anti-slop-guard.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/architect.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/cartographer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/eval-writer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/prototype-builder.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/reviewer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/spec-writer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/test-writer.md"
+
+[[components]]
+kind = "hook"
+name = "auto_lint_write"
+event = "after_tool"
+match = "write"
+command = "hooks/kit/auto-lint.sh"
+blocking = false
+timeout = 15
+
+[[components]]
+kind = "hook"
+name = "auto_lint_edit"
+event = "after_tool"
+match = "edit"
+command = "hooks/kit/auto-lint.sh"
+blocking = false
+timeout = 15
+
+[[components]]
+kind = "permission"
+rules = [
+  { tool = "read", match = "*", decision = "allow" },
+  { tool = "write", match = "*", decision = "allow" },
+  { tool = "edit", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "shell", match = "npm *", decision = "allow" },
+  { tool = "shell", match = "npx *", decision = "allow" },
+  { tool = "shell", match = "node *", decision = "allow" },
+  { tool = "shell", match = "git *", decision = "allow" },
+  { tool = "shell", match = "chmod *", decision = "allow" },
+  { tool = "shell", match = "mkdir *", decision = "allow" },
+  { tool = "shell", match = "rm /tmp/*", decision = "allow" },
+  { tool = "shell", match = "cat *", decision = "allow" },
+  { tool = "shell", match = "ls *", decision = "allow" },
+  { tool = "shell", match = "head *", decision = "allow" },
+  { tool = "shell", match = "tail *", decision = "allow" },
+  { tool = "shell", match = "find *", decision = "allow" },
+  { tool = "shell", match = "wc *", decision = "allow" },
+  { tool = "shell", match = "grep *", decision = "allow" },
+  { tool = "shell", match = "rg *", decision = "allow" },
+  { tool = "shell", match = "jq *", decision = "allow" },
+  { tool = "shell", match = "sed -n *", decision = "allow" },
+  { tool = "shell", match = "awk *", decision = "allow" },
+  { tool = "shell", match = "tree *", decision = "allow" },
+  { tool = "shell", match = "du *", decision = "allow" },
+  { tool = "shell", match = "df *", decision = "allow" },
+  { tool = "shell", match = "file *", decision = "allow" },
+  { tool = "shell", match = "stat *", decision = "allow" },
+  { tool = "shell", match = "diff *", decision = "allow" },
+  { tool = "shell", match = "echo *", decision = "allow" },
+  { tool = "shell", match = "printf *", decision = "allow" },
+  { tool = "shell", match = "node --check *", decision = "allow" },
+  { tool = "shell", match = "bash -n *", decision = "allow" },
+  { tool = "shell", match = "rm -rf /", decision = "deny" },
+  { tool = "shell", match = "rm -rf ~", decision = "deny" },
+  { tool = "shell", match = "rm -rf .", decision = "deny" },
+  { tool = "shell", match = "sudo rm *", decision = "deny" },
+  { tool = "shell", match = "sudo rm -rf *", decision = "deny" },
+  { tool = "shell", match = "git push --force * main", decision = "deny" },
+  { tool = "shell", match = "git push --force * master", decision = "deny" },
+]
+
+[[components]]
+kind = "flow"
+path = "flows/review.json"
+
+[[components]]
+kind = "flow"
+path = "flows/feature.json"
+
+[[components]]
+kind = "settings"
+harness = "claude-code"
+path = "harness/claude-code/sport.json"
