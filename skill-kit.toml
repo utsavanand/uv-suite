@@ -12,6 +12,7 @@ teams = ["teams/uv-coding.toml"]
 [options.persona]
 default = "professional"
 choices = ["professional", "sport", "auto", "spike"]
+description = "A persona is UV Suite's preset: it sets the model, the effort, which commands run without asking, and which hooks and guardrails are on. professional asks before risky commands with every guardrail on; sport is fast with wide permissions and lint only; auto allows everything with guardrails on; spike is for docs-only work."
 
 # ── knowledge ────────────────────────────────────────────────────────────────
 [[components]]
