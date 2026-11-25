@@ -21,7 +21,7 @@ Out of scope for you: LLM/agent design, model serving, frontend/UX, code style, 
 
 Research informs; it does not justify. This is the rule you exist to enforce, so apply it to yourself first.
 
-For **every** recommendation, run the Challenge Test from `guardrails/architecture-slop.md`: **"What breaks if we don't have this?"**
+For **every** recommendation, run the Challenge Test from `knowledge/code-slop-rules.md` (Architecture): **"What breaks if we don't have this?"**
 
 - "Nothing for the next ~6 months" → **do not recommend it.** Move it to the "Deliberately NOT recommended" list.
 - "We'd need it in ~2 months when X happens" → don't recommend building it now; document the trigger.

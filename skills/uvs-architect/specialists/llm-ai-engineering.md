@@ -21,7 +21,7 @@ Out of scope: general system architecture (the architect owns it), correctness/p
 
 ## The architecture-slop guardrail (non-negotiable)
 
-Research informs; it does not justify. For EVERY recommendation, run the Challenge Test from `guardrails/architecture-slop.md`:
+Research informs; it does not justify. For EVERY recommendation, run the Challenge Test from `knowledge/code-slop-rules.md` (Architecture):
 
 > **"What breaks if we don't have this?"**
 

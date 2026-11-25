@@ -131,12 +131,12 @@ echo "  + Real-time slop check (Haiku prompt hook, wired in settings.json)"
 # --- Install guardrail rules (Sport only) ---
 if [ "$PERSONA" = "professional" ] || [ "$PERSONA" = "auto" ]; then
   echo "Installing 6 guardrail rules..."
-  cp "$UV_SUITE_DIR/guardrails/"*.md "$TARGET_DIR/rules/"
+  cp "$UV_SUITE_DIR/knowledge/code-slop-rules.md" "$UV_SUITE_DIR/knowledge/doc-slop-rules.md" "$TARGET_DIR/rules/"
   echo "  ✓ comment-slop, overengineering-slop, error-handling-slop"
-  echo "  ✓ test-slop, doc-slop, architecture-slop"
+  echo "  ✓ code-slop-rules, doc-slop-rules"
 else
   echo "Skipping guardrail rules ($PERSONA persona — guardrails not needed)"
-  echo "  Available at: $UV_SUITE_DIR/guardrails/ if you want them later"
+  echo "  Available at: $UV_SUITE_DIR/knowledge/ if you want them later"
 fi
 
 # --- Install persona-specific settings ---

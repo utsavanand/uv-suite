@@ -11,30 +11,25 @@ conflicts_with = ["uv-suite", "uv-suite-fast"]
 
 [[components]]
 kind = "knowledge"
-path = "knowledge/practices.md"
+path = "knowledge/agent-working-rules.md"
 
 [[components]]
 kind = "knowledge"
-path = "knowledge/human-in-the-loop.md"
+path = "knowledge/acts-build-planning.md"
 load = "on-demand"
-description = "Cycle budgets, intervention types and learning loops: the HITL framework every gate follows"
+description = "How a build is planned as Acts: structure, decomposition, sizing, and when the agent stops and asks"
 
 [[components]]
 kind = "knowledge"
-path = "knowledge/sharing-and-standards.md"
+path = "knowledge/danger-zones.md"
 load = "on-demand"
-description = "Danger zones, team standards and sharing levels for using the suite across a team"
+description = "The DANGER-ZONES.md format and the inline @danger annotations the hooks and the reviewer act on"
 
 [[components]]
 kind = "knowledge"
-path = "acts-methodology.md"
-load = "on-demand"
-description = "The ACTS methodology behind the suite"
-
-[[components]]
-kind = "knowledge"
-path = "guardrails/doc-slop.md"
+path = "knowledge/doc-slop-rules.md"
 load = { paths = ["**/*.md", "**/*.txt", "**/*.rst"] }
+fallback = "always"
 
 [[components]]
 kind = "skill"

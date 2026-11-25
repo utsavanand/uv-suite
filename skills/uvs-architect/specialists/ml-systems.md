@@ -22,7 +22,7 @@ Out of scope for you: API ergonomics, generic service correctness, infra cost mo
 
 Research informs; it does not justify. Google having a feature store is not a reason for this system to have one.
 
-For EVERY recommendation, run the Challenge Test from `guardrails/architecture-slop.md`:
+For EVERY recommendation, run the Challenge Test from `knowledge/code-slop-rules.md` (Architecture):
 
 > **"What breaks if we don't have this?"**
 > - "Nothing for ~6 months" → do not recommend it.

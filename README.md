@@ -76,7 +76,7 @@ tool-permission prompt or an idle wait — with the tool and command as context.
 the keystroke is sent for you.
 
 ### 🛡️ Anti-slop guardrails
-Six guardrails (comment, doc, test, error-handling, over-engineering, and
+Six slop rules in two files (over-engineering, architecture, error-handling, comment, test, and
 architecture slop) run ambiently on the Pro / Auto personas, catching
 AI-generated noise as it's written rather than at review time.
 
@@ -256,7 +256,7 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
   agents/                8 agent definitions (canonical .md)
   skills/                12 slash commands
   hooks/                 ~28 hook scripts
-  rules/                 6 anti-slop guardrails (Pro / Auto only)
+  rules/                 slop rules (Pro / Auto only)
   personas/              4 persona configs
 .codex/agents/           8 Codex agent definitions (generated from .claude/agents)
 .cursor/rules/           8 Cursor rule definitions (generated from .claude/agents)
@@ -275,10 +275,10 @@ uv-out/                  Agent output artifacts (gitignored)
 |---|---|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Working on UV Suite — adding skills/agents/hooks, running the tests |
 | [personas.md](personas.md) | 4 personas, 7 knobs, when to use each |
-| [knowledge/practices.md](knowledge/practices.md) | Working principles (honesty, parallelism, scope, completion) |
-| [acts-methodology.md](acts-methodology.md) | Acts delivery framework with worked examples |
-| [knowledge/human-in-the-loop.md](knowledge/human-in-the-loop.md) | Cycle budgets, intervention types, learning loops |
-| [knowledge/sharing-and-standards.md](knowledge/sharing-and-standards.md) | Danger zones, team standards, sharing levels |
+| [knowledge/agent-working-rules.md](knowledge/agent-working-rules.md) | How the agent works: honesty, simplicity, surgical changes, verification, when to stop |
+| [knowledge/acts-build-planning.md](knowledge/acts-build-planning.md) | Planning a build as Acts: structure, decomposition, sizing, cycle budgets |
+| [knowledge/danger-zones.md](knowledge/danger-zones.md) | The DANGER-ZONES.md format and inline @danger markers |
+| [knowledge/code-slop-rules.md](knowledge/code-slop-rules.md) · [doc-slop-rules.md](knowledge/doc-slop-rules.md) | The slop rules the reviewer and the anti-slop guard check |
 | [research/landscape.md](research/landscape.md) | Open source tools and references for each agent |
 | [research/comparison.md](research/comparison.md) | UV Suite vs gstack vs Claude Code built-in — feature comparison + prompt-depth deep dive |
 | [research/tool-comparison.md](research/tool-comparison.md) | Claude Code vs Cursor vs Codex — how UV Suite works across all three |

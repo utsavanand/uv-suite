@@ -12,55 +12,31 @@ teams = ["teams/uv-coding.toml"]
 
 [[components]]
 kind = "knowledge"
-path = "knowledge/practices.md"
+path = "knowledge/agent-working-rules.md"
 
 [[components]]
 kind = "knowledge"
-path = "knowledge/human-in-the-loop.md"
+path = "knowledge/acts-build-planning.md"
 load = "on-demand"
-description = "Cycle budgets, intervention types and learning loops: the HITL framework every gate follows"
+description = "How a build is planned as Acts: structure, decomposition, sizing, and when the agent stops and asks"
 
 [[components]]
 kind = "knowledge"
-path = "knowledge/sharing-and-standards.md"
+path = "knowledge/danger-zones.md"
 load = "on-demand"
-description = "Danger zones, team standards and sharing levels for using the suite across a team"
+description = "The DANGER-ZONES.md format and the inline @danger annotations the hooks and the reviewer act on"
 
 [[components]]
 kind = "knowledge"
-path = "acts-methodology.md"
+path = "knowledge/code-slop-rules.md"
 load = "on-demand"
-description = "The ACTS methodology behind the suite"
+description = "The five code slop rules the reviewer and the anti-slop guard check: over-engineering, architecture, error handling, comments, tests"
 
 [[components]]
 kind = "knowledge"
-path = "guardrails/architecture-slop.md"
-load = { paths = ["**/*"] }
-
-[[components]]
-kind = "knowledge"
-path = "guardrails/comment-slop.md"
-load = { paths = ["**/*"] }
-
-[[components]]
-kind = "knowledge"
-path = "guardrails/error-handling-slop.md"
-load = { paths = ["**/*"] }
-
-[[components]]
-kind = "knowledge"
-path = "guardrails/overengineering-slop.md"
-load = { paths = ["**/*"] }
-
-[[components]]
-kind = "knowledge"
-path = "guardrails/test-slop.md"
-load = { paths = ["**/*"] }
-
-[[components]]
-kind = "knowledge"
-path = "guardrails/doc-slop.md"
+path = "knowledge/doc-slop-rules.md"
 load = { paths = ["**/*.md", "**/*.txt", "**/*.rst"] }
+fallback = "always"
 
 [[components]]
 kind = "skill"

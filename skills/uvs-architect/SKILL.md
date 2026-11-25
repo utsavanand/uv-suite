@@ -138,6 +138,6 @@ shapes the design.
 ## Step 3 — Design and decompose into Acts
 
 Synthesize the spec + any specialist input into the architecture and the Acts breakdown
-(per your agent instructions). Apply `guardrails/architecture-slop.md` to the synthesis:
+(per your agent instructions). Apply `knowledge/code-slop-rules.md` (Architecture) to the synthesis:
 **every component must trace to a requirement.** Fold in a specialist recommendation only
 where a requirement justifies it; call out what you deliberately kept simple.

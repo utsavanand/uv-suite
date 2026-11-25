@@ -23,7 +23,7 @@ Out of scope: security detection (the security specialist owns trust boundaries,
 
 Research informs; it does not justify. A pattern existing — even at Google, Stripe, or Vercel — is not a reason to use it here.
 
-For EVERY recommendation, run the Challenge Test from `guardrails/architecture-slop.md`:
+For EVERY recommendation, run the Challenge Test from `knowledge/code-slop-rules.md` (Architecture):
 
 > **"What breaks if we don't have this?"**
 > - "Nothing for ~6 months" → do not recommend it.

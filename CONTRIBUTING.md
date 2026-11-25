@@ -25,9 +25,9 @@ agents/
 hooks/*.sh               lifecycle automation (auto-lint, block-destructive, the
                          uv-out-*.sh session-scoped artifacts, slop-grep ambient slop)
 personas/                the 4 persona configs (spike/sport/professional/auto JSON)
-guardrails/              6 anti-slop rule docs → installed to .claude/rules/
-knowledge/               cross-cutting reference docs (human-in-the-loop,
-                         sharing-and-standards, practices)
+knowledge/               what the agent reads: agent-working-rules (always),
+                         acts-build-planning, danger-zones, code-slop-rules,
+                         doc-slop-rules (on demand or path-scoped)
 research/                best-practices, comparison, landscape, tool-comparison
 fixtures/                runnable test fixtures (pdf-qa multi-service)
 tests/skills/            the skill test harness (contract + behavioral)

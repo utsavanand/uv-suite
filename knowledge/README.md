@@ -1,10 +1,11 @@
 # Knowledge
 
-Cross-cutting reference docs that aren't owned by a single skill — they inform how
-the whole suite is used. (Skill-specific guidance lives inside each skill folder;
-ambient anti-slop rules live in `guardrails/`, installed to `.claude/rules/`.)
+What the agent reads, named by what it does with each file. One file is always on; the rest load on demand or for the files they cover. Skill-specific guidance lives inside each skill folder.
 
-| Doc | What it covers |
-|---|---|
-| [human-in-the-loop.md](human-in-the-loop.md) | Cycle budgets, intervention types, learning loops — the HITL framework every skill's gates follow. Referenced by `/architect`. |
-| [sharing-and-standards.md](sharing-and-standards.md) | Danger zones, team standards, and sharing levels for using the suite across a team. |
+| Doc | Loaded | What it covers |
+|---|---|---|
+| [agent-working-rules.md](agent-working-rules.md) | always | How the agent works: honesty, simplicity, surgical changes, verification, destructive actions, the Stuck format. |
+| [acts-build-planning.md](acts-build-planning.md) | on demand | Planning a build as Acts: structure, decomposition, sizing, parallelism, cycle budgets and when to stop and ask. Read by `/uvs-architect`. |
+| [danger-zones.md](danger-zones.md) | on demand | The `DANGER-ZONES.md` format and the inline `@danger` markers the danger-zone hooks and the reviewer act on. |
+| [code-slop-rules.md](code-slop-rules.md) | on demand | The five code slop rules the reviewer and the anti-slop guard check: over-engineering, architecture, error handling, comments, tests. |
+| [doc-slop-rules.md](doc-slop-rules.md) | docs files | Vague adjectives and buzzword documentation; path-scoped where the harness allows, always-on elsewhere. |
