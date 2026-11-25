@@ -8,7 +8,7 @@ description: >
 argument-hint: "[target]"
 user-invocable: true
 context: fork
-agent: cartographer
+agent: codebase-mapper
 model: claude-opus-4-6
 effort: high
 allowed-tools:
@@ -34,7 +34,7 @@ $ARGUMENTS
 
 ## Mode (auto-detected)
 
-The same cartographer, two ways of looking — and the skill picks for you:
+The same codebase-mapper, two ways of looking — and the skill picks for you:
 
 - **repo** — one codebase: architecture, domains, sequence diagrams, entry points, danger zones.
 - **stack** — multiple services: how they connect (REST, queues, shared DBs, shared libs).

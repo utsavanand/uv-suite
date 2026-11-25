@@ -132,7 +132,7 @@ Skip a specialist if the diff has zero relevance to its scope. Document which yo
 
 For each selected specialist, you (the orchestrator) read the corresponding specialist prompt at `specialists/<name>.md` beside this SKILL.md, then launch a subagent in a single message (parallel tool-call block) passing the specialist's prompt content + the diff you read above as the subagent's task.
 
-Use `Agent(general-purpose)` for each dispatch. Pass the diff, the specialist prompt content, and the relevant project context. Expected return shape per specialist:
+Dispatch each as the `reviewer` agent (the kit's review persona: its checklist and severity levels apply on top of the specialist prompt). Pass the diff, the specialist prompt content, and the relevant project context. Expected return shape per specialist:
 
 ```yaml
 specialist: <name>

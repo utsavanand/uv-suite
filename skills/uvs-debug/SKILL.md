@@ -7,7 +7,6 @@ description: >
 argument-hint: "[bug-description or error-message]"
 user-invocable: true
 context: fork
-agent: reviewer
 model: claude-opus-4-6
 effort: max
 allowed-tools:

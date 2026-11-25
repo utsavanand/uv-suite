@@ -58,6 +58,10 @@ outputs = { verdict = { choice = ["approve", "revise", "reject"] }, findings = {
 
 [[components]]
 kind = "tool"
+cli = { binary = "graphify", doctor = "graphify --version", install_hint = "pip install graphifyy && graphify install" }
+
+[[components]]
+kind = "tool"
 mcp = { name = "playwright", command = "npx", args = ["-y", "@playwright/mcp@0.0.85"], doctor = "npx -y @playwright/mcp@0.0.85 --help" }
 
 [[components]]
@@ -93,15 +97,11 @@ path = "agents/claude-code/architect.md"
 
 [[components]]
 kind = "agent"
-path = "agents/claude-code/cartographer.md"
+path = "agents/claude-code/codebase-mapper.md"
 
 [[components]]
 kind = "agent"
 path = "agents/claude-code/eval-writer.md"
-
-[[components]]
-kind = "agent"
-path = "agents/claude-code/prototype-builder.md"
 
 [[components]]
 kind = "agent"
