@@ -4,7 +4,7 @@ description: >
   Browser-based QA: exercises the running app via Playwright MCP, captures console
   errors and visual evidence, optionally fixes source bugs with atomic commits and
   generates regression tests. Three tiers (quick / standard / exhaustive). Writes
-  uv-out/qa-state.md so /uvs-commit and /ship can detect completion and read the health
+  uv-out/qa-state.md so /uvs-ship and /uvs-ship can detect completion and read the health
   score.
 argument-hint: "[url] [--tier quick|standard|exhaustive]"
 user-invocable: true
@@ -48,19 +48,19 @@ Parse `$ARGUMENTS`:
 Write QA artifacts under this directory (scoped to the current session). The
 `<session-output-dir>/qa/<ts>/` paths below all resolve under it:
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
+This session's output folder is `uv-out/sessions/<id>/`, where `<id>` is the `UVS_SESSION_ID` environment variable, or `uv-out/current/` when it is unset. Create it if it does not exist. Below, `<session-output-dir>` means this folder.
 
-Stable flat pointer maintained for `/uvs-commit` and `/ship`:
+Stable flat pointer maintained for `/uvs-ship` and `/uvs-ship`:
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-pointer.sh qa-state.md qa/state.md`
+After writing, copy this run's `<session-output-dir>/qa/state.md`` to `uv-out/qa-state.md`, so `/uvs-ship` and other skills find the latest run at a fixed path.
 
 ## Project context
 
-!`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
+Read `CLAUDE.md` or `AGENTS.md` at the project root, if present.
 
 ## Detected test framework
 
-!`(test -f playwright.config.ts && echo "playwright") || (test -f playwright.config.js && echo "playwright") || (test -f vitest.config.ts && echo "vitest") || (test -f jest.config.js && echo "jest") || (grep -l '"jest"' package.json 2>/dev/null && echo "jest") || echo "none-detected"`
+Detect the test framework: `playwright.config.*` → playwright; `vitest.config.*` → vitest; `jest.config.js` or a jest entry in `package.json` → jest; otherwise none.
 
 ## Tier definitions
 
@@ -80,7 +80,7 @@ Execute these steps in order.
 
 - Confirm Playwright MCP is reachable (`mcp__playwright__browser_*` tools available). If not, stop and tell user to enable the Playwright MCP server.
 - Verify the target URL is reachable: `curl -sf <url> > /dev/null`. If not, stop and ask user to start the dev server.
-- Create output directory: `mkdir -p <session-output-dir>/qa/<ISO-timestamp>/screenshots` (the `<session-output-dir>` printed above).
+- Create output directory: `mkdir -p <session-output-dir>/qa/<ISO-timestamp>/screenshots` (the `<session-output-dir>` named above).
 - If framework detected, note its config path; you'll write regression tests against it later.
 
 ### Step 2 — Orient
@@ -191,7 +191,7 @@ If a baseline was provided or auto-detected, compute `delta = current - baseline
 
 Write the canonical state to `<session-output-dir>/qa/state.md` (overwritten each run), and
 keep this run's detailed copy at `<session-output-dir>/qa/<ts>/qa-state.md`. The flat pointer
-`uv-out/qa-state.md` already points at `qa/state.md`, so `/uvs-commit` and `/ship` read the latest
+`uv-out/qa-state.md` already points at `qa/state.md`, so `/uvs-ship` and `/uvs-ship` read the latest
 run unchanged.
 
 State frontmatter schema:
@@ -250,11 +250,11 @@ If no fixes were applied (tier=`quick` or no critical bugs), say so explicitly �
 
 ## Notes for downstream skills
 
-`/uvs-commit` reads `uv-out/qa-state.md` and:
+`/uvs-ship` reads `uv-out/qa-state.md` and:
 - Surfaces `issues_remaining.critical > 0` as a blocker (user must override)
 - Includes `health_score` + `delta` in commit message footer when run after QA
 
-`/ship` reads `uv-out/qa-state.md` and:
+`/uvs-ship` reads `uv-out/qa-state.md` and:
 - Blocks PR if `status != complete` or `issues_remaining.critical > 0`
 - Posts the health-score summary as a PR comment
 
@@ -270,7 +270,7 @@ If no fixes were applied (tier=`quick` or no critical bugs), say so explicitly �
 This skill is new. No formal eval suite gates it; correctness is validated by running it against real apps in this workspace. Expected failure modes to watch for in early runs:
 - Playwright MCP tool names may drift; update `allowed-tools` if `mcp__playwright__*` wildcard stops matching.
 - Health-score weights are a starting point — adjust the formula in Step 8 if real runs produce uninformative scores.
-- Atomic-commit-per-fix can be noisy; consider squashing pre-PR or extending `/uvs-commit` to bundle when fixes are related.
+- Atomic-commit-per-fix can be noisy; consider squashing pre-PR or extending `/uvs-ship` to bundle when fixes are related.
 - Auto-detection of framework via config file presence misses monorepos; add support if needed.
 
 ## Verdict (when run as a flow step)

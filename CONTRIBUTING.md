@@ -15,9 +15,9 @@ skills/uvs-<name>/SKILL.md  12 skills, one slash command each (all `uvs-` prefix
                          its tool grants). Fan-out skills carry a sub-folder the
                          orchestrator routes into:
                            uvs-review/specialists/    one file per review specialist
-                           uvs-architect/specialists/ one file per domain expert (researches)
+                           uvs-plan/specialists/ one file per domain expert (researches)
                            uvs-test/specialists/      one file per test specialist
-                           uvs-understand/modes/      one file per understand mode
+                           uvs-map-codebase/modes/      one file per understand mode
                            uvs-session/operations/    one file per session operation
 agents/
   claude-code/<name>.md     subagent definitions — the SINGLE SOURCE OF TRUTH

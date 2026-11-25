@@ -6,8 +6,8 @@
     { "id": "spec", "run": "uvs-spec", "with": { "topic": "inputs.topic", "findings": "steps.review.outputs.findings?" } },
     { "id": "signoff", "gate": "Approve the spec?", "show": "steps.spec.outputs.spec",
       "routes": { "approve": "plan", "reject": "spec" }, "max_loops": 3 },
-    { "id": "plan", "run": "uvs-architect", "with": { "spec": "steps.spec.outputs.spec" } },
-    { "id": "build", "run": "uvs-prototype", "with": { "plan": "steps.plan.outputs.plan" } },
+    { "id": "plan", "run": "uvs-plan", "with": { "spec": "steps.spec.outputs.spec" } },
+    { "id": "build", "run": "uvs-implement", "with": { "plan": "steps.plan.outputs.plan" } },
     { "id": "checks", "parallel": [
         { "id": "review", "decide": "uvs-review", "with": { "diff": "workspace.diff" } },
         { "id": "qa", "decide": "uvs-qa", "with": { "diff": "workspace.diff" } } ] },

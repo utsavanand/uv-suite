@@ -4,7 +4,7 @@ description: >
   Multi-specialist code review. Dispatches concern-specific subagents in parallel
   (security, performance, testing, maintainability, api-contract, data-migration),
   scores each finding 1-10 for confidence, gates output by tier, and persists state
-  to uv-out/review-state.md so /uvs-commit and /ship can detect completion. Pass --security
+  to uv-out/review-state.md so /uvs-ship and /uvs-ship can detect completion. Pass --security
   for a focused tool-backed (Semgrep/Gitleaks/Trivy) OWASP review, --slop for a full
   anti-slop audit (all six slop categories), or --architecture to audit a design against
   its recorded Design Constraints (traceability). Note: ambient slop detection also runs as
@@ -34,11 +34,11 @@ allowed-tools:
 
 ## Changes to review
 
-!`git diff --cached --stat 2>/dev/null || git diff --stat 2>/dev/null || echo "No staged or unstaged changes found"`
+Run `git diff --cached --stat`, or `git diff --stat` when nothing is staged. If `$ARGUMENTS` names a branch, diff against it instead (`git diff <branch>...HEAD --stat`).
 
 ### Full diff
 
-!`git diff --cached 2>/dev/null || git diff 2>/dev/null || echo "No diff available"`
+Then read the full diff the same way (`git diff --cached`, else `git diff`, else the branch diff).
 
 ## Additional target
 
@@ -48,37 +48,37 @@ $ARGUMENTS
 
 Write the review report and state under this directory (scoped to the current session):
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
+This session's output folder is `uv-out/sessions/<id>/`, where `<id>` is the `UVS_SESSION_ID` environment variable, or `uv-out/current/` when it is unset. Create it if it does not exist. Below, `<session-output-dir>` means this folder.
 
-Stable flat pointer maintained for `/uvs-commit` and `/ship`:
+Stable flat pointer maintained for `/uvs-ship` and `/uvs-ship`:
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-pointer.sh review-state.md review/state.md`
+After writing, copy this run's `<session-output-dir>/review/state.md`` to `uv-out/review-state.md`, so `/uvs-ship` and other skills find the latest run at a fixed path.
 
 ## Project context
 
-!`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
+Read `CLAUDE.md` or `AGENTS.md` at the project root, if present.
 
 ## Danger zones
 
-!`cat DANGER-ZONES.md 2>/dev/null || echo "No DANGER-ZONES.md found"`
+Read `DANGER-ZONES.md` at the project root, if present; knowledge/danger-zones.md explains the format.
 
 ## Prior analysis (from other UV Suite agents)
 
 ### Architecture map
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-codebase.md 100 || echo "No codebase map — run /uvs-understand first for better review context"`
+Read the newest `uv-out/**/map-codebase.md` if there is one; its first 100 lines are enough to orient. If none: No codebase map — run /uvs-map-codebase first for better review context.
 
 ### Architecture decisions
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/decisions.md' 60 || echo "No architecture decisions found"`
+Read the newest `uv-out/**/architecture/decisions.md` if there is one; its first 60 lines are enough to orient. If none: No architecture decisions found.
 
 ### Acts plan
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 60 || echo "No acts plan found"`
+Read the newest `uv-out/**/architecture/acts-plan.md` if there is one; its first 60 lines are enough to orient. If none: No acts plan found.
 
 ### Session checkpoint (what's in progress)
 
-!`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
+If the harness shows a checkpoint or session summary, use it for what is in progress; otherwise continue.
 
 ## Orchestration procedure
 
@@ -100,9 +100,9 @@ project — skip Step 1's stop), run **only** that specialist, and skip all othe
 - **`--architecture`**: audit the design against its recorded constraints (no diff needed).
   Load the session's architecture artifacts and dispatch the `architecture-trace` specialist:
 
-  !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/constraints.md' 120 || echo "No constraints.md — run /uvs-architect first (it records design constraints)"`
-  !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/decisions.md' 200 || echo "No decisions.md"`
-  !`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 120 || echo "No acts-plan.md"`
+  Read the newest `uv-out/**/architecture/constraints.md` if there is one; its first 120 lines are enough to orient. If none: No constraints.md — run /uvs-plan first (it records design constraints).
+  Read the newest `uv-out/**/architecture/decisions.md` if there is one; its first 200 lines are enough to orient. If none: No decisions.md.
+  Read the newest `uv-out/**/architecture/acts-plan.md` if there is one; its first 120 lines are enough to orient. If none: No acts-plan.md.
 
   Pass those three to the specialist. If `constraints.md` is absent, stop and say so — there
   is nothing to trace against.
@@ -111,7 +111,7 @@ Otherwise, proceed normally from Step 1.
 
 ### Step 1 — Validate diff exists
 
-If the diff loaded above is empty or "No diff available", stop and tell the user there's nothing to review. Suggest `$ARGUMENTS` should be a branch name (e.g., `/uvs-review feature/foo`) if they want to review a different target. (Does not apply in a focused `--security`/`--slop`/`--architecture` mode.)
+If the diff you read above is empty or "No diff available", stop and tell the user there's nothing to review. Suggest `$ARGUMENTS` should be a branch name (e.g., `/uvs-review feature/foo`) if they want to review a different target. (Does not apply in a focused `--security`/`--slop`/`--architecture` mode.)
 
 ### Step 2 — Classify scope, pick specialists
 
@@ -130,7 +130,7 @@ Skip a specialist if the diff has zero relevance to its scope. Document which yo
 
 ### Step 3 — Dispatch specialists in parallel
 
-For each selected specialist, you (the orchestrator) read the corresponding specialist prompt at `.claude/skills/uvs-review/specialists/<name>.md`, then launch a subagent in a single message (parallel tool-call block) passing the specialist's prompt content + the diff loaded above as the subagent's task.
+For each selected specialist, you (the orchestrator) read the corresponding specialist prompt at `specialists/<name>.md` beside this SKILL.md, then launch a subagent in a single message (parallel tool-call block) passing the specialist's prompt content + the diff you read above as the subagent's task.
 
 Use `Agent(general-purpose)` for each dispatch. Pass the diff, the specialist prompt content, and the relevant project context. Expected return shape per specialist:
 
@@ -171,15 +171,15 @@ Confidence scoring rubric (specialists apply this; orchestrator validates):
 
 For each surfaced finding (tier Critical/High/Medium), assign `fix_class`:
 
-- `auto_fix`: trivial, mechanical fix where wrong-ness is unambiguous. Apply directly if the user runs `/uvs-commit` or asks. Examples: missing `await`, comment slop, dead variable.
+- `auto_fix`: trivial, mechanical fix where wrong-ness is unambiguous. Apply directly if the user runs `/uvs-ship` or asks. Examples: missing `await`, comment slop, dead variable.
 - `ask`: judgment call or risky change. Surface to user, wait for direction. Examples: refactor proposal, security finding requiring threat assessment, API contract break.
 - `info`: not actionable, just worth knowing. Example: "test coverage dropped from 87% to 82% on touched files."
 
 ### Step 6 — Write state
 
 Write the review state to `<session-output-dir>/review/state.md` (the
-`<session-output-dir>` printed above, e.g. `uv-out/sessions/<sid>/`). The flat pointer
-`uv-out/review-state.md` already points here, so `/uvs-commit` and `/ship` read it unchanged.
+`<session-output-dir>` named above, e.g. `uv-out/sessions/<sid>/`). The flat pointer
+`uv-out/review-state.md` already points here, so `/uvs-ship` and `/uvs-ship` read it unchanged.
 Use this exact frontmatter schema so they can parse it:
 
 ```yaml
@@ -222,12 +222,12 @@ Do not paste the appendix into the chat unless asked. Keep terminal output focus
 
 ## Notes for downstream skills
 
-`/uvs-commit` reads `uv-out/review-state.md` and:
+`/uvs-ship` reads `uv-out/review-state.md` and:
 - Refuses to commit if `summary.critical > 0` unless user explicitly overrides
 - Auto-applies `fix_class: auto_fix` findings before commit when `summary.ask == 0`
 - Includes review summary in commit message footer
 
-`/ship` reads `uv-out/review-state.md` and:
+`/uvs-ship` reads `uv-out/review-state.md` and:
 - Blocks PR creation if `status != complete` or `summary.critical > 0`
 - Adds review summary to PR body
 

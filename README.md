@@ -53,7 +53,6 @@ Label this session (Enter to skip — you'll be reminded):
   priority (1=low  2=med  3=high, Enter to skip): 3
 ```
 
-Skip any field with Enter. If you skip the name, `/uvs-session init` will be suggested every few prompts until you label it. Set `UVS_NO_PROMPT=1` to suppress prompts entirely.
 
 ## What it does
 
@@ -81,8 +80,6 @@ architecture slop) run ambiently on the Pro / Auto personas, catching
 AI-generated noise as it's written rather than at review time.
 
 ### 📜 Per-session memory
-`/uvs-session checkpoint` writes to `uv-out/sessions/<sid>/checkpoints/`, and
-`/uvs-session restore` auto-picks the current session's latest — so context
 survives across launches, compaction, and terminal restarts.
 
 ## Start here
@@ -90,13 +87,12 @@ survives across launches, compaction, and terminal restarts.
 After `uvs claude pro`, pick the path that matches what you're doing. Each path names the first skill to run and the canonical next steps.
 
 ### Existing codebase (you didn't write this)
-1. `/uvs-understand` — builds a knowledge graph + architecture overview in `uv-out/map-codebase.md`. Other skills (`/uvs-architect`, `/uvs-review`, `/uvs-review --security`) read it automatically.
-2. `/uvs-session checkpoint` — captures your baseline understanding so `/uvs-session restore` can bring it back next session.
+1. `/uvs-map-codebase` — builds a knowledge graph + architecture overview in `uv-out/map-codebase.md`. Other skills (`/uvs-plan`, `/uvs-review`, `/uvs-review --security`) read it automatically.
 3. Then: `/uvs-review` on the current diff, or `/uvs-spec` for the next feature.
 
 ### New project (you're starting from scratch)
 1. `/uvs-spec` — converts your idea into a structured spec in `uv-out/specs/`.
-2. `/uvs-architect` — breaks the spec into Acts with cycle budgets. Reads the spec automatically.
+2. `/uvs-plan` — breaks the spec into Acts with cycle budgets. Reads the spec automatically.
 3. Then: implement Act by Act. Use `/uvs-test` and `/uvs-review` per Act.
 
 ### Reviewing a PR
@@ -104,8 +100,7 @@ After `uvs claude pro`, pick the path that matches what you're doing. Each path 
 2. `/uvs-review --security` if the diff touches auth, payments, data access, or external inputs.
 
 ### Shipping
-1. `/uvs-session checkpoint` to capture state.
-2. `/uvs-commit` — runs review, tests, commits, optionally opens a PR.
+2. `/uvs-ship` — runs review, tests, commits, optionally opens a PR.
 
 Picking a persona (Spike / Sport / Professional / Auto) is a separate axis from picking a first skill — see [Personas](#personas) below for which mode fits which situation.
 
@@ -115,7 +110,6 @@ Each `uvs` launch generates a `UVS_SESSION_ID` and writes metadata to `.uv-suite
 
 - **Concurrent terminals don't collide.** Two `uvs` launches in the same repo run as distinct sessions with separate names, checkpoints, and dashboard rows.
 - **`uvs watch` shows them all.** The Watchtower control plane at `localhost:4200` streams every session live and lets you act on them from the browser — see [Watchtower at a glance](#watchtower-at-a-glance).
-- **Per-session checkpoints.** `/uvs-session checkpoint` writes to `uv-out/sessions/<sid>/checkpoints/`, and `/uvs-session restore` auto-picks the current session's latest. Pass a session id prefix or name to restore from a different one.
 - **Status line shows it all.** The Claude Code status bar shows session name, persona, priority, and elapsed time continuously.
 
 ### Watchtower at a glance
@@ -174,18 +168,15 @@ Human gates  After each     End only     Every Act          Final output
 
 | Command | What it does |
 |---|---|
-| `/uvs-understand [dir]` | Map a codebase or whole stack — auto-detects repo vs stack |
+| `/uvs-map-codebase [dir]` | Map a codebase or whole stack — auto-detects repo vs stack |
 | `/uvs-spec [requirements]` | Write a technical specification |
-| `/uvs-architect [spec]` | Design architecture, decompose into Acts |
+| `/uvs-plan [spec]` | Design architecture, decompose into Acts |
 | `/uvs-test [file]` | Write tests or evals: `--unit` / `--integration` / `--eval` ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
 | `/uvs-review` | Multi-specialist code review; add `--security` (OWASP via Semgrep/Gitleaks/Trivy), `--slop` (anti-slop audit), or `--architecture` (trace design vs. constraints) |
-| `/uvs-prototype [concept]` | Build a static React prototype |
+| `/uvs-implement [concept]` | Build a static React prototype |
 | `/uvs-qa` | Browser QA via Playwright MCP |
-| `/uvs-investigate` | Systematic root-cause debugging |
-| `/uvs-commit` | Review → test → commit (and optionally PR) |
-| `/uvs-session init\|checkpoint\|restore\|end\|auto` | Session lifecycle — label, checkpoint, restore, end, or auto-checkpoint |
-| `/uvs-lite [on\|off]` | Toggle terse output mode — no preamble, no summaries; persists across turns |
-| `/uvs-help` | List every skill, agent, hook, guardrail, and persona |
+| `/uvs-debug` | Systematic root-cause debugging |
+| `/uvs-ship` | Review → test → commit (and optionally PR) |
 
 ## Hooks (lifecycle automation)
 
@@ -198,7 +189,6 @@ Fire automatically on Claude Code events. You never invoke these. ~28 scripts li
 | doc-slop-grep | File edit/write | Catches vague adjectives in markdown on the spike persona |
 | danger-zone-check | File edit | Warns if file is in DANGER-ZONES.md |
 | block-destructive | Bash command | Blocks `rm -rf /`, force push to main, `DROP TABLE` |
-| session-label-nag | UserPromptSubmit | Reminds you to run `/uvs-session init` every Nth prompt while the session has no name |
 | watchtower-send | All events | Forwards every event (with session metadata) to the dashboard at `localhost:4200` |
 | watchtower-notify | Notification / PermissionRequest | Surfaces "needs human" approvals to the dashboard |
 | watchtower-tokens | Stop | Reports per-session token usage (parsed from the transcript) |
@@ -231,11 +221,10 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 
 | Output | Read by |
 |---|---|
-| `uv-out/map-codebase.md` | /uvs-architect, /uvs-review, /uvs-review --security |
-| `uv-out/specs/*.md` | /uvs-architect, /uvs-test, /uvs-test --eval |
+| `uv-out/map-codebase.md` | /uvs-plan, /uvs-review, /uvs-review --security |
+| `uv-out/specs/*.md` | /uvs-plan, /uvs-test, /uvs-test --eval |
 | `uv-out/architecture/*.md` | /uvs-review, /uvs-test, /uvs-review --slop |
 | `uv-out/review-*.md` | /uvs-review --slop, /uvs-review --security |
-| `uv-out/sessions/<sid>/checkpoints/*.md` | /uvs-session restore |
 
 ## Integrations
 

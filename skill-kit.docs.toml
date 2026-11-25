@@ -39,32 +39,20 @@ outputs = { spec = { file = "uv-out/spec.md" } }
 
 [[components]]
 kind = "skill"
-path = "skills/uvs-architect"
+path = "skills/uvs-plan"
 effects = "workspace"
 inputs  = { spec = "file" }
 outputs = { plan = { file = "uv-out/architecture.md" } }
 
 [[components]]
 kind = "skill"
-path = "skills/uvs-understand"
+path = "skills/uvs-map-codebase"
 effects = "read-only"
 
 [[components]]
 kind = "skill"
-path = "skills/uvs-investigate"
+path = "skills/uvs-debug"
 effects = "read-only"
-
-[[components]]
-kind = "skill"
-path = "skills/uvs-help"
-effects = "read-only"
-invocation = "user"
-
-[[components]]
-kind = "skill"
-path = "skills/uvs-session"
-effects = "workspace"
-invocation = "user"
 
 [[components]]
 kind = "hook"

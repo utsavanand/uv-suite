@@ -1,7 +1,7 @@
 ---
-name: uvs-commit
+name: uvs-ship
 description: >
-  Review, test, slop-check, then commit and optionally open a PR.
+  Run the tests and lint, read the diff once more, then commit and optionally open a PR.
   The ship pipeline: one command from "code complete" to "committed and reviewed."
 argument-hint: "[commit-message or 'pr']"
 user-invocable: true
@@ -28,11 +28,11 @@ $ARGUMENTS
 
 ## Current state
 
-!`git status --short 2>/dev/null | head -30 || echo "not a git repo"`
+Run `git status --short`.
 
-!`git diff --cached --stat 2>/dev/null || echo "nothing staged"`
+Run `git diff --cached --stat` for what is staged.
 
-!`git diff --stat 2>/dev/null || echo "no unstaged changes"`
+Run `git diff --stat` for what is unstaged.
 
 ## Pipeline — run these steps in order
 
@@ -44,15 +44,7 @@ Find and run the project's test command. If tests fail, fix the failures before 
 
 If a lint command exists (npm run lint, ruff check, etc.), run it. Fix auto-fixable issues.
 
-### 3. Quick slop check
-
-Scan changed files for the most obvious patterns:
-- `toBeTruthy()` / `toBeDefined()` in test files
-- Bare `except: pass` in Python
-
-Don't run the full /uvs-review --slop agent — just grep for mechanical patterns.
-
-### 4. Review the diff
+### 3. Review the diff
 
 Read the full diff. Check for:
 - Correctness: does it do what it should?
@@ -61,13 +53,13 @@ Read the full diff. Check for:
 
 If you find issues, fix them. If they need human input, stop and ask.
 
-### 5. Stage and commit
+### 4. Stage and commit
 
 - Stage the relevant files (not `.env`, not `node_modules`, not build artifacts)
 - Write a commit message. If the user provided one in $ARGUMENTS, use it. Otherwise, write a concise message that describes the WHY, not the WHAT.
 - Commit.
 
-### 6. Open PR (if requested)
+### 5. Open PR (if requested)
 
 If the user said "pr" in their arguments, or if on a feature branch:
 - Push the branch
@@ -75,16 +67,9 @@ If the user said "pr" in their arguments, or if on a feature branch:
 - Title: short, under 70 chars
 - Body: summary bullets + test plan
 
-### 7. Checkpoint
-
-After committing, write a checkpoint to `latest.md` in this session's checkpoint
-directory (shown below) with what was committed:
-
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/checkpoint-helper.sh dir`
-
 ## Danger zones
 
-!`cat DANGER-ZONES.md 2>/dev/null || echo "No DANGER-ZONES.md"`
+Read `DANGER-ZONES.md` at the project root, if present; knowledge/danger-zones.md explains the format.
 
 ## Rules
 

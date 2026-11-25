@@ -25,51 +25,43 @@ $ARGUMENTS
 
 The orchestrator picks one specialist per run. Default is `--unit`.
 
-```!
-case "$ARGUMENTS" in
-  *--eval*)        echo "MODE=eval        → specialists/eval.md        (eval-writer agent)";;
-  *--integration*) echo "MODE=integration → specialists/integration.md (test-writer agent)";;
-  *)               echo "MODE=unit        → specialists/unit.md        (test-writer agent)";;
-esac
-```
+Mode: `--eval` in the arguments → eval (eval-writer agent); `--integration` → integration (test-writer agent); otherwise unit (test-writer agent). Pick one per run.
 
 ## Context for code tests (unit / integration)
 
 ### Existing test patterns (match these)
 
-!`find . \( -name "*.test.*" -o -name "*.spec.*" -o -name "test_*" \) -not -path "*/node_modules/*" 2>/dev/null | head -5`
-
-!`cat $(find . \( -name "*.test.*" -o -name "*.spec.*" \) -not -path "*/node_modules/*" 2>/dev/null | head -1) 2>/dev/null | head -40 || echo "No existing tests found"`
+Find existing tests (`*.test.*`, `*.spec.*`, `test_*`, outside `node_modules`) and read one to match its conventions.
 
 ### Project test command
 
-!`cat package.json 2>/dev/null | grep -A2 '"test"' || echo "No package.json test script"`
+Read the project's test command from `package.json` scripts, `pyproject.toml`, a `Makefile` or the CI config.
 
 ## Context for evals (--eval)
 
 ### Existing eval framework
 
-!`find . \( -name "*eval*" -o -name "*evals*" \) -not -path "*/node_modules/*" 2>/dev/null | head -10 || echo "No eval files found"`
+Find existing eval files or folders (`*eval*`), if any, and match their shape.
 
 ### Session output directory
 
 Write eval artifacts under this directory (scoped to the current session):
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
+This session's output folder is `uv-out/sessions/<id>/`, where `<id>` is the `UVS_SESSION_ID` environment variable, or `uv-out/current/` when it is unset. Create it if it does not exist. Below, `<session-output-dir>` means this folder.
 
 ## Shared prior analysis
 
 ### Spec (what to test / evaluate against)
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'specs/*.md' 60 || echo "No spec found — work from code/prompt behavior"`
+Read the newest `uv-out/**/specs/*.md` if there is one; its first 60 lines are enough to orient. If none: No spec found — work from code/prompt behavior.
 
 ### Acts plan (current task context)
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/acts-plan.md' 40 || echo "No acts plan found"`
+Read the newest `uv-out/**/architecture/acts-plan.md` if there is one; its first 40 lines are enough to orient. If none: No acts plan found.
 
 ### Session checkpoint
 
-!`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
+If the harness shows a checkpoint or session summary, use it for what is in progress; otherwise continue.
 
 ## Dispatch
 
@@ -77,12 +69,12 @@ Read the `MODE` line above. It names the specialist prompt file and the agent to
 
 | MODE | Specialist prompt | Agent |
 |---|---|---|
-| unit | `skills/uvs-test/specialists/unit.md` | `test-writer` |
-| integration | `skills/uvs-test/specialists/integration.md` | `test-writer` |
-| eval | `skills/uvs-test/specialists/eval.md` | `eval-writer` |
+| unit | `specialists/unit.md` beside this SKILL.md | `test-writer` |
+| integration | `specialists/integration.md` beside this SKILL.md | `test-writer` |
+| eval | `specialists/eval.md` beside this SKILL.md | `eval-writer` |
 
 You (the orchestrator) read the matching specialist prompt at
-`.claude/skills/uvs-test/specialists/<mode>.md`, then dispatch the named agent via the Agent
+`specialists/<mode>.md` beside this SKILL.md, then dispatch the named agent via the Agent
 tool, passing the specialist prompt content + the target (`$ARGUMENTS`) + the gathered
 context above as the agent's task. Do not write the tests or evals yourself — the agent does.
 

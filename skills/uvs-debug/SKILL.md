@@ -1,5 +1,5 @@
 ---
-name: uvs-investigate
+name: uvs-debug
 description: >
   Systematic root-cause debugging. Traces data flow, tests hypotheses,
   narrows scope. Stops after 3 failed attempts and escalates.
@@ -36,25 +36,25 @@ $ARGUMENTS
 
 ## Project context
 
-!`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md"`
+Read `CLAUDE.md` or `AGENTS.md` at the project root, if present.
 
 ## Session output directory
 
 Write investigation findings under this directory (scoped to the current session):
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
+This session's output folder is `uv-out/sessions/<id>/`, where `<id>` is the `UVS_SESSION_ID` environment variable, or `uv-out/current/` when it is unset. Create it if it does not exist. Below, `<session-output-dir>` means this folder.
 
 ## Codebase map
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-codebase.md 60 || echo "No codebase map"`
+Read the newest `uv-out/**/map-codebase.md` if there is one; its first 60 lines are enough to orient. If none: No codebase map.
 
 ## Recent changes (potential cause)
 
-!`git log --oneline -15 2>/dev/null || echo "no git"`
+Run `git log --oneline -15`: recent changes are the first suspects.
 
 ## Latest checkpoint
 
-!`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -30 || echo "No checkpoint"`
+If the harness shows a checkpoint or session summary, use it for what is in progress; otherwise continue.
 
 ## Investigation methodology
 
@@ -110,11 +110,11 @@ What I need:
 - State hypotheses explicitly before testing them.
 - Track what you've ruled out so you don't revisit.
 - 3 attempts max. Then escalate with structured findings.
-- If the bug is in code you don't understand, run /uvs-understand on that area first.
+- If the bug is in code you don't understand, run /uvs-map-codebase on that area first.
 
 ## Artifact output
 
 Write investigation findings to `<session-output-dir>/investigate/report.md` (the
-`<session-output-dir>` printed above, e.g. `uv-out/sessions/<sid>/`), stamped with
+`<session-output-dir>` named above, e.g. `uv-out/sessions/<sid>/`), stamped with
 provenance frontmatter (`session`, `skill: investigate`, `created`). Include: bug
 description, hypotheses tested, root cause found (or not), fix applied (or escalation).

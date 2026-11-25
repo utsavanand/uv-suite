@@ -1,5 +1,5 @@
 ---
-name: uvs-architect
+name: uvs-plan
 description: >
   Design system architecture and decompose work into Acts with tasks, dependencies, and cycle budgets.
   Use after a spec is approved, before coding begins.
@@ -29,7 +29,7 @@ $ARGUMENTS
 
 Write architecture artifacts under this directory (scoped to the current session):
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
+This session's output folder is `uv-out/sessions/<id>/`, where `<id>` is the `UVS_SESSION_ID` environment variable, or `uv-out/current/` when it is unset. Create it if it does not exist. Below, `<session-output-dir>` means this folder.
 
 ## Step 0 — REQUIRE a curated spec (HARD GATE — do this before anything else)
 
@@ -59,34 +59,34 @@ a one-line explanation. Designing without a spec is a failure, not a fallback.
 
 ## Project context
 
-!`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
+Read `CLAUDE.md` or `AGENTS.md` at the project root, if present.
 
 ## Available specs (current session first, then prior, then legacy)
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-collect.sh 'specs/*.md' || echo "No specs found"`
+List every `uv-out/**/specs/*.md`, newest first, and read the newest. If none: No specs found.
 
 ## Prior analysis
 
 ### Codebase map (current session first)
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-collect.sh 'map-codebase.md' || echo "No codebase map"`
+List every `uv-out/**/map-codebase.md`, newest first, and read the newest. If none: No codebase map.
 
 ### Prior design constraints (reuse or update these — don't re-ask from scratch)
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/constraints.md' 80 || echo "No prior constraints — gather fresh"`
+Read the newest `uv-out/**/architecture/constraints.md` if there is one; its first 80 lines are enough to orient. If none: No prior constraints — gather fresh.
 
 ### Session checkpoint
 
-!`cat uv-out/current/checkpoints/latest.md 2>/dev/null | head -40 || echo "No checkpoint"`
+If the harness shows a checkpoint or session summary, use it for what is in progress; otherwise continue.
 
 ## Step 1 — Establish design constraints (scaling & risk factors)
 
 Right-sizing requires knowing the constraints — without them you can't run the Challenge
 Test or judge what's over-engineering.
 
-**If a prior `architecture/constraints.md` is loaded above, start from it — don't re-ask
+**If a prior `architecture/constraints.md` is read above, start from it — don't re-ask
 from scratch.** Reconcile it:
-- If the user's request already says what changed (e.g. `/uvs-architect update constraints:
+- If the user's request already says what changed (e.g. `/uvs-plan update constraints:
   now 10× users`), apply that delta.
 - Otherwise present the prior constraints and ask with `AskUserQuestion` whether to reuse
   as-is or update specific factors.
@@ -110,7 +110,7 @@ Capture:
 
 These constraints drive everything downstream: pass them to the specialists in Step 2, and
 use them for the Challenge Test in Step 3. **Write the reconciled set to
-`<session-output-dir>/architecture/constraints.md` now** (the session dir printed above),
+`<session-output-dir>/architecture/constraints.md` now** (the session folder named above),
 before designing — overwriting any prior version, and noting what changed if you updated
 it. This keeps one current, auditable record of what the design is right-sized against.
 
@@ -126,7 +126,7 @@ specialists — skip the rest and document which you skipped and why.
 | `ml-systems` | model training/serving, data/feature pipelines, model lifecycle/monitoring |
 | `full-stack` | a web/product app — frontend/backend/API, state, auth, data layer |
 
-For each relevant specialist, read `.claude/skills/uvs-architect/specialists/<name>.md` and
+For each relevant specialist, read `specialists/<name>.md` beside this SKILL.md and
 dispatch it via `Agent(general-purpose)`, passing the specialist prompt + the spec + the
 codebase map. They run in parallel and return scoped, slop-guarded recommendations (with
 sources where they researched).
