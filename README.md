@@ -178,6 +178,19 @@ Human gates  After each     End only     Every Act          Final output
 | `/uvs-debug` | Systematic root-cause debugging |
 | `/uvs-ship` | Review → test → commit (and optionally PR) |
 
+## Flows (sequences DuckTerm runs step by step)
+
+A flow is a sequence of skills the DuckTerm runner drives, with gates the owner answers in the Flows tab. Four flows, each with the input it needs:
+
+| Flow | Input | Steps |
+|---|---|---|
+| `pr-review` | a pull request number or URL | review decides: approve ends, revise or reject fails with the findings |
+| `build` | a spec file | plan → gate "Approve the plan?" → implement → review decides; revise returns to implement up to three times |
+| `qa` | the running app's URL | browser QA decides pass or fail |
+| `ship` | a spec file and the app URL | plan → gate → implement → review and QA together → one verdict (`scripts/verdict.py`, no model) → commit and open the PR; revise returns to implement up to three times |
+
+`/uvs-spec` writes the spec a build starts from; `/uvs-review` without a flow reviews the working tree.
+
 ## Permissions (an opinion on top of the harness's own)
 
 The kit's permission rules sit on top of each harness's own permissioning. They allow without a prompt what a coding session does all day (reading, searching, the read-only git commands, the project's test, lint and build runners) and deny what should never run (`rm -rf` of root, home or the current folder, `sudo rm`, force push to main, hard reset to origin). Everything else keeps the harness's default, so `git commit`, `git push` and `gh pr` still ask. Copilot takes the rules as launch flags; Codex takes the shell rules only.

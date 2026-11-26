@@ -1,9 +1,0 @@
-{
-  "name": "review",
-  "description": "Review the working diff and decide whether it may ship",
-  "inputs": {},
-  "steps": [
-    { "id": "verdict", "decide": "uvs-review", "with": { "diff": "workspace.diff" },
-      "routes": { "approve": "end", "revise": "fail", "reject": "fail" }, "default": "reject" }
-  ]
-}

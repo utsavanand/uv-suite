@@ -34,6 +34,8 @@ allowed-tools:
 
 ## Changes to review
 
+When run as a flow step, the Inputs JSON names what to review: `pr` (a pull request number or URL) or `diff` (a file). For a `pr`, read it with `gh pr view <pr>` for the title and description and `gh pr diff <pr>` for the diff, and review that instead of the working tree.
+
 Run `git diff --cached --stat`, or `git diff --stat` when nothing is staged. If `$ARGUMENTS` names a branch, diff against it instead (`git diff <branch>...HEAD --stat`).
 
 ### Full diff

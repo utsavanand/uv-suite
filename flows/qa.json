@@ -1,0 +1,21 @@
+{
+  "name": "qa",
+  "description": "Drive the running app in a browser and decide whether it passes",
+  "inputs": {
+    "url": "text"
+  },
+  "steps": [
+    {
+      "id": "verdict",
+      "decide": "uvs-qa",
+      "with": {
+        "url": "inputs.url"
+      },
+      "routes": {
+        "pass": "end",
+        "fail": "fail"
+      },
+      "default": "fail"
+    }
+  ]
+}

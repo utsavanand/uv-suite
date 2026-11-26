@@ -43,6 +43,7 @@ outputs = { plan = { file = "uv-out/architecture.md" } }
 kind = "skill"
 path = "skills/uvs-implement"
 effects = "workspace"
+inputs  = { plan = "file", findings = "file?" }
 
 [[components]]
 kind = "skill"
@@ -53,7 +54,7 @@ effects = "workspace"
 kind = "skill"
 path = "skills/uvs-review"
 effects = "read-only"
-inputs  = { diff = "file" }
+inputs  = { diff = "file?", pr = "text?" }
 outputs = { verdict = { choice = ["approve", "revise", "reject"] }, findings = { file = "uv-out/review-findings.md" } }
 
 [[components]]
@@ -68,7 +69,7 @@ mcp = { name = "playwright", command = "npx", args = ["-y", "@playwright/mcp@0.0
 kind = "skill"
 path = "skills/uvs-qa"
 effects = "read-only"
-inputs  = { diff = "file" }
+inputs  = { url = "text", diff = "file?" }
 outputs = { verdict = { choice = ["pass", "fail"] }, report = { file = "uv-out/qa-report.md" } }
 
 [[components]]
@@ -161,11 +162,19 @@ rules = [
 
 [[components]]
 kind = "flow"
-path = "flows/review.json"
+path = "flows/pr-review.json"
 
 [[components]]
 kind = "flow"
-path = "flows/feature.json"
+path = "flows/build.json"
+
+[[components]]
+kind = "flow"
+path = "flows/qa.json"
+
+[[components]]
+kind = "flow"
+path = "flows/ship.json"
 
 [[components]]
 kind = "settings"

@@ -26,6 +26,8 @@ allowed-tools:
 
 $ARGUMENTS
 
+When run as the last step of the `ship` flow there are no arguments: the intent is `pr`, the review and QA verdicts are already in, so run the pipeline and open the pull request.
+
 ## Current state
 
 Run `git status --short`.

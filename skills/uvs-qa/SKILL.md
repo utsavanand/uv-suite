@@ -38,6 +38,8 @@ allowed-tools:
 
 $ARGUMENTS
 
+When run as a flow step, the Inputs JSON carries `url` (the running app) and may carry `diff` (the change under test); use them as the arguments below.
+
 Parse `$ARGUMENTS`:
 - First positional token without `--` prefix → app URL (defaults to `http://localhost:3000` if not given).
 - `--tier quick|standard|exhaustive` → tier (defaults to `standard`).
