@@ -52,7 +52,7 @@ Write QA artifacts under this directory (scoped to the current session). The
 
 This session's output folder is `uv-out/sessions/<id>/`, where `<id>` is the `UVS_SESSION_ID` environment variable, or `uv-out/current/` when it is unset. Create it if it does not exist. Below, `<session-output-dir>` means this folder.
 
-Stable flat pointer maintained for `/uvs-ship` and `/uvs-ship`:
+Stable flat pointer maintained for `/uvs-ship`:
 
 After writing, copy this run's `<session-output-dir>/qa/state.md`` to `uv-out/qa-state.md`, so `/uvs-ship` and other skills find the latest run at a fixed path.
 
