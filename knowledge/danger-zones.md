@@ -1,6 +1,6 @@
 # UV Suite — Danger zones
 
-Code that looks simple but carries a hidden invariant, an undocumented constraint, or history that is not visible from reading it. Each repository lists its own in `DANGER-ZONES.md` at the project root (or one per service). The `danger_zone_write` and `danger_zone_edit` hooks warn when a listed file is about to change; the reviewer reads this file before judging a diff that touches one.
+Code that looks simple but carries a hidden invariant, an undocumented constraint, or history that is not visible from reading it. Each repository lists its own in `DANGER-ZONES.md` at the project root (or one per service). The implement, review and ship skills read this file before touching or judging a listed file.
 
 ## The file
 

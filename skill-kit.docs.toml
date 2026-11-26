@@ -55,15 +55,6 @@ path = "skills/uvs-debug"
 effects = "read-only"
 
 [[components]]
-kind = "hook"
-name = "doc_slop_write"
-event = "after_tool"
-match = "write"
-command = "hooks/kit/doc-slop-grep.sh"
-blocking = false
-timeout = 3
-
-[[components]]
 kind = "permission"
 rules = [
   { tool = "read", match = "*", decision = "allow" },

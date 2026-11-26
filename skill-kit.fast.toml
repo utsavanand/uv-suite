@@ -116,24 +116,6 @@ kind = "agent"
 path = "agents/claude-code/test-writer.md"
 
 [[components]]
-kind = "hook"
-name = "auto_lint_write"
-event = "after_tool"
-match = "write"
-command = "hooks/kit/auto-lint.sh"
-blocking = false
-timeout = 15
-
-[[components]]
-kind = "hook"
-name = "auto_lint_edit"
-event = "after_tool"
-match = "edit"
-command = "hooks/kit/auto-lint.sh"
-blocking = false
-timeout = 15
-
-[[components]]
 kind = "permission"
 rules = [
   { tool = "read", match = "*", decision = "allow" },

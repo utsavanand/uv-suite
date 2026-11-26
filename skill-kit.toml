@@ -137,68 +137,6 @@ blocking = true
 timeout = 5
 
 [[components]]
-kind = "hook"
-name = "danger_zone_write"
-event = "before_tool"
-match = "write"
-command = "hooks/kit/danger-zone-check.sh"
-blocking = false
-timeout = 5
-
-[[components]]
-kind = "hook"
-name = "danger_zone_edit"
-event = "before_tool"
-match = "edit"
-command = "hooks/kit/danger-zone-check.sh"
-blocking = false
-timeout = 5
-
-[[components]]
-kind = "hook"
-name = "auto_lint_write"
-event = "after_tool"
-match = "write"
-command = "hooks/kit/auto-lint.sh"
-blocking = false
-timeout = 15
-
-[[components]]
-kind = "hook"
-name = "auto_lint_edit"
-event = "after_tool"
-match = "edit"
-command = "hooks/kit/auto-lint.sh"
-blocking = false
-timeout = 15
-
-[[components]]
-kind = "hook"
-name = "slop_grep_write"
-event = "after_tool"
-match = "write"
-command = "hooks/kit/slop-grep.sh"
-blocking = false
-timeout = 3
-
-[[components]]
-kind = "hook"
-name = "slop_grep_edit"
-event = "after_tool"
-match = "edit"
-command = "hooks/kit/slop-grep.sh"
-blocking = false
-timeout = 3
-
-[[components]]
-kind = "hook"
-name = "review_reminder"
-event = "stop"
-command = "hooks/kit/session-review-reminder.sh"
-blocking = false
-timeout = 10
-
-[[components]]
 kind = "permission"
 rules = [
   { tool = "read", match = "*", decision = "allow" },

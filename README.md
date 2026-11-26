@@ -180,25 +180,11 @@ Human gates  After each     End only     Every Act          Final output
 
 ## Hooks (lifecycle automation)
 
-Fire automatically on Claude Code events. You never invoke these. ~28 scripts live in `hooks/`.
+One hook, because a hook is the only component that can stop a command by its content before it runs; everything else a hook used to do here (formatting, slop greps, danger-zone warnings, reminders) is the project's own tooling or a skill's job.
 
 | Hook | Fires on | What it does |
 |---|---|---|
-| auto-lint | File write | Runs prettier, ruff, or gofmt |
-| slop-grep | File edit/write | Ambient slop detection on sport / professional / auto personas |
-| doc-slop-grep | File edit/write | Catches vague adjectives in markdown on the spike persona |
-| danger-zone-check | File edit | Warns if file is in DANGER-ZONES.md |
-| block-destructive | Bash command | Blocks `rm -rf /`, force push to main, `DROP TABLE` |
-| watchtower-send | All events | Forwards every event (with session metadata) to the dashboard at `localhost:4200` |
-| watchtower-notify | Notification / PermissionRequest | Surfaces "needs human" approvals to the dashboard |
-| watchtower-tokens | Stop | Reports per-session token usage (parsed from the transcript) |
-| watchtower-end | SessionEnd | Marks the session terminated on the dashboard |
-| session-start | SessionStart | Records start time, fires bootstrap event with session metadata |
-| session-timer | PostToolUse | Reminders at 45 / 90 / 180 minutes |
-| session-end | Stop | Shows duration, today's total, reflection prompt |
-| session-review-reminder | Stop | Nudges you to review uncommitted changes |
-| uv-out-* | Session events | Manage session-scoped artifacts under `uv-out/sessions/<sid>/` |
-| status-line | Continuous | Renders session label, persona, priority, and timer in the Claude Code status bar |
+| block-destructive | Before every shell command | Blocks `rm -rf` of root, home or the current folder, `DROP TABLE` and `TRUNCATE`, force push to main, `git reset --hard origin` |
 
 ## Agents
 
