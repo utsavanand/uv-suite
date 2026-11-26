@@ -54,7 +54,7 @@ This session's output folder is `uv-out/sessions/<id>/`, where `<id>` is the `UV
 
 Stable flat pointer maintained for `/uvs-ship`:
 
-After writing, copy this run's `<session-output-dir>/qa/state.md`` to `uv-out/qa-state.md`, so `/uvs-ship` and other skills find the latest run at a fixed path.
+After writing, copy this run's `<session-output-dir>/qa/state.md` to `uv-out/qa-state.md`, so `/uvs-ship` and other skills find the latest run at a fixed path.
 
 ## Project context
 
