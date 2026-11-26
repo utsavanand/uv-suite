@@ -134,21 +134,7 @@ Skip a specialist if the diff has zero relevance to its scope. Document which yo
 
 For each selected specialist, you (the orchestrator) read the corresponding specialist prompt at `specialists/<name>.md` beside this SKILL.md, then launch a subagent in a single message (parallel tool-call block) passing the specialist's prompt content + the diff you read above as the subagent's task.
 
-Dispatch each as the `reviewer` agent (the kit's review persona: its checklist and severity levels apply on top of the specialist prompt). Pass the diff, the specialist prompt content, and the relevant project context. Expected return shape per specialist:
-
-```yaml
-specialist: <name>
-findings:
-  - file: <path>
-    line: <number or range>
-    severity: critical|high|medium|low
-    confidence: <1-10>
-    title: <one-line summary>
-    detail: <what's wrong, why it matters>
-    fix_class: auto_fix|ask|info
-    suggested_fix: <code or instruction, optional>
-status: complete
-```
+Dispatch each as the `reviewer` agent (the kit's review persona: its checklist and severity levels apply on top of the specialist prompt). Pass the diff, the specialist prompt content, and the relevant project context. Each specialist returns the shape in `reference/specialist-return.md` beside this SKILL.md.
 
 ### Step 4 — Aggregate, score, tier
 
@@ -181,33 +167,8 @@ For each surfaced finding (tier Critical/High/Medium), assign `fix_class`:
 
 Write the review state to `<session-output-dir>/review/state.md` (the
 `<session-output-dir>` named above, e.g. `uv-out/sessions/<sid>/`). The flat pointer
-`uv-out/review-state.md` already points here, so `/uvs-ship` and `/uvs-ship` read it unchanged.
-Use this exact frontmatter schema so they can parse it:
-
-```yaml
----
-schema: uv-suite/review-state/v1
-session_id: <UVS_SESSION_ID env var, or "unknown">
-ran_at: <ISO 8601 timestamp>
-target: <branch | HEAD | $ARGUMENTS>
-diff_stats:
-  files_changed: <n>
-  additions: <n>
-  deletions: <n>
-specialists_run: [security, performance, testing, maintainability, api-contract, data-migration]
-specialists_skipped: []   # with reason in body
-summary:
-  critical: <count of confidence 9-10>
-  high: <count of confidence 7-8>
-  medium: <count of confidence 5-6>
-  low: <count of confidence 3-4>
-  suppressed: <count of confidence 1-2>
-  auto_fix: <count>
-  ask: <count>
-  info: <count>
-status: complete   # or: partial, failed
----
-```
+`uv-out/review-state.md` already points here, so `/uvs-ship` reads it unchanged.
+Start the file with the frontmatter in `reference/review-state.md` beside this SKILL.md, exactly.
 
 Below the frontmatter, write the human-readable findings report (markdown) with one section per tier, then an appendix for low-confidence findings, then a "Specialists skipped" section explaining why each was skipped.
 
@@ -221,21 +182,6 @@ Output to the user in this order:
 5. Pointer to `uv-out/review-state.md` for the full report including low-confidence findings
 
 Do not paste the appendix into the chat unless asked. Keep terminal output focused on what needs attention.
-
-## Notes for downstream skills
-
-`/uvs-ship` reads `uv-out/review-state.md` and:
-- Refuses to commit if `summary.critical > 0` unless user explicitly overrides
-- Auto-applies `fix_class: auto_fix` findings before commit when `summary.ask == 0`
-- Includes review summary in commit message footer
-
-`/uvs-ship` reads `uv-out/review-state.md` and:
-- Blocks PR creation if `status != complete` or `summary.critical > 0`
-- Adds review summary to PR body
-
-## Dogfood note (2026-06-05)
-
-This skill was rewritten with gstack-derived structural patterns (parallel specialist dispatch, confidence-scored output gating, persisted state coupling). No formal eval gate was used; correctness is validated by running against real PRs in this workspace and tuning specialist prompts as gaps surface. If you spot a finding category that's getting missed or a noise pattern that's leaking through tier gating, edit the relevant specialist file or this orchestrator directly.
 
 ## Verdict (when run as a flow step)
 

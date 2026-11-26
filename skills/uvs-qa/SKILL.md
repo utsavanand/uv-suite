@@ -124,12 +124,7 @@ Sort findings into severity buckets:
 | `medium` | Visual regression visible to user (layout shift, missing image, alignment), console warning, slow interaction (>2s with no spinner) |
 | `low` | Minor visual nit, accessibility warning that doesn't block use, console info-level message |
 
-Assign confidence 1-10 to each (same rubric as `/uvs-review`):
-- 9-10: Reproduced in this run with screenshot evidence
-- 7-8: Pattern-matched against a known bug class (e.g., 404 on resource fetch in console) with screenshot
-- 5-6: Likely issue but couldn't reproduce reliably (e.g., race condition observed once)
-- 3-4: Suspicious but not confirmed
-- 1-2: Speculation, suppress from output
+Assign confidence 1-10 to each, as `/uvs-review` does: 9-10 reproduced here with a screenshot, 7-8 a known bug class with a screenshot, 5-6 seen but not reliably reproduced, 3-4 suspicious, 1-2 suppress.
 
 ### Step 5 — Fix loop (skip for tier `quick`)
 
@@ -152,18 +147,7 @@ Never bundle multiple fixes in one commit — atomic per fix so revert is precis
 
 ### Step 6 — Generate regression tests
 
-Skip if framework is `none-detected` or tier is `quick`.
-
-For each `verified-fixed` finding, write a regression test in the project's convention:
-- Playwright: `*.spec.ts` in the existing test dir, using `test(...)` and `page.*` API.
-- Jest/Vitest: `*.test.ts` covering the unit if the fix was unit-level; integration spec if not.
-
-Each test must:
-- Have a name that describes the bug (`'navigates to /users when nav button clicked (regression for QA-003)'`)
-- Have at least one assertion that would have failed pre-fix
-- Run as part of the project's existing test command (verify by running it)
-
-Run the new tests once before declaring done. If they fail, the fix didn't actually work — go back to Step 5 with `regressed`.
+Skip if the framework is `none-detected` or the tier is `quick`. Otherwise one regression test per `verified-fixed` finding, in the project's own framework, run once before declaring done; the rules are in `reference/regression-tests.md` beside this SKILL.md.
 
 ### Step 7 — Final QA pass
 
@@ -176,68 +160,20 @@ After all fixes are committed and tests pass:
 
 ### Step 8 — Compute health score
 
-```
-score = 100
-  - 25 × critical_remaining
-  - 10 × high_remaining
-  - 3 × medium_remaining
-  - 1 × low_remaining
-  - 5 × console_errors_remaining
-  - 2 × console_warnings_remaining
-(clamped to [0, 100])
-```
-
-If a baseline was provided or auto-detected, compute `delta = current - baseline`. **If delta is negative, warn prominently** — something regressed during this run that wasn't caused by an in-run fix.
+The formula and the baseline delta are in `reference/health-score.md` beside this SKILL.md.
 
 ### Step 9 — Write state
 
 Write the canonical state to `<session-output-dir>/qa/state.md` (overwritten each run), and
 keep this run's detailed copy at `<session-output-dir>/qa/<ts>/qa-state.md`. The flat pointer
-`uv-out/qa-state.md` already points at `qa/state.md`, so `/uvs-ship` and `/uvs-ship` read the latest
+`uv-out/qa-state.md` already points at `qa/state.md`, so `/uvs-ship` reads the latest
 run unchanged.
 
-State frontmatter schema:
-
-```yaml
----
-schema: uv-suite/qa-state/v1
-session_id: <UVS_SESSION_ID env, or "unknown">
-ran_at: <ISO 8601>
-target: <url>
-tier: quick|standard|exhaustive
-viewports: [<list>]
-test_framework: <playwright|jest|vitest|none-detected>
-pages_visited: <n>
-deep_flows_run: <n>
-issues_found:
-  critical: <n>
-  high: <n>
-  medium: <n>
-  low: <n>
-issues_remaining:
-  critical: <n>
-  high: <n>
-  medium: <n>
-  low: <n>
-console_errors: <n>
-console_warnings: <n>
-fixes_committed: <n>
-fixes_regressed: <n>
-fixes_unchanged: <n>
-regression_tests_added: <n>
-health_score: <0-100>
-baseline_score: <0-100 | null>
-health_delta: <integer | null>
-artifacts:
-  screenshots_dir: <session-output-dir>/qa/<ts>/screenshots/
-  commits: [<sha>, ...]
-status: complete   # or: partial, failed
----
-```
-
-Below the frontmatter, write a human-readable report with sections for: page map, findings by severity (with screenshot references), commits made, regression tests added, remaining work, health score breakdown.
+Start the file with the frontmatter in `reference/qa-state.md` beside this SKILL.md, exactly, then the report sections it lists.
 
 ### Step 10 — Report to user
+
+Write in the voice of `reference/voice.md` beside this SKILL.md: what you observed, with the screenshot, before what you assume.
 
 Output to the user in this order:
 1. Tier + viewports + pages visited (one line)
@@ -249,31 +185,6 @@ Output to the user in this order:
 7. Pointer to `uv-out/qa-state.md` and screenshots directory
 
 If no fixes were applied (tier=`quick` or no critical bugs), say so explicitly — don't pretend there was nothing to fix.
-
-## Notes for downstream skills
-
-`/uvs-ship` reads `uv-out/qa-state.md` and:
-- Surfaces `issues_remaining.critical > 0` as a blocker (user must override)
-- Includes `health_score` + `delta` in commit message footer when run after QA
-
-`/uvs-ship` reads `uv-out/qa-state.md` and:
-- Blocks PR if `status != complete` or `issues_remaining.critical > 0`
-- Posts the health-score summary as a PR comment
-
-## Voice rules
-
-- Lead with what you observed, not what you assumed. "Clicked button at /users/new, no network request fired" beats "submit handler appears broken."
-- Cite the screenshot for every finding (file path). Evidence first.
-- When a bug isn't reproducible, say so and lower confidence — don't fabricate steps.
-- "Health score dropped 8 points; root cause: 2 new console errors after the search input change" beats "QA found regressions."
-
-## Dogfood note (2026-06-05)
-
-This skill is new. No formal eval suite gates it; correctness is validated by running it against real apps in this workspace. Expected failure modes to watch for in early runs:
-- Playwright MCP tool names may drift; update `allowed-tools` if `mcp__playwright__*` wildcard stops matching.
-- Health-score weights are a starting point — adjust the formula in Step 8 if real runs produce uninformative scores.
-- Atomic-commit-per-fix can be noisy; consider squashing pre-PR or extending `/uvs-ship` to bundle when fixes are related.
-- Auto-detection of framework via config file presence misses monorepos; add support if needed.
 
 ## Verdict (when run as a flow step)
 
