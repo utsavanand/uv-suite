@@ -178,6 +178,12 @@ Human gates  After each     End only     Every Act          Final output
 | `/uvs-debug` | Systematic root-cause debugging |
 | `/uvs-ship` | Review → test → commit (and optionally PR) |
 
+## Permissions (an opinion on top of the harness's own)
+
+The kit's permission rules sit on top of each harness's own permissioning. They allow without a prompt what a coding session does all day (reading, searching, the read-only git commands, the project's test, lint and build runners) and deny what should never run (`rm -rf` of root, home or the current folder, `sudo rm`, force push to main, hard reset to origin). Everything else keeps the harness's default, so `git commit`, `git push` and `gh pr` still ask. Copilot takes the rules as launch flags; Codex takes the shell rules only.
+
+Validate warns that the kit combines private data (`read: *`), untrusted content (the Playwright MCP server the QA skill drives) and a way out (shell). That is inherent to browser QA; `/uvs-qa` drives only the app URL you give it, and the warning is accepted knowingly.
+
 ## Hooks (lifecycle automation)
 
 One hook, because a hook is the only component that can stop a command by its content before it runs; everything else a hook used to do here (formatting, slop greps, danger-zone warnings, reminders) is the project's own tooling or a skill's job.
