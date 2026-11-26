@@ -1,7 +1,6 @@
 # Contributing to UV Suite
 
 This is for people **changing UV Suite itself** — adding or editing skills, agents,
-hooks, and personas. If you just want to *use* UV Suite, see [README.md](README.md).
 
 ## Source layout
 
@@ -24,7 +23,6 @@ agents/
   generate.py               generates Cursor (.mdc) + Codex (.toml) from the .md files
 hooks/*.sh               lifecycle automation (auto-lint, block-destructive, the
                          uv-out-*.sh session-scoped artifacts, slop-grep ambient slop)
-personas/                the 4 persona configs (spike/sport/professional/auto JSON)
 knowledge/               what the agent reads: agent-working-rules (always),
                          acts-build-planning, danger-zones, code-slop-rules,
                          doc-slop-rules (on demand or path-scoped)

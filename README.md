@@ -164,7 +164,7 @@ Human gates  After each     End only     Every Act          Final output
 
 ## Skills (slash commands)
 
-12 skills. Each `skills/<name>/SKILL.md` is a thin orchestrator that dispatches to agents.
+9 skills. Each `skills/<name>/SKILL.md` is a thin orchestrator that dispatches to agents or does one job itself.
 
 | Command | What it does |
 |---|---|
@@ -207,7 +207,7 @@ One hook, because a hook is the only component that can stop a command by its co
 
 ## Agents
 
-8 agents. The canonical definitions are `agents/claude-code/*.md`. The Cursor (`.mdc`) and Codex (`.toml`) variants are generated from those by `agents/generate.py` at install — they're not hand-maintained.
+7 agents. The canonical definitions are `agents/claude-code/*.md`. The Cursor (`.mdc`) and Codex (`.toml`) variants are generated from those by `agents/generate.py` at install — they're not hand-maintained.
 
 | Agent | Subsystem | Model | Cycle Budget |
 |---|---|---|---|
@@ -247,11 +247,10 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 ```
 .claude/
   settings.json          Permissions and hooks (seeded from your persona on first install)
-  agents/                8 agent definitions (canonical .md)
-  skills/                12 slash commands
-  hooks/                 ~28 hook scripts
+  agents/                7 agent definitions (canonical .md)
+  skills/                9 slash commands
+  hooks/kit/             1 hook script (block-destructive); hooks/ holds the old installer's scripts
   rules/                 slop rules (Pro / Auto only)
-  personas/              4 persona configs
 .codex/agents/           8 Codex agent definitions (generated from .claude/agents)
 .cursor/rules/           8 Cursor rule definitions (generated from .claude/agents)
 AGENTS.md                Codex instruction file
@@ -268,7 +267,6 @@ uv-out/                  Agent output artifacts (gitignored)
 | Document | What it covers |
 |---|---|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Working on UV Suite — adding skills/agents/hooks, running the tests |
-| [personas.md](personas.md) | 4 personas, 7 knobs, when to use each |
 | [knowledge/agent-working-rules.md](knowledge/agent-working-rules.md) | How the agent works: honesty, simplicity, surgical changes, verification, when to stop |
 | [knowledge/acts-build-planning.md](knowledge/acts-build-planning.md) | Planning a build as Acts: structure, decomposition, sizing, cycle budgets |
 | [knowledge/danger-zones.md](knowledge/danger-zones.md) | The DANGER-ZONES.md format and inline @danger markers |

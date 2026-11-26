@@ -102,4 +102,4 @@ rules = [
 [[components]]
 kind = "settings"
 harness = "claude-code"
-path = "harness/claude-code/spike.json"
+path = "harness/claude-code/opus-effort-max.json"

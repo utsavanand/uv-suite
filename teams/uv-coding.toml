@@ -6,8 +6,8 @@ card = { purpose = "Writes the spec and the architecture; assigns build work" }
 skills = ["uvs-spec", "uvs-plan", "uvs-map-codebase"]
 
 [roles.dev]
-card = { purpose = "Builds what the plan says and raises the PR" }
-skills = ["uvs-implement", "uvs-test", "uvs-ship"]
+card = { purpose = "Builds what the plan says and hands it to qa; release raises the PR" }
+skills = ["uvs-implement", "uvs-test", "uvs-debug"]
 
 [roles.qa]
 card = { purpose = "Reviews every diff and runs QA before anything is done" }

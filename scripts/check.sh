@@ -23,10 +23,8 @@ section "README counts match shipped files"
 count_dir() { ls -1 "$1" 2>/dev/null | wc -l | tr -d ' '; }
 
 skills_actual=$(count_dir skills)
-hooks_actual=$(count_dir hooks)
+hooks_actual=$(count_dir hooks/kit)
 agents_actual=$(count_dir agents/claude-code)
-personas_actual=$(count_dir personas)
-guardrails_actual=$(count_dir guardrails)
 
 check_count() {
   local label="$1" actual="$2" pattern="$3"
@@ -40,8 +38,6 @@ check_count() {
 check_count "skills"     "$skills_actual"     "$skills_actual[[:space:]]+(skills|slash commands)"
 check_count "hooks"      "$hooks_actual"      "$hooks_actual[[:space:]]+hooks?"
 check_count "agents"     "$agents_actual"     "$agents_actual[[:space:]]+agents?"
-check_count "personas"   "$personas_actual"   "$personas_actual[[:space:]]+personas?"
-check_count "guardrails" "$guardrails_actual" "$guardrails_actual[[:space:]]+(guardrails|anti-slop)"
 
 # Every skill mentioned by name in source should also appear in README's skills table
 for skill_dir in skills/*/; do
@@ -85,10 +81,10 @@ for sf in skills/*/SKILL.md; do
 done
 [ $fail -eq 0 ] && ok "all skills have name + description"
 
-# --- Persona JSON validates --------------------------------------------------
+# --- Settings JSON validates ---------------------------------------------------
 
-section "Persona JSON is valid"
-for pf in personas/*.json; do
+section "Settings JSON is valid"
+for pf in harness/claude-code/*.json; do
   if python3 -m json.tool < "$pf" > /dev/null 2>&1; then
     ok "$(basename "$pf")"
   else

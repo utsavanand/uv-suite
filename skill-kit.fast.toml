@@ -179,4 +179,4 @@ path = "flows/ship.json"
 [[components]]
 kind = "settings"
 harness = "claude-code"
-path = "harness/claude-code/sport.json"
+path = "harness/claude-code/sonnet-effort-high.json"
