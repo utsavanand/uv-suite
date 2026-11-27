@@ -53,7 +53,6 @@ Label this session (Enter to skip — you'll be reminded):
   priority (1=low  2=med  3=high, Enter to skip): 3
 ```
 
-Skip any field with Enter. If you skip the name, `/uvs-session init` will be suggested every few prompts until you label it. Set `UVS_NO_PROMPT=1` to suppress prompts entirely.
 
 ## What it does
 
@@ -76,13 +75,11 @@ tool-permission prompt or an idle wait — with the tool and command as context.
 the keystroke is sent for you.
 
 ### 🛡️ Anti-slop guardrails
-Six guardrails (comment, doc, test, error-handling, over-engineering, and
+Six slop rules in two files (over-engineering, architecture, error-handling, comment, test, and
 architecture slop) run ambiently on the Pro / Auto personas, catching
 AI-generated noise as it's written rather than at review time.
 
 ### 📜 Per-session memory
-`/uvs-session checkpoint` writes to `uv-out/sessions/<sid>/checkpoints/`, and
-`/uvs-session restore` auto-picks the current session's latest — so context
 survives across launches, compaction, and terminal restarts.
 
 ## Start here
@@ -90,13 +87,12 @@ survives across launches, compaction, and terminal restarts.
 After `uvs claude pro`, pick the path that matches what you're doing. Each path names the first skill to run and the canonical next steps.
 
 ### Existing codebase (you didn't write this)
-1. `/uvs-understand` — builds a knowledge graph + architecture overview in `uv-out/map-codebase.md`. Other skills (`/uvs-architect`, `/uvs-review`, `/uvs-review --security`) read it automatically.
-2. `/uvs-session checkpoint` — captures your baseline understanding so `/uvs-session restore` can bring it back next session.
+1. `/uvs-map-codebase` — builds a knowledge graph + architecture overview in `uv-out/map-codebase.md`. Other skills (`/uvs-plan`, `/uvs-review`, `/uvs-review --security`) read it automatically.
 3. Then: `/uvs-review` on the current diff, or `/uvs-spec` for the next feature.
 
 ### New project (you're starting from scratch)
 1. `/uvs-spec` — converts your idea into a structured spec in `uv-out/specs/`.
-2. `/uvs-architect` — breaks the spec into Acts with cycle budgets. Reads the spec automatically.
+2. `/uvs-plan` — breaks the spec into Acts with cycle budgets. Reads the spec automatically.
 3. Then: implement Act by Act. Use `/uvs-test` and `/uvs-review` per Act.
 
 ### Reviewing a PR
@@ -104,8 +100,7 @@ After `uvs claude pro`, pick the path that matches what you're doing. Each path 
 2. `/uvs-review --security` if the diff touches auth, payments, data access, or external inputs.
 
 ### Shipping
-1. `/uvs-session checkpoint` to capture state.
-2. `/uvs-commit` — runs review, tests, commits, optionally opens a PR.
+2. `/uvs-ship` — runs review, tests, commits, optionally opens a PR.
 
 Picking a persona (Spike / Sport / Professional / Auto) is a separate axis from picking a first skill — see [Personas](#personas) below for which mode fits which situation.
 
@@ -115,7 +110,6 @@ Each `uvs` launch generates a `UVS_SESSION_ID` and writes metadata to `.uv-suite
 
 - **Concurrent terminals don't collide.** Two `uvs` launches in the same repo run as distinct sessions with separate names, checkpoints, and dashboard rows.
 - **`uvs watch` shows them all.** The Watchtower control plane at `localhost:4200` streams every session live and lets you act on them from the browser — see [Watchtower at a glance](#watchtower-at-a-glance).
-- **Per-session checkpoints.** `/uvs-session checkpoint` writes to `uv-out/sessions/<sid>/checkpoints/`, and `/uvs-session restore` auto-picks the current session's latest. Pass a session id prefix or name to restore from a different one.
 - **Status line shows it all.** The Claude Code status bar shows session name, persona, priority, and elapsed time continuously.
 
 ### Watchtower at a glance
@@ -170,49 +164,50 @@ Human gates  After each     End only     Every Act          Final output
 
 ## Skills (slash commands)
 
-12 skills. Each `skills/<name>/SKILL.md` is a thin orchestrator that dispatches to agents.
+9 skills. Each `skills/<name>/SKILL.md` is a thin orchestrator that dispatches to agents or does one job itself.
 
 | Command | What it does |
 |---|---|
-| `/uvs-understand [dir]` | Map a codebase or whole stack — auto-detects repo vs stack |
+| `/uvs-map-codebase [dir]` | Map a codebase or whole stack — auto-detects repo vs stack |
 | `/uvs-spec [requirements]` | Write a technical specification |
-| `/uvs-architect [spec]` | Design architecture, decompose into Acts |
+| `/uvs-plan [spec]` | Design architecture, decompose into Acts |
 | `/uvs-test [file]` | Write tests or evals: `--unit` / `--integration` / `--eval` ([DeepEval](https://github.com/confident-ai/deepeval) compatible) |
 | `/uvs-review` | Multi-specialist code review; add `--security` (OWASP via Semgrep/Gitleaks/Trivy), `--slop` (anti-slop audit), or `--architecture` (trace design vs. constraints) |
-| `/uvs-prototype [concept]` | Build a static React prototype |
+| `/uvs-implement [concept]` | Build a static React prototype |
 | `/uvs-qa` | Browser QA via Playwright MCP |
-| `/uvs-investigate` | Systematic root-cause debugging |
-| `/uvs-commit` | Review → test → commit (and optionally PR) |
-| `/uvs-session init\|checkpoint\|restore\|end\|auto` | Session lifecycle — label, checkpoint, restore, end, or auto-checkpoint |
-| `/uvs-lite [on\|off]` | Toggle terse output mode — no preamble, no summaries; persists across turns |
-| `/uvs-help` | List every skill, agent, hook, guardrail, and persona |
+| `/uvs-debug` | Systematic root-cause debugging |
+| `/uvs-ship` | Review → test → commit (and optionally PR) |
+
+## Flows (sequences DuckTerm runs step by step)
+
+A flow is a sequence of skills the DuckTerm runner drives, with gates the owner answers in the Flows tab. Four flows, each with the input it needs:
+
+| Flow | Input | Steps |
+|---|---|---|
+| `pr-review` | a pull request number or URL | review decides: approve ends, revise or reject fails with the findings |
+| `build` | a spec file | plan → gate "Approve the plan?" → implement → review decides; revise returns to implement up to three times |
+| `qa` | the running app's URL | browser QA decides pass or fail |
+| `ship` | a spec file and the app URL | plan → gate → implement → review and QA together → one verdict (`scripts/verdict.py`, no model) → commit and open the PR; revise returns to implement up to three times |
+
+`/uvs-spec` writes the spec a build starts from; `/uvs-review` without a flow reviews the working tree.
+
+## Permissions (an opinion on top of the harness's own)
+
+The MetaHarness's permission rules sit on top of each harness's own permissioning. They allow without a prompt what a coding session does all day (reading, searching, the read-only git commands, the project's test, lint and build runners) and deny what should never run (`rm -rf` of root, home or the current folder, `sudo rm`, force push to main, hard reset to origin). Everything else keeps the harness's default, so `git commit`, `git push` and `gh pr` still ask. Copilot takes the rules as launch flags; Codex takes the shell rules only.
+
+Validate warns that the MetaHarness combines private data (`read: *`), untrusted content (the Playwright MCP server the QA skill drives) and a way out (shell). That is inherent to browser QA; `/uvs-qa` drives only the app URL you give it, and the warning is accepted knowingly.
 
 ## Hooks (lifecycle automation)
 
-Fire automatically on Claude Code events. You never invoke these. ~28 scripts live in `hooks/`.
+One hook, because a hook is the only component that can stop a command by its content before it runs; everything else a hook used to do here (formatting, slop greps, danger-zone warnings, reminders) is the project's own tooling or a skill's job.
 
 | Hook | Fires on | What it does |
 |---|---|---|
-| auto-lint | File write | Runs prettier, ruff, or gofmt |
-| slop-grep | File edit/write | Ambient slop detection on sport / professional / auto personas |
-| doc-slop-grep | File edit/write | Catches vague adjectives in markdown on the spike persona |
-| danger-zone-check | File edit | Warns if file is in DANGER-ZONES.md |
-| block-destructive | Bash command | Blocks `rm -rf /`, force push to main, `DROP TABLE` |
-| session-label-nag | UserPromptSubmit | Reminds you to run `/uvs-session init` every Nth prompt while the session has no name |
-| watchtower-send | All events | Forwards every event (with session metadata) to the dashboard at `localhost:4200` |
-| watchtower-notify | Notification / PermissionRequest | Surfaces "needs human" approvals to the dashboard |
-| watchtower-tokens | Stop | Reports per-session token usage (parsed from the transcript) |
-| watchtower-end | SessionEnd | Marks the session terminated on the dashboard |
-| session-start | SessionStart | Records start time, fires bootstrap event with session metadata |
-| session-timer | PostToolUse | Reminders at 45 / 90 / 180 minutes |
-| session-end | Stop | Shows duration, today's total, reflection prompt |
-| session-review-reminder | Stop | Nudges you to review uncommitted changes |
-| uv-out-* | Session events | Manage session-scoped artifacts under `uv-out/sessions/<sid>/` |
-| status-line | Continuous | Renders session label, persona, priority, and timer in the Claude Code status bar |
+| block-destructive | Before every shell command | Blocks `rm -rf` of root, home or the current folder, `DROP TABLE` and `TRUNCATE`, force push to main, `git reset --hard origin` |
 
 ## Agents
 
-8 agents. The canonical definitions are `agents/claude-code/*.md`. The Cursor (`.mdc`) and Codex (`.toml`) variants are generated from those by `agents/generate.py` at install — they're not hand-maintained.
+7 agents. The canonical definitions are `agents/claude-code/*.md`. The Cursor (`.mdc`) and Codex (`.toml`) variants are generated from those by `agents/generate.py` at install — they're not hand-maintained.
 
 | Agent | Subsystem | Model | Cycle Budget |
 |---|---|---|---|
@@ -231,11 +226,10 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 
 | Output | Read by |
 |---|---|
-| `uv-out/map-codebase.md` | /uvs-architect, /uvs-review, /uvs-review --security |
-| `uv-out/specs/*.md` | /uvs-architect, /uvs-test, /uvs-test --eval |
+| `uv-out/map-codebase.md` | /uvs-plan, /uvs-review, /uvs-review --security |
+| `uv-out/specs/*.md` | /uvs-plan, /uvs-test, /uvs-test --eval |
 | `uv-out/architecture/*.md` | /uvs-review, /uvs-test, /uvs-review --slop |
 | `uv-out/review-*.md` | /uvs-review --slop, /uvs-review --security |
-| `uv-out/sessions/<sid>/checkpoints/*.md` | /uvs-session restore |
 
 ## Integrations
 
@@ -253,11 +247,10 @@ Agents write persistent output to `uv-out/`. Each agent reads prior artifacts au
 ```
 .claude/
   settings.json          Permissions and hooks (seeded from your persona on first install)
-  agents/                8 agent definitions (canonical .md)
-  skills/                12 slash commands
-  hooks/                 ~28 hook scripts
-  rules/                 6 anti-slop guardrails (Pro / Auto only)
-  personas/              4 persona configs
+  agents/                7 agent definitions (canonical .md)
+  skills/                9 slash commands
+  hooks/kit/             1 hook script (block-destructive); hooks/ holds the old installer's scripts
+  rules/                 slop rules (Pro / Auto only)
 .codex/agents/           8 Codex agent definitions (generated from .claude/agents)
 .cursor/rules/           8 Cursor rule definitions (generated from .claude/agents)
 AGENTS.md                Codex instruction file
@@ -274,11 +267,10 @@ uv-out/                  Agent output artifacts (gitignored)
 | Document | What it covers |
 |---|---|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Working on UV Suite — adding skills/agents/hooks, running the tests |
-| [personas.md](personas.md) | 4 personas, 7 knobs, when to use each |
-| [knowledge/practices.md](knowledge/practices.md) | Working principles (honesty, parallelism, scope, completion) |
-| [acts-methodology.md](acts-methodology.md) | Acts delivery framework with worked examples |
-| [knowledge/human-in-the-loop.md](knowledge/human-in-the-loop.md) | Cycle budgets, intervention types, learning loops |
-| [knowledge/sharing-and-standards.md](knowledge/sharing-and-standards.md) | Danger zones, team standards, sharing levels |
+| [knowledge/agent-working-rules.md](knowledge/agent-working-rules.md) | How the agent works: honesty, simplicity, surgical changes, verification, when to stop |
+| [knowledge/acts-build-planning.md](knowledge/acts-build-planning.md) | Planning a build as Acts: structure, decomposition, sizing, cycle budgets |
+| [knowledge/danger-zones.md](knowledge/danger-zones.md) | The DANGER-ZONES.md format and inline @danger markers |
+| [knowledge/code-slop-rules.md](knowledge/code-slop-rules.md) · [doc-slop-rules.md](knowledge/doc-slop-rules.md) | The slop rules the reviewer and the anti-slop guard check |
 | [research/landscape.md](research/landscape.md) | Open source tools and references for each agent |
 | [research/comparison.md](research/comparison.md) | UV Suite vs gstack vs Claude Code built-in — feature comparison + prompt-depth deep dive |
 | [research/tool-comparison.md](research/tool-comparison.md) | Claude Code vs Cursor vs Codex — how UV Suite works across all three |

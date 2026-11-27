@@ -26,11 +26,11 @@ $ARGUMENTS
 Write the spec under this directory (it is scoped to the current session, so artifacts
 are attributable to the session that produced them):
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-session.sh`
+This session's output folder is `uv-out/sessions/<id>/`, where `<id>` is the `UVS_SESSION_ID` environment variable, or `uv-out/current/` when it is unset. Create it if it does not exist. Below, `<session-output-dir>` means this folder.
 
 ## Step 0 — Gather context (do this FIRST, before writing)
 
-The codebase map, prior specs, and decisions for this project are auto-loaded below (from
+The codebase map, prior specs, and decisions for this project are the files named below (under
 `uv-out/`). Read them first — they are the indexed view of the existing codebase. Then use
 `AskUserQuestion` to ask the user only for what those don't cover: specific files, modules,
 API contracts, or data models the spec must account for. Read every file they name before
@@ -39,11 +39,11 @@ files — ground in the map or ask.
 
 ## Project context
 
-!`cat CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"`
+Read `CLAUDE.md` or `AGENTS.md` at the project root, if present.
 
 ## Existing architecture
 
-!`ls -la docs/architecture* 2>/dev/null || echo "No architecture docs found"`
+List `docs/architecture*` if present and read what is relevant.
 
 ## What we already know about this codebase (from uv-out)
 
@@ -53,20 +53,20 @@ already captured.
 
 ### Codebase map (architecture, domains, entry points)
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-codebase.md 120 || echo "No codebase map — run /uvs-understand first for a grounded spec"`
+Read the newest `uv-out/**/map-codebase.md` if there is one; its first 120 lines are enough to orient. If none: No codebase map — run /uvs-map-codebase first for a grounded spec.
 
 ### Stack map (if a multi-service system)
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh map-stack.md 80 || echo "No stack map"`
+Read the newest `uv-out/**/map-stack.md` if there is one; its first 80 lines are enough to orient. If none: No stack map.
 
 ### Prior specs (build on these; don't duplicate)
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'specs/*.md' 80 || echo "No prior specs"`
+Read the newest `uv-out/**/specs/*.md` if there is one; its first 80 lines are enough to orient. If none: No prior specs.
 
 ### Architecture decisions
 
-!`"${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/uv-out-best.sh 'architecture/decisions.md' 60 || echo "No architecture decisions found"`
+Read the newest `uv-out/**/architecture/decisions.md` if there is one; its first 60 lines are enough to orient. If none: No architecture decisions found.
 
 ## Today's date
 
-!`date +%Y-%m-%d`
+Use today's date.

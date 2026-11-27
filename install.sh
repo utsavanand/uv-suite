@@ -109,9 +109,9 @@ for skill_dir in "$UV_SUITE_DIR/skills/"*/; do
   # routes into (specialists/, modes/, operations/).
   cp -R "$skill_dir"* "$TARGET_DIR/skills/$skill_name/"
 done
-echo "  ✓ /uvs-understand (auto-detects repo vs stack), /uvs-spec, /uvs-architect, /uvs-test (--unit/--integration/--eval)"
-echo "  ✓ /uvs-review (--security/--slop/--architecture), /uvs-prototype, /uvs-qa, /uvs-investigate"
-echo "  ✓ /uvs-commit, /uvs-session (init|checkpoint|restore|end|auto), /uvs-help"
+echo "  ✓ /uvs-map-codebase (auto-detects repo vs stack), /uvs-spec, /uvs-plan, /uvs-test (--unit/--integration/--eval)"
+echo "  ✓ /uvs-review (--security/--slop/--architecture), /uvs-implement, /uvs-qa, /uvs-debug"
+echo "  ✓ /uvs-ship, /uvs-session (init|checkpoint|restore|end|auto), /uvs-help"
 
 # --- Install hooks ---
 echo "Installing hook scripts..."
@@ -131,12 +131,12 @@ echo "  + Real-time slop check (Haiku prompt hook, wired in settings.json)"
 # --- Install guardrail rules (Sport only) ---
 if [ "$PERSONA" = "professional" ] || [ "$PERSONA" = "auto" ]; then
   echo "Installing 6 guardrail rules..."
-  cp "$UV_SUITE_DIR/guardrails/"*.md "$TARGET_DIR/rules/"
+  cp "$UV_SUITE_DIR/knowledge/code-slop-rules.md" "$UV_SUITE_DIR/knowledge/doc-slop-rules.md" "$TARGET_DIR/rules/"
   echo "  ✓ comment-slop, overengineering-slop, error-handling-slop"
-  echo "  ✓ test-slop, doc-slop, architecture-slop"
+  echo "  ✓ code-slop-rules, doc-slop-rules"
 else
   echo "Skipping guardrail rules ($PERSONA persona — guardrails not needed)"
-  echo "  Available at: $UV_SUITE_DIR/guardrails/ if you want them later"
+  echo "  Available at: $UV_SUITE_DIR/knowledge/ if you want them later"
 fi
 
 # --- Install persona-specific settings ---
@@ -211,19 +211,19 @@ This project uses [UV Suite](https://github.com/utsavanand/uv-suite) v${UV_VERSI
 
 ### Skills
 
-/uvs-understand (auto-detects repo vs stack), /uvs-spec, /uvs-architect, /uvs-test (--unit/--integration/--eval), /uvs-review (--security/--slop/--architecture), /uvs-prototype, /uvs-qa, /uvs-investigate, /uvs-commit, /uvs-session (init|checkpoint|restore|end|auto), /uvs-help
+/uvs-map-codebase (auto-detects repo vs stack), /uvs-spec, /uvs-plan, /uvs-test (--unit/--integration/--eval), /uvs-review (--security/--slop/--architecture), /uvs-implement, /uvs-qa, /uvs-debug, /uvs-ship, /uvs-session (init|checkpoint|restore|end|auto), /uvs-help
 
 ### When to use which skill (reach for these proactively)
 
 Prefer the matching skill over doing the task ad hoc -- they carry the project's conventions,
 anti-slop guardrails, and session-scoped artifacts. Don't wait to be told:
-- Entering an unfamiliar codebase, or "how does this work" -> /uvs-understand
-- New feature or vague requirements -> /uvs-spec, then /uvs-architect (which gates on the spec)
+- Entering an unfamiliar codebase, or "how does this work" -> /uvs-map-codebase
+- New feature or vague requirements -> /uvs-spec, then /uvs-plan (which gates on the spec)
 - After implementing, or coverage is low -> /uvs-test (--eval for LLM/AI features)
 - Before merging, or reviewing a diff -> /uvs-review (--security for auth/payments/data;
   --architecture to audit a design against its recorded constraints)
-- A bug you can't explain -> /uvs-investigate
-- Shipping a change -> /uvs-commit
+- A bug you can't explain -> /uvs-debug
+- Shipping a change -> /uvs-ship
 - Session lifecycle -> /uvs-session init|checkpoint|restore|end
 If unsure which fits, ask the user rather than guessing.
 
@@ -238,18 +238,18 @@ to the session that produced it. Each artifact is also stamped with provenance f
 Downstream skills prefer the current session's artifacts but can use a prior session's when
 the current one has none (they list current → prior → legacy and ask which to use). All
 writers are session-scoped:
-- /uvs-understand  → uv-out/sessions/<sid>/map-codebase.md (repo) or map-stack.md (stack)
+- /uvs-map-codebase  → uv-out/sessions/<sid>/map-codebase.md (repo) or map-stack.md (stack)
 - /uvs-spec          → uv-out/sessions/<sid>/specs/
-- /uvs-architect     → uv-out/sessions/<sid>/architecture/
+- /uvs-plan     → uv-out/sessions/<sid>/architecture/
 - /uvs-review        → uv-out/sessions/<sid>/review/state.md   (flat pointer: uv-out/review-state.md)
 - /uvs-review --slop    → uv-out/sessions/<sid>/slop/report.md
 - /uvs-review --security → uv-out/sessions/<sid>/security/report.md
-- /uvs-investigate   → uv-out/sessions/<sid>/investigate/report.md
+- /uvs-debug   → uv-out/sessions/<sid>/investigate/report.md
 - /uvs-test --eval   → uv-out/sessions/<sid>/evals/
 - /uvs-qa            → uv-out/sessions/<sid>/qa/   (flat pointer: uv-out/qa-state.md)
 - /uvs-session checkpoint    → uv-out/sessions/<sid>/checkpoints/
 
-Fixed-path consumers (/uvs-commit, /ship) read the flat pointer symlinks (uv-out/review-state.md,
+Fixed-path consumers (/uvs-ship, /ship) read the flat pointer symlinks (uv-out/review-state.md,
 uv-out/qa-state.md), which resolve into the current session. The Stop hook uv-out-notify.sh
 prints the artifact path (and session id) to the terminal after each run.
 
@@ -424,15 +424,15 @@ echo ""
 
 echo "Available slash commands (12 skills):"
 echo ""
-echo "  /uvs-understand                  Map a codebase or full stack (auto-detected) (Cartographer)"
+echo "  /uvs-map-codebase                  Map a codebase or full stack (auto-detected) (Cartographer)"
 echo "  /uvs-spec [requirements]          Write a technical spec (Spec Writer)"
-echo "  /uvs-architect [spec]             Design architecture + Acts (Architect)"
+echo "  /uvs-plan [spec]             Design architecture + Acts (Architect)"
 echo "  /uvs-test [--unit|--integration|--eval]  Generate tests/evals (Test Writer, Eval Writer)"
 echo "  /uvs-review [--security|--slop]   Code review, security audit, slop check (Reviewer, etc.)"
-echo "  /uvs-prototype [concept]          Build a prototype (Prototype Builder)"
+echo "  /uvs-implement [concept]          Build a prototype (Prototype Builder)"
 echo "  /uvs-qa [target]                  Browser-based QA (Playwright MCP)"
-echo "  /uvs-investigate [question]       Multi-step codebase investigation"
-echo "  /uvs-commit                       Stage and commit changes"
+echo "  /uvs-debug [question]       Multi-step codebase investigation"
+echo "  /uvs-ship                       Stage and commit changes"
 echo "  /uvs-session <init|checkpoint|restore|end|auto>  Manage session lifecycle"
 echo "  /uvs-help                      Show UV Suite help"
 echo ""

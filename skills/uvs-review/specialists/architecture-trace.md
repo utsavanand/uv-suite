@@ -8,7 +8,7 @@ the `/uvs-review --architecture` orchestrator).
 ## Precondition
 
 If there is no `constraints.md`, **stop** and say so: you cannot audit traceability without
-the recorded constraints. Recommend running `/uvs-architect` (which records them). Do not invent
+the recorded constraints. Recommend running `/uvs-plan` (which records them). Do not invent
 constraints or guess at them.
 
 ## What you check — traceability in both directions

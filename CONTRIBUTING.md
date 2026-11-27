@@ -1,7 +1,6 @@
 # Contributing to UV Suite
 
 This is for people **changing UV Suite itself** — adding or editing skills, agents,
-hooks, and personas. If you just want to *use* UV Suite, see [README.md](README.md).
 
 ## Source layout
 
@@ -15,19 +14,18 @@ skills/uvs-<name>/SKILL.md  12 skills, one slash command each (all `uvs-` prefix
                          its tool grants). Fan-out skills carry a sub-folder the
                          orchestrator routes into:
                            uvs-review/specialists/    one file per review specialist
-                           uvs-architect/specialists/ one file per domain expert (researches)
+                           uvs-plan/specialists/ one file per domain expert (researches)
                            uvs-test/specialists/      one file per test specialist
-                           uvs-understand/modes/      one file per understand mode
+                           uvs-map-codebase/modes/      one file per understand mode
                            uvs-session/operations/    one file per session operation
 agents/
   claude-code/<name>.md     subagent definitions — the SINGLE SOURCE OF TRUTH
   generate.py               generates Cursor (.mdc) + Codex (.toml) from the .md files
 hooks/*.sh               lifecycle automation (auto-lint, block-destructive, the
                          uv-out-*.sh session-scoped artifacts, slop-grep ambient slop)
-personas/                the 4 persona configs (spike/sport/professional/auto JSON)
-guardrails/              6 anti-slop rule docs → installed to .claude/rules/
-knowledge/               cross-cutting reference docs (human-in-the-loop,
-                         sharing-and-standards, practices)
+knowledge/               what the agent reads: agent-working-rules (always),
+                         acts-build-planning, danger-zones, code-slop-rules,
+                         doc-slop-rules (on demand or path-scoped)
 research/                best-practices, comparison, landscape, tool-comparison
 fixtures/                runnable test fixtures (pdf-qa multi-service)
 tests/skills/            the skill test harness (contract + behavioral)

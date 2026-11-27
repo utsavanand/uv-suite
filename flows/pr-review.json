@@ -1,0 +1,22 @@
+{
+  "name": "pr-review",
+  "description": "Review a GitHub pull request and decide whether it may merge",
+  "inputs": {
+    "pr": "text"
+  },
+  "steps": [
+    {
+      "id": "verdict",
+      "decide": "uvs-review",
+      "with": {
+        "pr": "inputs.pr"
+      },
+      "routes": {
+        "approve": "end",
+        "revise": "fail",
+        "reject": "fail"
+      },
+      "default": "reject"
+    }
+  ]
+}

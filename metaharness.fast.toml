@@ -1,0 +1,182 @@
+manifest_version = 1
+name        = "uv-suite-fast"
+description = "UV Suite, fast: wide permissions, lint only, no guardrails; for prototypes and throwaway work"
+version     = "0.34.0"
+author      = "utsavanand"
+homepage    = "https://github.com/utsavanand/uv-suite"
+license     = "MIT"
+conflicts_with = ["uv-suite", "uv-suite-docs"]
+teams = ["teams/uv-coding.toml"]
+
+# One of three UV Suite kits sharing this repository: uv-suite (careful), uv-suite-fast, uv-suite-docs.
+
+[[components]]
+kind = "knowledge"
+path = "knowledge/agent-working-rules.md"
+
+[[components]]
+kind = "knowledge"
+path = "knowledge/acts-build-planning.md"
+load = "on-demand"
+description = "How a build is planned as Acts: structure, decomposition, sizing, and when the agent stops and asks"
+
+[[components]]
+kind = "knowledge"
+path = "knowledge/danger-zones.md"
+load = "on-demand"
+description = "The DANGER-ZONES.md format and the inline @danger annotations the hooks and the reviewer act on"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-spec"
+effects = "workspace"
+outputs = { spec = { file = "uv-out/spec.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-plan"
+effects = "workspace"
+inputs  = { spec = "file" }
+outputs = { plan = { file = "uv-out/architecture.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-implement"
+effects = "workspace"
+inputs  = { plan = "file", findings = "file?" }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-test"
+effects = "workspace"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-review"
+effects = "read-only"
+inputs  = { diff = "file?", pr = "text?" }
+outputs = { verdict = { choice = ["approve", "revise", "reject"] }, findings = { file = "uv-out/review-findings.md" } }
+
+[[components]]
+kind = "tool"
+cli = { binary = "graphify", doctor = "graphify --version", install_hint = "pip install graphifyy && graphify install" }
+
+[[components]]
+kind = "tool"
+mcp = { name = "playwright", command = "npx", args = ["-y", "@playwright/mcp@0.0.85"], doctor = "npx -y @playwright/mcp@0.0.85 --help" }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-qa"
+effects = "read-only"
+inputs  = { url = "text", diff = "file?" }
+outputs = { verdict = { choice = ["pass", "fail"] }, report = { file = "uv-out/qa-report.md" } }
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-map-codebase"
+effects = "read-only"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-debug"
+effects = "read-only"
+
+[[components]]
+kind = "skill"
+path = "skills/uvs-ship"
+effects = "workspace"
+invocation = "user"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/anti-slop-guard.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/architect.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/codebase-mapper.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/eval-writer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/reviewer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/spec-writer.md"
+
+[[components]]
+kind = "agent"
+path = "agents/claude-code/test-writer.md"
+
+[[components]]
+kind = "permission"
+rules = [
+  { tool = "read", match = "*", decision = "allow" },
+  { tool = "write", match = "*", decision = "allow" },
+  { tool = "edit", match = "*", decision = "allow" },
+  { tool = "search", match = "*", decision = "allow" },
+  { tool = "shell", match = "npm *", decision = "allow" },
+  { tool = "shell", match = "npx *", decision = "allow" },
+  { tool = "shell", match = "node *", decision = "allow" },
+  { tool = "shell", match = "git *", decision = "allow" },
+  { tool = "shell", match = "chmod +x *", decision = "allow" },
+  { tool = "shell", match = "mkdir *", decision = "allow" },
+  { tool = "shell", match = "rm /tmp/*", decision = "allow" },
+  { tool = "shell", match = "cat *", decision = "allow" },
+  { tool = "shell", match = "ls *", decision = "allow" },
+  { tool = "shell", match = "head *", decision = "allow" },
+  { tool = "shell", match = "tail *", decision = "allow" },
+  { tool = "shell", match = "find *", decision = "allow" },
+  { tool = "shell", match = "wc *", decision = "allow" },
+  { tool = "shell", match = "grep *", decision = "allow" },
+  { tool = "shell", match = "rg *", decision = "allow" },
+  { tool = "shell", match = "jq *", decision = "allow" },
+  { tool = "shell", match = "sed -n *", decision = "allow" },
+  { tool = "shell", match = "awk *", decision = "allow" },
+  { tool = "shell", match = "tree *", decision = "allow" },
+  { tool = "shell", match = "du *", decision = "allow" },
+  { tool = "shell", match = "df *", decision = "allow" },
+  { tool = "shell", match = "file *", decision = "allow" },
+  { tool = "shell", match = "stat *", decision = "allow" },
+  { tool = "shell", match = "diff *", decision = "allow" },
+  { tool = "shell", match = "echo *", decision = "allow" },
+  { tool = "shell", match = "printf *", decision = "allow" },
+  { tool = "shell", match = "node --check *", decision = "allow" },
+  { tool = "shell", match = "bash -n *", decision = "allow" },
+  { tool = "shell", match = "rm -rf /", decision = "deny" },
+  { tool = "shell", match = "rm -rf ~", decision = "deny" },
+  { tool = "shell", match = "rm -rf .", decision = "deny" },
+  { tool = "shell", match = "sudo rm *", decision = "deny" },
+  { tool = "shell", match = "sudo rm -rf *", decision = "deny" },
+  { tool = "shell", match = "git push --force * main", decision = "deny" },
+  { tool = "shell", match = "git push --force * master", decision = "deny" },
+]
+
+[[components]]
+kind = "flow"
+path = "flows/pr-review.json"
+
+[[components]]
+kind = "flow"
+path = "flows/build.json"
+
+[[components]]
+kind = "flow"
+path = "flows/qa.json"
+
+[[components]]
+kind = "flow"
+path = "flows/ship.json"
+
+[[components]]
+kind = "settings"
+harness = "claude-code"
+path = "harness/claude-code/sonnet-effort-high.json"

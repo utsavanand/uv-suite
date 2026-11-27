@@ -1,0 +1,75 @@
+{
+  "name": "ship",
+  "description": "End to end: plan from a spec, approve, implement, review and QA together, then commit and open the PR",
+  "inputs": {
+    "spec": "file",
+    "url": "text"
+  },
+  "steps": [
+    {
+      "id": "plan",
+      "run": "uvs-plan",
+      "with": {
+        "spec": "inputs.spec"
+      }
+    },
+    {
+      "id": "signoff",
+      "gate": "Approve the plan?",
+      "show": "steps.plan.outputs.plan",
+      "routes": {
+        "approve": "implement",
+        "reject": "plan"
+      },
+      "max_loops": 3
+    },
+    {
+      "id": "implement",
+      "run": "uvs-implement",
+      "with": {
+        "plan": "steps.plan.outputs.plan",
+        "findings": "steps.review.outputs.findings?"
+      }
+    },
+    {
+      "id": "checks",
+      "parallel": [
+        {
+          "id": "review",
+          "decide": "uvs-review",
+          "with": {
+            "diff": "workspace.diff"
+          }
+        },
+        {
+          "id": "qa",
+          "decide": "uvs-qa",
+          "with": {
+            "url": "inputs.url",
+            "diff": "workspace.diff"
+          }
+        }
+      ]
+    },
+    {
+      "id": "verdict",
+      "exec": "scripts/verdict.py",
+      "effects": "read-only",
+      "with": {
+        "review": "steps.review.outputs.verdict",
+        "qa": "steps.qa.outputs.verdict"
+      },
+      "routes": {
+        "ship": "deliver",
+        "revise": "implement",
+        "stop": "fail"
+      },
+      "default": "stop",
+      "max_loops": 3
+    },
+    {
+      "id": "deliver",
+      "run": "uvs-ship"
+    }
+  ]
+}
