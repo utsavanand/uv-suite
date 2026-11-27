@@ -6,6 +6,7 @@ Newest first. Each entry says what changed for someone installing the kit, not e
 
 The component-by-component review against the DuckTerm skill-kit calibration (15/20 → 17/20).
 
+- Manifests: `skill-kit.toml`, `.fast` and `.docs` are now `metaharness.toml`, `metaharness.fast.toml` and `metaharness.docs.toml`, the name DuckTerm reads first since its MetaHarness rename (2026-11-26); the old name still loads with a rename warning.
 - Knowledge: ten files became five, named by what the agent does with them: agent-working-rules (always on, 2.6 KB), acts-build-planning, danger-zones, code-slop-rules (on demand), doc-slop-rules (docs files). Always-on text per harness 13.3 KB → 4.7 KB.
 - Skills: twelve became nine plus `uvs-implement`. Removed prototype, session, help, lite. Renamed understand → map-codebase, architect → plan, investigate → debug, commit → ship. Every shell context block is a plain instruction, so the skills work on Codex, Copilot and OpenCode as well as Claude Code. Review and QA keep their long reference material in `reference/` beside each SKILL.md.
 - Agents: eight became seven; cartographer → codebase-mapper; debugging no longer runs under the read-only reviewer; review specialists run under the reviewer; Graphify and the Playwright MCP server are declared tools.
