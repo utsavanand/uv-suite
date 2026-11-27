@@ -1,10 +1,10 @@
 # Changelog
 
-Newest first. Each entry says what changed for someone installing the kit, not every commit.
+Newest first. Each entry says what changed for someone installing the MetaHarness, not every commit.
 
 ## Unreleased (branch kit/knowledge-cleanup, 2026-11-25)
 
-The component-by-component review against the DuckTerm skill-kit calibration (15/20 → 17/20).
+The component-by-component review against the DuckTerm MetaHarness calibration (15/20 → 17/20).
 
 - Manifests: `skill-kit.toml`, `.fast` and `.docs` are now `metaharness.toml`, `metaharness.fast.toml` and `metaharness.docs.toml`, the name DuckTerm reads first since its MetaHarness rename (2026-11-26); the old name still loads with a rename warning.
 - Knowledge: ten files became five, named by what the agent does with them: agent-working-rules (always on, 2.6 KB), acts-build-planning, danger-zones, code-slop-rules (on demand), doc-slop-rules (docs files). Always-on text per harness 13.3 KB → 4.7 KB.
