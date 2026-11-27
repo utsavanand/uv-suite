@@ -1,0 +1,48 @@
+{
+  "name": "build",
+  "description": "Plan from a spec, approve the plan, implement it, and let the review decide",
+  "inputs": {
+    "spec": "file"
+  },
+  "steps": [
+    {
+      "id": "plan",
+      "run": "uvs-plan",
+      "with": {
+        "spec": "inputs.spec"
+      }
+    },
+    {
+      "id": "signoff",
+      "gate": "Approve the plan?",
+      "show": "steps.plan.outputs.plan",
+      "routes": {
+        "approve": "implement",
+        "reject": "plan"
+      },
+      "max_loops": 3
+    },
+    {
+      "id": "implement",
+      "run": "uvs-implement",
+      "with": {
+        "plan": "steps.plan.outputs.plan",
+        "findings": "steps.review.outputs.findings?"
+      }
+    },
+    {
+      "id": "review",
+      "decide": "uvs-review",
+      "with": {
+        "diff": "workspace.diff"
+      },
+      "routes": {
+        "approve": "end",
+        "revise": "implement",
+        "reject": "fail"
+      },
+      "default": "reject",
+      "max_loops": 3
+    }
+  ]
+}

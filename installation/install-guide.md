@@ -144,14 +144,12 @@ agents/
 Anti-slop rules are also modular — one file per rule category:
 
 ```
-guardrails/
-├── comment-slop.md           # Restating code in comments
-├── overengineering-slop.md   # Abstractions with no concrete use
-├── test-slop.md              # Tests that pass but verify nothing
-├── doc-slop.md               # Vague adjectives, buzzword documentation
-├── architecture-slop.md      # Unjustified complexity, pattern abuse
-├── error-handling-slop.md    # Try/catch around code that can't throw
-└── naming-slop.md            # Generic names, Hungarian notation, etc.
+knowledge/
+├── agent-working-rules.md    # How the agent works (always loaded)
+├── acts-build-planning.md    # Planning a build as Acts (on demand)
+├── danger-zones.md           # DANGER-ZONES.md format and @danger markers (on demand)
+├── code-slop-rules.md        # Five code slop rules (on demand)
+└── doc-slop-rules.md         # Vague adjectives, buzzword documentation (docs only)
 ```
 
 **Why modular?**
@@ -163,11 +161,10 @@ guardrails/
 
 ```bash
 # Install all guardrails
-cp ~/uv-suite/guardrails/*.md .claude/rules/
+cp ~/uv-suite/knowledge/code-slop-rules.md ~/uv-suite/knowledge/doc-slop-rules.md .claude/rules/
 
 # Install selectively
-cp ~/uv-suite/guardrails/comment-slop.md .claude/rules/
-cp ~/uv-suite/guardrails/test-slop.md .claude/rules/
+cp ~/uv-suite/knowledge/code-slop-rules.md .claude/rules/
 ```
 
 ---
@@ -214,10 +211,10 @@ cp agents/claude-code/my-custom-agent.md ~/.claude/agents/
 
 ### Adding Custom Guardrails
 
-Create a new file in `guardrails/`:
+Add a section to `knowledge/code-slop-rules.md`, or a new file under `knowledge/`:
 
 ```markdown
-# guardrails/our-api-patterns.md
+# knowledge/our-api-patterns.md
 ---
 name: api-pattern-guard
 description: Enforce our team's API response envelope and error format

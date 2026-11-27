@@ -62,9 +62,7 @@ Unit, integration, e2e, load?
 
 ## Artifact Output
 
-Write the spec to `<session-output-dir>/specs/[feature-name]-spec.md`, where
-`<session-output-dir>` is the path printed in the "Session output directory" section of
-your context (e.g. `uv-out/sessions/<sid>/`). Create the directory if needed.
+Write the spec to `<session-output-dir>/specs/[feature-name]-spec.md`. `<session-output-dir>` is `uv-out/sessions/<id>/`, where `<id>` is the `UVS_SESSION_ID` environment variable, or `uv-out/current/` when it is unset. Create it if it does not exist.
 
 Stamp the top of the spec with provenance frontmatter so it stays attributable if moved:
 
@@ -84,7 +82,7 @@ Then the `# Spec: [Feature Name]` heading and the rest of the template. Summariz
    the skill — the codebase map (`map-codebase.md`/`map-stack.md`), prior specs, and
    architecture decisions. Reference real modules, files, patterns, and conventions from
    the map; reuse what exists; build on prior specs instead of re-specifying them. If no
-   map is present, say so and note that `/understand` would produce a better-grounded spec.
+   map is present, say so and note that `/uvs-map-codebase` would produce a better-grounded spec.
 2. Parse the input into discrete requirements
 3. Separate functional vs non-functional
 4. Identify gaps — list as open questions, don't invent answers

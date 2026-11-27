@@ -1,5 +1,5 @@
 #!/bin/bash
-# UV Suite hook (skill kit): block dangerous shell commands.
+# UV Suite hook (MetaHarness): block dangerous shell commands.
 # Event: before_tool, match shell. Reads the neutral payload DuckTerm's shim
 # writes; exit 2 blocks, the reason goes to stderr.
 INPUT=$(cat)

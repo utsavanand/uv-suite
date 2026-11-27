@@ -35,8 +35,6 @@
     "agents/",
     "skills/",
     "hooks/",
-    "guardrails/",
-    "personas/",
     "portable-standards/",
     "settings.json",
     "uv.sh",

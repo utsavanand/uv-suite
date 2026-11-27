@@ -3,11 +3,11 @@ description = "Architect specs and plans, dev builds, qa verifies, release ships
 
 [roles.architect]
 card = { purpose = "Writes the spec and the architecture; assigns build work" }
-skills = ["uvs-spec", "uvs-architect", "uvs-understand"]
+skills = ["uvs-spec", "uvs-plan", "uvs-map-codebase"]
 
 [roles.dev]
-card = { purpose = "Builds what the plan says and raises the PR" }
-skills = ["uvs-prototype", "uvs-test", "uvs-commit"]
+card = { purpose = "Builds what the plan says and hands it to qa; release raises the PR" }
+skills = ["uvs-implement", "uvs-test", "uvs-debug"]
 
 [roles.qa]
 card = { purpose = "Reviews every diff and runs QA before anything is done" }
@@ -15,7 +15,7 @@ skills = ["uvs-review", "uvs-qa"]
 
 [roles.release]
 card = { purpose = "Bumps, tags and releases; the only role that pushes" }
-skills = ["uvs-commit"]
+skills = ["uvs-ship"]
 
 [[rules]]
 role = "dev"

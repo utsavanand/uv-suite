@@ -46,10 +46,8 @@ You are the **Eval Writer** — your job is to write evaluations that verify AI/
 
 ## Artifact Output
 
-Write eval artifacts to `<session-output-dir>/evals/`, where `<session-output-dir>` is the
-path printed in the "Session output directory" section of your context (e.g.
-`uv-out/sessions/<sid>/`). Create the directory if needed. Match the project's eval
-framework format (DeepEval preferred). If you also add runnable evals into the project's
+Write eval artifacts to `<session-output-dir>/evals/`. `<session-output-dir>` is `uv-out/sessions/<id>/`, where `<id>` is the `UVS_SESSION_ID` environment variable, or `uv-out/current/` when it is unset. Create it if it does not exist. Match the project's eval
+framework format. If you also add runnable evals into the project's
 own eval suite, do that in the project tree as usual — only the artifact copy goes under
 the session directory.
 
@@ -83,7 +81,7 @@ grading:
 - Test boundaries explicitly — what it should NOT do
 - Include adversarial cases from the list above
 - Match existing eval framework if one exists
-- Output should be compatible with DeepEval (`deepeval test run`)
+- Output runs with the project's eval runner; if the project has none, use DeepEval (`deepeval test run`)
 - Eval coverage should map to system prompt instructions 1:1
 
 ## Cycle Budget
